@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>צור קשר - Escoob</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #f2f4f8; color: #333; }
+    header { background: #004b91; color: white; text-align: center; padding: 1.2rem; }
+    main { max-width: 600px; margin: auto; padding: 2rem; background: white; border-radius: 10px; margin-top: 2rem; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 1rem; font-weight: bold; }
+    input, textarea { width: 100%; padding: 0.7rem; margin-top: 0.3rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+    button { background: #0077cc; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-size: 1rem; margin-top: 1.5rem; cursor: pointer; }
+    button:hover { background: #005fa3; }
+    footer { text-align: center; padding: 1rem; font-size: 0.9rem; color: #888; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>צור קשר עם צוות Escoob</h1>
+  </header>
+  <main>
+    <form id="contact-form">
+      <label for="name">שם מלא</label>
+      <input type="text" id="name" required>
+
+      <label for="email">כתובת דוא"ל</label>
+      <input type="email" id="email" required>
+
+      <label for="message">הודעה</label>
+      <textarea id="message" rows="6" required></textarea>
+
+      <button type="submit">📨 שלח הודעה</button>
+    </form>
+    <p id="status"></p>
+  </main>
+  <footer>
+    &copy; 2025 Escoob Help Center
+  </footer>
+
+  <script>
+    const form = document.getElementById("contact-form");
+    const status = document.getElementById("status");
+
+    form.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const data = {
+        userEmail: document.getElementById("email").value,
+        transcript: `שם: ${document.getElementById("name").value}\nהודעה: ${document.getElementById("message").value}`
+      };
+
+      status.textContent = "שולח הודעה...";
+      try {
+        const res = await fetch("/send-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const msg = await res.text();
+        status.textContent = msg;
+        form.reset();
+      } catch (err) {
+        status.textContent = "אירעה שגיאה בשליחת הטופס.";
+      }
+    });
+  </script>
+</body>
+</html>
