@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>מרכז העזרה של Escoob</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 0; }
+    header { background: #004b91; color: white; padding: 1rem; text-align: center; }
+    header img { border-radius: 50%; width: 64px; height: 64px; vertical-align: middle; margin-left: 10px; }
+    main { padding: 2rem; text-align: center; }
+    .search-box input { padding: 1rem; width: 50%; border-radius: 8px; border: 1px solid #ccc; margin-top: 1rem; }
+    .nav { margin-top: 2rem; }
+    .nav button { padding: 1rem; margin: 0.5rem; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+    .chatbox { position: fixed; bottom: 10px; left: 10px; width: 350px; background: white; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; z-index: 1000; }
+    .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; max-height: 300px; }
+    .chat-input { display: flex; padding: 0.5rem; gap: 0.5rem; }
+    .chat-input input, .chat-input button { padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc; }
+    .bubble { margin-bottom: 0.5rem; padding: 0.7rem; border-radius: 10px; max-width: 80%; line-height: 1.4; }
+    .user-msg { background: #d9eaff; align-self: flex-end; text-align: right; }
+    .bot-msg { background: #f0f0f0; align-self: flex-start; text-align: right; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://lh3.googleusercontent.com/a/ACg8ocK0Jg4vx7RJyDTWd36HpJxNsEIxVCz7E_n1cKW8vSxPzFkalno=s288-c-no" alt="Escoob Logo" />
+    <span>ברוך הבא למרכז העזרה של Escoob</span>
+  </header>
+  <main>
+    <h2>כיצד נוכל לעזור לך?</h2>
+    <div class="search-box"><input type="text" placeholder="חפש שאלה, נושא או מדריך..."></div>
+    <div class="nav">
+      <button onclick="alert('בקרוב יתווספו מאמרים')">📖 מאמרי עזרה</button>
+      <button onclick="alert('צור קשר')">📨 צור קשר</button>
+      <button onclick="document.querySelector('.chatbox').style.display='flex'">💬 דבר עם הבוט</button>
+    </div>
+  </main>
+  <div class="chatbox" style="display:none">
+    <div class="chat-messages" id="chat"></div>
+    <div class="chat-input">
+      <input type="email" id="email" placeholder="כתובת מייל (לא חובה)" style="width: 30%;">
+      <input type="text" id="message" placeholder="כתוב הודעה..." style="flex:1">
+      <button onclick="sendMessage()">שלח</button>
+    </div>
+    <button onclick="sendEmail()" style="margin: 0.5rem;">📩 שלח סיכום למייל</button>
+  </div>
+  <script>
+    async function sendMessage() {
+      const message = document.getElementById('message').value;
+      const email = document.getElementById('email').value;
+      if (!message) return;
+      appendMessage(message, 'user-msg');
+      document.getElementById('message').value = '';
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, userEmail: email })
+      });
+      const data = await res.json();
+      appendMessage(data.reply, 'bot-msg');
+    }
+    function appendMessage(msg, cls) {
+      const chat = document.getElementById('chat');
+      const div = document.createElement('div');
+      div.className = 'bubble ' + cls;
+      div.innerText = msg;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+    async function sendEmail() {
+      const email = document.getElementById('email').value;
+      if (!email) return alert("אנא הזן כתובת מייל תחילה");
+      const res = await fetch('/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: email })
+      });
+      const text = await res.text();
+      alert(text);
+    }
+  </script>
+</body>
+</html>
