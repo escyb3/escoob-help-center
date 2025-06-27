@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ניהול שיחות - Escoob</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f7fa; margin: 0; color: #333; }
+    header { background: #004b91; color: white; padding: 1rem; text-align: center; }
+    main { padding: 2rem; max-width: 960px; margin: auto; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-top: 1rem; }
+    th, td { padding: 0.9rem; border-bottom: 1px solid #eee; text-align: right; }
+    th { background: #e7f0fa; }
+    tr:hover { background-color: #f1f1f1; }
+    .loading { text-align: center; font-size: 1.2rem; margin-top: 2rem; color: #555; }
+    footer { text-align: center; padding: 1rem; font-size: 0.9rem; color: #888; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📊 דשבורד ניהול שיחות</h1>
+  </header>
+  <main>
+    <p class="loading" id="status">🔄 טוען נתונים מהשרת...</p>
+    <table id="table" style="display:none;">
+      <thead>
+        <tr>
+          <th>זמן</th>
+          <th>אימייל</th>
+          <th>תפקיד</th>
+          <th>תוכן</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+      </tbody>
+    </table>
+  </main>
+  <footer>
+    &copy; 2025 Escoob Help Center
+  </footer>
+  <script>
+    async function fetchMessages() {
+      const status = document.getElementById("status");
+      const table = document.getElementById("table");
+      const tbody = document.getElementById("tbody");
+
+      try {
+        const res = await fetch("/admin/messages");
+        const data = await res.json();
+
+        if (!Array.isArray(data)) throw new Error("התגובה מהשרת לא תקינה");
+
+        status.style.display = "none";
+        table.style.display = "table";
+
+        data.forEach(row => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${new Date(row.timestamp).toLocaleString('he-IL')}</td>
+            <td>${row.email}</td>
+            <td>${row.role === 'user' ? 'משתמש' : 'בוט'}</td>
+            <td>${row.content}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        status.textContent = "❌ שגיאה בטעינת הנתונים";
+        console.error(err);
+      }
+    }
+
+    fetchMessages();
+  </script>
+</body>
+</html>
