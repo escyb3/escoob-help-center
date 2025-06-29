@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>הדשבורד שלי - Escoob</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f7fa; margin: 0; color: #333; }
+    header { background: #004b91; color: white; padding: 1rem; text-align: center; }
+    h2 { margin-top: 1rem; }
+    main { max-width: 960px; margin: 2rem auto; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 0 8px #ccc; }
+    .info { margin-bottom: 1rem; font-size: 1.1rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.8rem; border-bottom: 1px solid #ddd; text-align: right; }
+    th { background: #eaf0f7; }
+    tr:hover { background-color: #f1f1f1; }
+    .actions { margin-top: 1.5rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    button { padding: 0.6rem 1.2rem; background: #004b91; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    footer { text-align: center; padding: 1rem; font-size: 0.85rem; color: #888; margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎛️ הדשבורד האישי שלך</h1>
+    <p id="welcome">שלום משתמש...</p>
+  </header>
+
+  <main>
+    <div class="info" id="userinfo">טוען פרטי משתמש...</div>
+    <h2>📜 היסטוריית השיחות שלך</h2>
+    <table id="table" style="display:none;">
+      <thead>
+        <tr><th>זמן</th><th>תוכן</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <p id="status">🔄 טוען נתונים...</p>
+
+    <div class="actions">
+      <button onclick="sendSummary()">📤 שלח סיכום למייל</button>
+      <button onclick="logout()">🚪 התנתק</button>
+    </div>
+  </main>
+
+  <footer>&copy; 2025 Escoob Help Center</footer>
+
+  <script>
+    async function fetchUserData() {
+      try {
+        const res = await fetch("/me");
+        const data = await res.json();
+        document.getElementById("userinfo").textContent = `שם: ${data.name} | אימייל: ${data.email}`;
+        document.getElementById("welcome").textContent = `שלום ${data.name} 👋`;
+      } catch {
+        location.href = "/login.html";
+      }
+    }
+
+    async function fetchMessages() {
+      try {
+        const res = await fetch("/user/messages");
+        const data = await res.json();
+        const table = document.getElementById("table");
+        const tbody = document.getElementById("tbody");
+        document.getElementById("status").style.display = "none";
+        table.style.display = "table";
+        data.forEach(msg => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${new Date(msg.timestamp).toLocaleString('he-IL')}</td><td>${msg.content}</td>`;
+          tbody.appendChild(tr);
+        });
+      } catch {
+        document.getElementById("status").textContent = "❌ שגיאה בטעינת ההודעות";
+      }
+    }
+
+    async function sendSummary() {
+      const res = await fetch("/user/send-summary", { method: "POST" });
+      alert(res.ok ? "הסיכום נשלח למייל 🎉" : "שליחת הסיכום נכשלה");
+    }
+
+    function logout() {
+      document.cookie = "user=; max-age=0";
+      location.href = "/login.html";
+    }
+
+    fetchUserData();
+    fetchMessages();
+  </script>
+</body>
+</html>
