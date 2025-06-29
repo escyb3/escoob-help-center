@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>התחברות - Escoob</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+
+<nav>
+  <div class="logo font-bold text-white text-lg">Escoob</div>
+  <div class="links">
+    <a href="/index.html">בית</a>
+    <a href="/articles.html">מאמרים</a>
+    <a href="/chat.html">צ'אט</a>
+    <a href="/support.html">תמיכה</a>
+    <a href="/contact_send_mail.html">צור קשר</a>
+    <a href="/login.html">התחברות</a>
+  </div>
+</nav>
+ class="bg-gray-100 flex items-center justify-center h-screen">
+  <form class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm space-y-4" id="loginForm">
+    <h2 class="text-center text-2xl font-bold text-blue-800">התחברות</h2>
+    <input name="email" type="email" placeholder="אימייל" required class="w-full p-2 border rounded" />
+    <input name="password" type="password" placeholder="סיסמה" required class="w-full p-2 border rounded" />
+    <button class="w-full bg-blue-700 hover:bg-blue-800 text-white py-2 rounded">התחבר</button>
+    <p class="text-sm text-center mt-4">
+      <a href="/reset_password.html" class="text-blue-700 hover:underline">שכחת סיסמה?</a>
+    </p>
+  </form>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        email: form.email.value,
+        password: form.password.value,
+      };
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const text = await res.text();
+      alert(text);
+      if (res.ok) location.href = '/';
+    });
+  </script>
+</body>
+</html>
