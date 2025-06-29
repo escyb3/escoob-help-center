@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>מרכז העזרה של Escoob</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/lucide-static@latest/font/lucide.css" rel="stylesheet" />
+    <style>
+      body { font-family: 'Segoe UI', sans-serif; }
+    </style>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- סרגל עליון -->
+    <header class="bg-blue-800 text-white shadow">
+      <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-4 rtl:space-x-reverse">
+          <img src="https://lh3.googleusercontent.com/a/ACg8ocK0Jg4vx7RJyDTWd36HpJxNsEIxVCz7E_n1cKW8vSxPzFkalno=s288-c-no" alt="Logo" class="w-10 h-10 rounded-full" />
+          <span class="text-xl font-semibold">Escoob</span>
+        </div>
+        <span class="text-sm text-gray-100 hidden sm:block">ברוך הבא למרכז העזרה של Escoob</span>
+      </div>
+    </header>
+
+    <!-- תוכן ראשי -->
+    <main class="flex-grow container mx-auto px-4 py-10 text-center">
+      <h1 class="text-2xl sm:text-3xl font-bold mb-3 text-gray-800">כיצד נוכל לעזור לך?</h1>
+
+      <div class="max-w-xl mx-auto mb-8">
+        <input type="text" placeholder="חפש שאלה, נושא או מדריך..." class="w-full rounded-xl p-3 border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      </div>
+
+      <!-- כפתורים -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 justify-center text-sm max-w-3xl mx-auto">
+        <a href="support.html" class="bg-white shadow rounded-xl py-4 px-2 hover:bg-blue-50 transition">
+          <i class="lucide lucide-wrench text-blue-600 text-2xl mb-2"></i><br>תמיכה טכנית
+        </a>
+        <a href="articles.html" class="bg-white shadow rounded-xl py-4 px-2 hover:bg-blue-50 transition">
+          <i class="lucide lucide-book-open-text text-blue-600 text-2xl mb-2"></i><br>מאמרי עזרה
+        </a>
+        <a href="contact_send_mail.html" class="bg-white shadow rounded-xl py-4 px-2 hover:bg-blue-50 transition">
+          <i class="lucide lucide-mail text-blue-600 text-2xl mb-2"></i><br>צור קשר
+        </a>
+        <a href="chat.html" class="bg-white shadow rounded-xl py-4 px-2 hover:bg-blue-50 transition">
+          <i class="lucide lucide-message-square-text text-blue-600 text-2xl mb-2"></i><br>התחבר לצ'אט
+        </a>
+      </div>
+
+      <!-- תיאור -->
+      <div class="mt-6 text-gray-500 text-sm">
+        הצ'אט תומך בשפות שונות, לפי שפת ההקלדה שלך — פשוט כתוב, והמענה יופיע בשפה שלך 🗣️
+      </div>
+    </main>
+
+    <!-- תחתית -->
+    <footer class="bg-blue-800 text-white text-sm py-4 text-center">
+      © Escoob Help Center 2025
+    </footer>
+
+  </body>
+</html>
