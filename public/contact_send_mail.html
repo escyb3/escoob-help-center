@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>צור קשר - Escoob</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="max-w-xl mx-auto mt-20 bg-white p-6 rounded-lg shadow space-y-4">
+    <h2 class="text-xl font-semibold text-blue-800">צור קשר</h2>
+    <form id="contactForm" class="space-y-4">
+      <input name="email" type="email" placeholder="האימייל שלך" required class="w-full border p-2 rounded" />
+      <textarea name="message" placeholder="ההודעה שלך" required class="w-full border p-2 rounded"></textarea>
+      <button class="bg-blue-700 text-white py-2 px-4 rounded hover:bg-blue-800">שלח</button>
+    </form>
+    <div id="contactResult" class="text-sm text-green-700"></div>
+  </div>
+
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = e.target.email.value;
+      const message = e.target.message.value;
+      const res = await fetch('/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: email, transcript: message })
+      });
+      const text = await res.text();
+      document.getElementById('contactResult').textContent = text;
+    });
+  </script>
+</body>
+</html>
