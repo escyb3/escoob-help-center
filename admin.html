@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ניהול מערכת - Escoob</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; }
+    td, th { padding: 8px; }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <!-- סרגל עליון -->
+  <header class="bg-blue-800 text-white py-4 shadow">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <div class="flex items-center space-x-4 rtl:space-x-reverse">
+        <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
+        <h1 class="text-xl font-bold">ניהול מערכת - Escoob</h1>
+      </div>
+      <a href="/index.html" class="text-sm underline hover:text-blue-200">חזרה לאתר</a>
+    </div>
+  </header>
+
+  <!-- תוכן -->
+  <main class="container mx-auto px-4 py-6 space-y-10">
+
+    <!-- סטטיסטיקות -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+      <div class="bg-white shadow rounded-xl p-4">
+        <div class="text-gray-500 text-sm">סה"כ משתמשים</div>
+        <div id="total-users" class="text-2xl font-bold">--</div>
+      </div>
+      <div class="bg-white shadow rounded-xl p-4">
+        <div class="text-gray-500 text-sm">סה"כ שיחות</div>
+        <div id="total-messages" class="text-2xl font-bold">--</div>
+      </div>
+      <div class="bg-white shadow rounded-xl p-4 col-span-2 sm:col-span-1">
+        <input type="text" id="searchInput" placeholder="חפש משתמש..." class="w-full rounded-lg p-2 border border-gray-300 focus:ring-2 focus:ring-blue-400" />
+      </div>
+    </section>
+
+    <!-- טבלת משתמשים -->
+    <section>
+      <h2 class="text-xl font-semibold mb-2">רשימת משתמשים</h2>
+      <div class="overflow-auto bg-white rounded-xl shadow">
+        <table class="min-w-full text-sm">
+          <thead class="bg-blue-50 font-bold text-gray-700">
+            <tr>
+              <th>שם</th>
+              <th>אימייל</th>
+              <th>תפקיד</th>
+              <th>שיחות</th>
+              <th>מחיקה</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- תצוגת שיחות -->
+    <section class="hidden" id="chatSection">
+      <h2 class="text-xl font-semibold mb-2">שיחות של <span id="chatUser"></span></h2>
+      <div class="bg-white rounded-xl shadow p-4 space-y-2 max-h-96 overflow-y-auto" id="chatMessages"></div>
+      <button onclick="closeChat()" class="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">סגור</button>
+    </section>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+    let users = [];
+
+    function loadUsers() {
+      fetch('/admin/users').then(res => res.json()).then(data => {
+        users = data;
+        updateTable(data);
+        document.getElementById("total-users").textContent = data.length;
+      });
+      fetch('/admin/messages-count').then(res => res.json()).then(stat => {
+        document.getElementById("total-messages").textContent = stat.total;
+      });
+    }
+
+    function updateTable(list) {
+      const tbody = document.getElementById("userTableBody");
+      tbody.innerHTML = "";
+      list.forEach(user => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>${user.role}</td>
+          <td><button onclick="viewChats('${user.email}', '${user.name}')" class="text-blue-600 underline text-xs">הצג</button></td>
+          <td><button onclick="deleteUser('${user.email}')" class="text-red-600 underline text-xs">מחק</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function viewChats(email, name) {
+      fetch('/admin/messages/' + encodeURIComponent(email))
+        .then(res => res.json())
+        .then(messages => {
+          const div = document.getElementById("chatMessages");
+          div.innerHTML = "";
+          messages.forEach(msg => {
+            const el = document.createElement("div");
+            el.className = "border-b pb-1 text-sm";
+            el.textContent = msg.content;
+            div.appendChild(el);
+          });
+          document.getElementById("chatUser").textContent = name;
+          document.getElementById("chatSection").classList.remove("hidden");
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        });
+    }
+
+    function closeChat() {
+      document.getElementById("chatSection").classList.add("hidden");
+    }
+
+    function deleteUser(email) {
+      if (!confirm("האם למחוק את המשתמש?")) return;
+      fetch('/admin/delete-user/' + encodeURIComponent(email), { method: 'DELETE' })
+        .then(res => res.ok ? loadUsers() : alert("שגיאה במחיקה"));
+    }
+
+    document.getElementById("searchInput").addEventListener("input", e => {
+      const value = e.target.value.toLowerCase();
+      const filtered = users.filter(u => u.name.toLowerCase().includes(value) || u.email.toLowerCase().includes(value));
+      updateTable(filtered);
+    });
+
+    loadUsers();
+  </script>
+</body>
+</html>
