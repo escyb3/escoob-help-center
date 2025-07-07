@@ -1,149 +1,186 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>מרכז העזרה של Escoob</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; background: #f3f4f6; margin: 0; }
-    header, footer { background: #1e40af; color: white; padding: 1em; text-align: center; }
-    .container { max-width: 960px; margin: auto; padding: 2em; }
-    h1, h2 { color: #1e3a8a; }
-    nav ul { list-style: none; padding: 0; display: flex; gap: 1em; justify-content: center; }
-    nav a { color: white; text-decoration: none; font-weight: bold; }
-    .cards { display: flex; flex-wrap: wrap; gap: 1em; justify-content: center; margin-top: 2em; }
-    .card { background: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 280px; text-align: center; padding: 1em; }
-    .card img { width: 100%; height: 160px; object-fit: cover; border-radius: 6px; }
-    .card h3 { margin: 1em 0 0.5em; }
-    .card a.btn { display: inline-block; margin-top: 0.5em; background: #1e40af; color: white; padding: 0.5em 1em; border-radius: 4px; text-decoration: none; }
-    .menu-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 1em; margin-top: 2em; }
-    .menu-buttons a { padding: 1em 1.5em; background: white; border-radius: 10px; text-decoration: none; color: #111827; box-shadow: 0 0 5px rgba(0,0,0,0.1); font-weight: bold; }
-    .note { text-align: center; margin-top: 1em; font-size: 0.9em; color: #555; }
-    #chat-box { background: white; padding: 1em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 2em; }
-    #chat-log { max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; background: #f9fafb; }
-    #chat-log div { margin-bottom: 0.5em; }
-    #chat-log .user { font-weight: bold; color: #1e3a8a; }
-    #chat-log .bot { color: #333; }
-    #contact-form { background: white; padding: 1em; margin-top: 2em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    label { display: block; margin-top: 1em; font-weight: bold; }
-    input, textarea { width: 100%; padding: 0.5em; margin-top: 0.3em; border-radius: 4px; border: 1px solid #ccc; }
-    button { margin-top: 1em; padding: 0.7em 1.5em; background: #1e40af; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+    body {
+      font-family: 'Varela Round', sans-serif;
+      margin: 0;
+      background-color: #f4f6fa;
+      color: #222;
+    }
+    header {
+      background-color: #133fa1;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 1.4rem;
+      margin: 0;
+    }
+    nav a {
+      color: white;
+      margin-left: 1.5rem;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    main {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .search-bar {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .search-bar input {
+      width: 100%;
+      max-width: 500px;
+      padding: 0.8rem 1rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.2rem;
+    }
+    .buttons button {
+      background-color: #133fa1;
+      color: white;
+      border: none;
+      padding: 0.8rem 1.2rem;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .buttons button:hover {
+      background-color: #0f2e77;
+    }
+    .language-note {
+      text-align: center;
+      margin-top: 0.6rem;
+      color: #555;
+      font-size: 0.9rem;
+    }
+    .services {
+      margin-top: 3rem;
+    }
+    .services h2 {
+      text-align: center;
+      color: #133fa1;
+      margin-bottom: 1.5rem;
+    }
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 280px;
+      overflow: hidden;
+      text-align: center;
+    }
+    .card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+    .card h3 {
+      margin: 1rem 0 0.5rem;
+      color: #133fa1;
+      font-size: 1.1rem;
+    }
+    .card a {
+      display: inline-block;
+      margin: 0 0 1rem;
+      background-color: #133fa1;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    .card a:hover {
+      background-color: #0f2e77;
+    }
+    footer {
+      background-color: #133fa1;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      margin-top: 3rem;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>ברוך הבא למרכז העזרה של Escoob</h1>
-  </header>
 
+<header>
+  <h1>ברוך הבא למרכז העזרה של Escoob</h1>
   <nav>
-    <ul>
-      <li><a href="#support">תמיכה טכנית</a></li>
-      <li><a href="#articles">מאמרי עזרה</a></li>
-      <li><a href="#contact">צור קשר</a></li>
-      <li><a href="#chat">התחבר לצ'אט</a></li>
-      <li><a href="#services">שירותי Escoob</a></li>
-    </ul>
+    <a href="support.html">תמיכה טכנית</a>
+    <a href="articles.html">מאמרי עזרה</a>
+    <a href="contact_send_mail.html">צור קשר</a>
+    <a href="chat.html">התחבר לצ'אט</a>
   </nav>
+</header>
 
-  <div class="container">
+<main>
+  <section class="search-bar">
     <h2>כיצד נוכל לעזור לך?</h2>
-    <input type="text" placeholder="חפש שאלה, נושא או מדריך..." style="width:100%; padding:0.8em; border-radius:8px; border:1px solid #ccc;">
-
-    <div class="menu-buttons">
-      <a href="#chat">התחבר לצ'אט</a>
-      <a href="#contact">צור קשר</a>
-      <a href="#articles">מאמרי עזרה</a>
-      <a href="#support">תמיכה טכנית</a>
+    <input type="text" placeholder="חפש שאלה, נושא או מדריך..." />
+    <div class="buttons">
+      <button onclick="location.href='chat.html'">התחבר לצ'אט</button>
+      <button onclick="location.href='contact_send_mail.html'">צור קשר</button>
+      <button onclick="location.href='articles.html'">מאמרי עזרה</button>
+      <button onclick="location.href='support.html'">תמיכה טכנית</button>
     </div>
+    <div class="language-note">🗣️ הצ'אט תומך בשפות שונות — פשוט כתוב, והמענה יופיע בשפה שלך</div>
+  </section>
 
-    <p class="note">הצ׳אט תומך בשפות שונות, לפי שפת ההקלדה שלך — פשוט כתוב, והמענה יופיע בשפה שלך 🗣️</p>
-
-    <section id="services">
-      <h2>שירותים נוספים של Escoob</h2>
-      <div class="cards">
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=600&q=80" alt="מסעדת הטעמים">
-          <h3>מסעדת הטעמים / החומוסלט</h3>
-          <a class="btn" href="https://6683e3ca023a4.site123.me/" target="_blank">לכניסה</a>
-        </div>
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="תיאטרון כוית ומופסון">
-          <h3>תיאטרון כוית ומופסון</h3>
-          <a class="btn" href="#">לכניסה</a>
-        </div>
-        <div class="card">
-          <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80" alt="גישה לקומיקסים וסרטים">
-          <h3>גישה לקומיקסים וסרטים</h3>
-          <a class="btn" href="#">לכניסה</a>
-        </div>
+  <section class="services">
+    <h2>שירותים נוספים של Escoob</h2>
+    <div class="cards">
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=600&q=80" alt="מסעדה">
+        <h3>מסעדת הטעמים / החומוסלט</h3>
+        <a href="restaurant.html">לכניסה</a>
       </div>
-    </section>
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="תיאטרון">
+        <h3>תיאטרון כוית ומופסון</h3>
+        <a href="theater.html">לכניסה</a>
+      </div>
+      <div class="card">
+        <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80" alt="קומיקס">
+        <h3>גישה לקומיקסים וסרטים</h3>
+        <a href="comics.html">לכניסה</a>
+      </div>
+    </div>
+  </section>
+</main>
 
-    <section id="chat-box">
-      <h2>צ׳אט עם בינה מלאכותית (Ollama)</h2>
-      <div id="chat-log"></div>
-      <form id="chat-form">
-        <input type="text" id="user-input" placeholder="הקלד הודעה...">
-        <button type="submit">שלח</button>
-      </form>
-    </section>
+<footer>
+  © Escoob Help Center 2025 | כל הזכויות שמורות
+</footer>
 
-    <section id="contact-form">
-      <h2>צור קשר</h2>
-      <form id="contactForm">
-        <label for="name">שם מלא</label>
-        <input type="text" id="name" name="name" required>
-        <label for="email">דוא"ל</label>
-        <input type="email" id="email" name="email" required>
-        <label for="message">הודעה</label>
-        <textarea id="message" name="message" rows="5" required></textarea>
-        <button type="submit">שלח</button>
-      </form>
-    </section>
-  </div>
-
-  <footer>
-    Escoob Help Center 2025 ©
-  </footer>
-
-  <script>
-    document.getElementById('chat-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const input = document.getElementById('user-input');
-      const msg = input.value;
-      const log = document.getElementById('chat-log');
-
-      log.innerHTML += `<div><span class="user">אתה:</span> ${msg}</div>`;
-      input.value = '';
-
-      const res = await fetch('/ollama', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg })
-      });
-      const data = await res.json();
-
-      log.innerHTML += `<div><span class="bot">בוט:</span> ${data.reply}</div>`;
-      log.scrollTop = log.scrollHeight;
-    });
-
-    document.getElementById('contactForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      const message = document.getElementById('message').value;
-
-      const res = await fetch('/submit-contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message })
-      });
-
-      const data = await res.json();
-      if (res.ok) alert('✅ תודה! הפנייה נשלחה בהצלחה');
-      else alert('שגיאה: ' + data.error);
-    });
-  </script>
 </body>
 </html>
