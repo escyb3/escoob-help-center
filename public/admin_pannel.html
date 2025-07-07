@@ -1,35 +1,60 @@
-<!-- admin-panel.html -->
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <title>ניהול מנהלים - Escoob</title>
+  <meta charset="UTF-8" />
+  <title>ממשק ניהול - Escoob</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #fffbea;
-      padding: 2rem;
-      direction: rtl;
+    body { font-family: Arial, sans-serif; background: #f0f2f5; margin: 0; color: #333; }
+    header { background: #003f7d; color: white; padding: 1rem; text-align: center; }
+    main { max-width: 1200px; margin: 2rem auto; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 0 8px #ccc; }
+    h2 { border-bottom: 2px solid #eee; padding-bottom: 0.5rem; }
+    input[type="search"] {
+      width: 100%;
+      padding: 0.6rem;
+      margin: 1rem 0;
+      font-size: 1rem;
+      border: 1.5px solid #aaa;
+      border-radius: 5px;
     }
-    h1 {
-      color: #aa0000;
-    }
-    .panel-box {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      max-width: 800px;
-      margin: auto;
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+    th, td { padding: 0.6rem; border: 1px solid #ddd; text-align: right; }
+    th { background: #eaf0f7; }
+    tr:hover { background: #f9f9f9; }
+    button {
+      padding: 0.6rem 1.2rem;
+      background: #0055aa;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 1rem;
     }
   </style>
 </head>
 <body>
-  <div class="panel-box">
-    <h1>איזור מנהלים 🔒</h1>
-    <p>כאן ניתן לצפות בפניות, לנהל משתמשים, או לשנות תכנים.</p>
-    <p><a href="/logout">התנתק</a></p>
-  </div>
+  <header>
+    <h1>🎛️ לוח ניהול - Escoob</h1>
+  </header>
+  <main>
+    <h2>🔍 חיפוש</h2>
+    <input type="search" id="searchBox" placeholder="חפש לפי שם, מייל או תוכן שיחה..." />
+
+    <h2>👥 משתמשים</h2>
+    <table id="usersTable">
+      <thead><tr><th>שם</th><th>אימייל</th><th>תפקיד</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>💬 שיחות</h2>
+    <table id="messagesTable">
+      <thead><tr><th>אימייל</th><th>תוכן</th><th>תאריך</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <button onclick="sendSummaryToAdmins()">📤 שלח סיכום שבועי</button>
+  </main>
+
+  <script src="admin.js"></script>
 </body>
 </html>
