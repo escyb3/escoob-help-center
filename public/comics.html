@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Escoob – קומיקסים וסרטים</title>
+  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Varela Round', sans-serif; margin:0; background:#f4f4f9; color:#333; }
+    header { background:#d9236f; color:white; padding:1rem 2rem; display:flex; justify-content:space-between; align-items:center; }
+    header h1 { margin:0; font-size:1.5rem; }
+    nav a { color:white; text-decoration:none; margin-left:1rem; font-weight:600; }
+    nav a:hover { text-decoration:underline; }
+
+    .hero { background:url('https://images.unsplash.com/photo-1585829365295-009c4632f859?auto=format&fit=crop&w=1350&q=80') center/cover no-repeat; height:45vh; display:flex; align-items:center; justify-content:center; color:white; text-shadow:0 0 5px black; }
+    .hero h2 { font-size:2.5rem; background:rgba(0,0,0,0.4); padding:1rem 2rem; border-radius:10px; }
+
+    main { max-width:1000px; margin:2rem auto; padding:0 1rem; }
+
+    .section { margin-bottom:3rem; }
+    .section h2 { color:#d9236f; margin-bottom:1rem; text-align:center; }
+
+    .benefits { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
+    .benefit { background:white; padding:1rem; border-radius:10px; width:260px; box-shadow:0 0 10px rgba(0,0,0,0.1); text-align:center; }
+    .benefit h3 { color:#d9236f; margin-bottom:0.5rem; }
+    
+    .gallery { display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; }
+    .gallery img { width:280px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+
+    .contact { background:white; padding:1.5rem; border-radius:10px; box-shadow:0 0 8px rgba(0,0,0,0.1); max-width:600px; margin:auto; }
+    .contact label { display:block; margin-top:1rem; font-weight:bold; }
+    .contact input, .contact textarea { width:100%; padding:0.6rem; margin-top:0.4rem; border:1px solid #ccc; border-radius:5px; }
+    .contact button { margin-top:1.2rem; background:#d9236f; color:white; padding:0.7rem 1.2rem; border:none; border-radius:6px; cursor:pointer; }
+
+    footer { text-align:center; padding:1rem; background:#eaeaea; font-size:0.9rem; color:#555; margin-top:3rem; }
+    @media(max-width:600px) { .benefit, .gallery img { width:100%; } header { flex-direction:column; gap:1rem; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Escoob – קומיקסים וסרטים</h1>
+  <nav>
+    <a href="comics.html">בית</a>
+    <a href="#benefits">מה כלול</a>
+    <a href="#gallery">גלריה</a>
+    <a href="#contact">צור קשר</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <h2>העולם שלך – בצבע ובתנועה 🎬📚</h2>
+</section>
+
+<main>
+  <section class="section" id="benefits">
+    <h2>מה אנחנו מציעים?</h2>
+    <div class="benefits">
+      <div class="benefit">
+        <h3>📖 גישה חופשית</h3>
+        <p>מאות קומיקסים וסרטים – בכל סגנון ולכל גיל, זמינים לצפייה 24/7.</p>
+      </div>
+      <div class="benefit">
+        <h3>💸 הנחות קבועות</h3>
+        <p>מבצעים חודשיים, הנחות מיוחדות למנויים ותוכן בלעדי בחינם.</p>
+      </div>
+      <div class="benefit">
+        <h3>🧒 לכל המשפחה</h3>
+        <p>מתאים לילדים, נוער ומבוגרים – עם סינון גילאים ואיכות גבוהה.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="gallery">
+    <h2>גלריה</h2>
+    <div class="gallery">
+      <img src="https://images.unsplash.com/photo-1611605698335-cd82c51e2f77?auto=format&fit=crop&w=600&q=80" alt="קומיקס">
+      <img src="https://images.unsplash.com/photo-1611988617722-6f4a1a165fb3?auto=format&fit=crop&w=600&q=80" alt="סרט">
+      <img src="https://images.unsplash.com/photo-1603574670812-d24560880210?auto=format&fit=crop&w=600&q=80" alt="צפייה">
+    </div>
+  </section>
+
+  <section class="section contact" id="contact">
+    <h2>מעוניין בגישה?</h2>
+    <form action="/submit-contact" method="POST">
+      <label for="name">שם מלא:</label>
+      <input type="text" id="name" name="name" required>
+      <label for="email">אימייל:</label>
+      <input type="email" id="email" name="email" required>
+      <label for="message">הודעה / בקשה:</label>
+      <textarea id="message" name="message" rows="5" required></textarea>
+      <button type="submit">שלח</button>
+    </form>
+  </section>
+</main>
+
+<footer>
+  © 2025 Escoob – גישה חכמה לעולם התוכן שלך
+</footer>
+
+</body>
+</html>
