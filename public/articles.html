@@ -1,38 +1,79 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
+<<!DOCTYPE html>
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
-  <title>מאמרי עזרה - Escoob</title>
+  <title>📚 Help Articles - Escoob Help Center</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #searchInput {
+      display: block;
+      width: 90%;
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .article {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin: 10px auto;
+      max-width: 700px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .article h2 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
+  <h1>📖 Help Articles</h1>
+  <input type="text" id="searchInput" placeholder="Search articles... 🔍" />
 
-<nav>
-  <div class="logo font-bold text-white text-lg">Escoob</div>
-  <div class="links">
-    <a href="/index.html">בית</a>
-    <a href="/articles.html">מאמרים</a>
-    <a href="/chat.html">צ'אט</a>
-    <a href="/support.html">תמיכה</a>
-    <a href="/contact_send_mail.html">צור קשר</a>
-    <a href="/login.html">התחברות</a>
+  <div class="article">
+    <h2>How do I reset my password?</h2>
+    <p>Click on “Forgot Password” on the login page, enter your email, and follow the instructions sent to you.</p>
   </div>
-</nav>
- class="bg-gray-50">
-  <div class="max-w-4xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-4 text-blue-800">מאמרי עזרה</h1>
-    <input type="text" placeholder="חפש מאמר..." class="w-full p-2 border rounded mb-4" />
-    <div class="space-y-4">
-      <div class="bg-white p-4 rounded shadow">
-        <h2 class="text-xl font-semibold">איך לאפס סיסמה?</h2>
-        <p class="text-gray-700">ניתן לבצע זאת דרך <a href="/reset_password.html" class="text-blue-600 underline">שחזור סיסמה</a></p>
-      </div>
-      <div class="bg-white p-4 rounded shadow">
-        <h2 class="text-xl font-semibold">איך לשלוח בקשת תמיכה?</h2>
-        <p class="text-gray-700">כנסו ל<a href="/contact_send_mail.html" class="text-blue-600 underline">טופס צור קשר</a>.</p>
-      </div>
-    </div>
+  <div class="article">
+    <h2>How to contact technical support?</h2>
+    <p>You can use the “📨 Contact Us” or “🛠️ Support” buttons on the home page. Fill in your issue and we’ll get back to you.</p>
   </div>
+  <div class="article">
+    <h2>Can I use the chat in multiple languages?</h2>
+    <p>Yes! The Escoob AI Chat understands and responds in many languages automatically.</p>
+  </div>
+  <div class="article">
+    <h2>How to update my email address?</h2>
+    <p>Log in, go to your profile settings, and update your email from there.</p>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const articles = document.querySelectorAll('.article');
+
+    searchInput.addEventListener('input', function() {
+      const term = this.value.toLowerCase();
+      articles.forEach(article => {
+        const text = article.textContent.toLowerCase();
+        article.classList.toggle('hidden', !text.includes(term));
+      });
+    });
+  </script>
 </body>
 </html>
