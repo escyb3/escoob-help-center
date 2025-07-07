@@ -58,6 +58,46 @@
     <footer class="bg-blue-800 text-white text-sm py-4 text-center">
       © Escoob Help Center 2025
     </footer>
+<hr>
+<h3>📩 שלח סיכום שיחה למייל</h3>
+<input type="email" id="userEmail" placeholder="הכנס את כתובת המייל שלך" />
+<button onclick="sendSummary()">סיים שיחה ושלח מייל</button>
 
+<script>
+  async function sendSummary() {
+    const userEmail = document.getElementById('userEmail').value;
+
+    // דוגמת שיחה לדוגמה – אתה יכול לשלב שיחה אמיתית
+    const conversation = [
+      { user: 'משתמש', text: 'שלום' },
+      { user: 'בוט', text: 'שלום! איך אפשר לעזור?' },
+      { user: 'משתמש', text: 'אני צריך עזרה' },
+      { user: 'בוט', text: 'בשמחה! תאר לי את הבעיה.' }
+    ];
+
+    if (!userEmail) {
+      alert('אנא הכנס כתובת מייל תקינה');
+      return;
+    }
+
+    try {
+      const res = await fetch('/end-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail, conversation })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('✅ סיכום השיחה נשלח למייל!');
+      } else {
+        alert('❌ שגיאה בשליחת מייל: ' + data.error);
+      }
+    } catch (err) {
+      alert('שגיאה בשליחה: ' + err.message);
+    }
+  }
+</script>
   </body>
 </html>
