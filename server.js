@@ -168,8 +168,6 @@ function parseUser(req) {
 }
 
 app.listen(port, () => {
-  console.log(`✅ Help Center server running on port ${port}`);
-});
-
+app.listen(port, () => {
   console.log(`✅ Help Center server running on port ${port}`);
 });
