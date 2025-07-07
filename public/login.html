@@ -1,70 +1,41 @@
-<!-- login.html -->
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <title>התחברות - Escoob</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f7f9fc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      direction: rtl;
-    }
-    .login-box {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-    h2 {
-      color: #0055aa;
-      text-align: center;
-    }
-    label {
-      font-weight: bold;
-      color: #0055aa;
-    }
-    input {
-      width: 100%;
-      padding: 0.6rem;
-      margin: 0.5rem 0 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      background-color: #0055aa;
-      color: white;
-      border: none;
-      padding: 0.8rem;
-      width: 100%;
-      font-size: 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #003f7d;
-    }
+    body { font-family: Arial, sans-serif; background: #f5f7fa; margin: 0; color: #333; }
+    main { max-width: 400px; margin: 4rem auto; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+    h1 { text-align: center; color: #004b91; }
+    label { display: block; margin-top: 1rem; font-weight: bold; }
+    input { width: 100%; padding: 0.6rem; margin-top: 0.4rem; border: 1px solid #aaa; border-radius: 4px; }
+    button { width: 100%; padding: 0.8rem; margin-top: 1.5rem; background: #004b91; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; }
+    button:hover { background: #003366; }
+    .divider { text-align: center; margin: 1.5rem 0; font-size: 0.9rem; color: #888; }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <h2>התחברות</h2>
+  <main>
+    <h1>התחברות 🔐</h1>
+
     <form action="/login" method="POST">
-      <label for="email">אימייל</label>
-      <input type="email" id="email" name="email" required />
+      <label for="email">אימייל:</label>
+      <input type="email" name="email" required />
 
-      <label for="password">סיסמה</label>
-      <input type="password" id="password" name="password" required />
+      <label for="password">סיסמה:</label>
+      <input type="password" name="password" required />
 
-      <button type="submit">התחבר</button>
+      <button type="submit">התחברות עם סיסמה</button>
     </form>
-  </div>
+
+    <div class="divider">או</div>
+
+    <form action="/login-otp" method="POST">
+      <label for="otp-email">התחברות עם קוד אימות למייל:</label>
+      <input type="email" name="email" required />
+      <button type="submit">קבל קוד חד פעמי</button>
+    </form>
+  </main>
 </body>
 </html>
