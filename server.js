@@ -172,4 +172,3 @@ app.listen(port, () => {
 });
 
   console.log(`✅ Help Center server running on port ${port}`);
-});
