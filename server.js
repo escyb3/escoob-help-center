@@ -1,14 +1,11 @@
-// server.js
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
-const fs = require('fs');
-const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser');
-const path = require('path');
-require('dotenv').config();
-
+const bcrypt = require('bcrypt');
+const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 10000;
 
@@ -17,116 +14,162 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(express.static('public'));
 
-const usersFile = './users.json';
-const messagesFile = './messages.json';
+let users = []; // טען ממשק נתונים אמיתי בעתיד
+let messages = [];
 
-// ====== תצורת מייל ======
+// שליחת מיילים
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'escoob30@gmail.com',
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// ====== פונקציית שליחת סיכום ======
-async function sendSummaryEmail(userEmail, conversation) {
-  const htmlContent = `
-    <h2>📄 סיכום שיחה מהאתר</h2>
-    ${conversation.map(m => `<p><strong>${m.role}:</strong> ${m.content}</p>`).join('')}
-  `;
-  const mailOptions = {
-    from: '"Help Center" <escoob30@gmail.com>',
-    to: ['escoob30@gmail.com', 'help-center@gmx.com', userEmail],
-    subject: '📨 סיכום שיחה ממרכז העזרה',
-    html: htmlContent,
-  };
-  await transporter.sendMail(mailOptions);
-}
-
-// ====== עזר: שמירת שיחות ======
-function saveMessage(email, content) {
-  let allMessages = [];
-  if (fs.existsSync(messagesFile)) {
-    allMessages = JSON.parse(fs.readFileSync(messagesFile));
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
-  allMessages.push({ email, content, timestamp: Date.now() });
-  fs.writeFileSync(messagesFile, JSON.stringify(allMessages, null, 2));
-}
-
-// ====== רישום משתמש ======
-app.post('/signup', async (req, res) => {
-  const { name, email, password, role } = req.body;
-  if (!name || !email || !password) return res.status(400).send("שדות חסרים");
-  let users = fs.existsSync(usersFile) ? JSON.parse(fs.readFileSync(usersFile)) : [];
-
-  if (users.find(u => u.email === email)) return res.status(400).send("המשתמש קיים");
-
-  const hashed = await bcrypt.hash(password, 10);
-  users.push({ name, email, password: hashed, role: role || 'user' });
-  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-  res.sendStatus(200);
 });
 
-// ====== התחברות ======
+// כניסה בסיסמה
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const users = fs.existsSync(usersFile) ? JSON.parse(fs.readFileSync(usersFile)) : [];
   const user = users.find(u => u.email === email);
-  if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).send("שגוי");
+  if (!user) return res.status(401).json({ error: 'User not found' });
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'Invalid password' });
 
-  res.cookie('user', JSON.stringify({ name: user.name, email: user.email, role: user.role }), {
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24,
-  });
-  res.redirect(user.role === 'admin' ? '/admin-panel.html' : '/dashboard.html');
+  res.cookie("user", JSON.stringify({ email: user.email, name: user.name, role: user.role }), { httpOnly: true });
+  res.redirect('/dashboard.html');
 });
 
-// ====== שליחה לצ'אט ושמירה ======
-app.post('/save-message', (req, res) => {
+// כניסה עם OTP
+app.post('/login-otp', (req, res) => {
+  const { email } = req.body;
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  users = users.filter(u => u.email !== email); // הסר אם קיים
+  users.push({ email, name: email.split('@')[0], role: 'user', otp: code });
+
+  transporter.sendMail({
+    from: '"Escoob Help Center" <escoob30@gmail.com>',
+    to: email,
+    subject: 'קוד חד פעמי',
+    text: `קוד הכניסה שלך הוא: ${code}`
+  });
+
+  res.send(`<h2>קוד נשלח למייל. הזן אותו כאן:</h2>
+    <form action="/verify-otp" method="POST">
+      <input type="hidden" name="email" value="${email}" />
+      <input name="code" placeholder="קוד שקיבלת" required />
+      <button type="submit">אישור</button>
+    </form>`);
+});
+
+// אימות קוד OTP
+app.post('/verify-otp', (req, res) => {
+  const { email, code } = req.body;
+  const user = users.find(u => u.email === email && u.otp === code);
+  if (!user) return res.send('קוד שגוי');
+
+  res.cookie("user", JSON.stringify({ email, name: user.name, role: user.role }), { httpOnly: true });
+  res.redirect('/dashboard.html');
+});
+
+// שמירת שיחות
+app.post('/chat/save', (req, res) => {
   const { email, content } = req.body;
-  if (!email || !content) return res.status(400).send("שדות חסרים");
-  saveMessage(email, content);
+  messages.push({ email, content, timestamp: Date.now() });
   res.sendStatus(200);
 });
 
-// ====== שליחת סיכום ======
+// סיכום שיחה למייל
 app.post('/user/send-summary', (req, res) => {
-  const userCookie = req.cookies.user;
-  if (!userCookie) return res.status(401).send("לא מחובר");
-  const user = JSON.parse(userCookie);
+  const user = parseUser(req);
+  if (!user) return res.sendStatus(401);
 
-  const allMessages = fs.existsSync(messagesFile) ? JSON.parse(fs.readFileSync(messagesFile)) : [];
-  const userMsgs = allMessages.filter(m => m.email === user.email);
-  sendSummaryEmail(user.email, userMsgs.map(m => ({ role: 'משתמש', content: m.content })))
-    .then(() => res.sendStatus(200))
-    .catch(() => res.status(500).send("שגיאה בשליחה"));
+  const conv = messages.filter(m => m.email === user.email).map(m => `• ${m.content}`).join("\n");
+
+  transporter.sendMail({
+    from: '"Escoob Help Center" <escoob30@gmail.com>',
+    to: [user.email, 'escoob30@gmail.com'],
+    subject: 'סיכום שיחה',
+    text: `הנה סיכום השיחה שלך:\n${conv}`
+  });
+
+  res.sendStatus(200);
 });
 
-// ====== קבלת מידע אישי ======
+// שמירת פניות "צור קשר"
+app.post('/submit-contact', async (req, res) => {
+  const { name, email, message, category } = req.body;
+  const htmlContent = `
+    <h2>פניה חדשה ממרכז העזרה</h2>
+    <p><strong>שם:</strong> ${name}</p>
+    <p><strong>אימייל:</strong> ${email}</p>
+    <p><strong>תחום:</strong> ${category}</p>
+    <p><strong>הודעה:</strong><br/>${message}</p>
+  `;
+  try {
+    await transporter.sendMail({
+      from: '"Escoob Help Center" <escoob30@gmail.com>',
+      to: ['escoob30@gmail.com', 'help-center@gmx.com'],
+      subject: `📩 פניה מ-${name}`,
+      html: htmlContent
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'שגיאה בשליחת המייל' });
+  }
+});
+
+// מידע אישי
 app.get('/me', (req, res) => {
-  const userCookie = req.cookies.user;
-  if (!userCookie) return res.status(401).send("לא מחובר");
-  const user = JSON.parse(userCookie);
+  const user = parseUser(req);
+  if (!user) return res.sendStatus(401);
   res.json(user);
 });
 
-// ====== קבלת שיחות ======
+// הודעות משתמש
 app.get('/user/messages', (req, res) => {
-  const userCookie = req.cookies.user;
-  if (!userCookie) return res.status(401).send("לא מחובר");
-  const user = JSON.parse(userCookie);
-  const messages = fs.existsSync(messagesFile) ? JSON.parse(fs.readFileSync(messagesFile)) : [];
-  res.json(messages.filter(m => m.email === user.email));
+  const user = parseUser(req);
+  if (!user) return res.sendStatus(401);
+  const userMsgs = messages.filter(m => m.email === user.email);
+  res.json(userMsgs);
 });
 
-// ====== יציאה ======
-app.get('/logout', (req, res) => {
-  res.clearCookie('user');
-  res.redirect('/login.html');
+// דשבורד ניהול
+app.get('/admin/users', (req, res) => {
+  const user = parseUser(req);
+  if (!user || user.role !== 'admin') return res.sendStatus(403);
+  res.json(users);
 });
 
-// ====== הפעלת השרת ======
+app.get('/admin/messages', (req, res) => {
+  const user = parseUser(req);
+  if (!user || user.role !== 'admin') return res.sendStatus(403);
+  res.json(messages);
+});
+
+app.post('/admin/send-summary', (req, res) => {
+  const user = parseUser(req);
+  if (!user || user.role !== 'admin') return res.sendStatus(403);
+
+  const summary = messages.map(m => `${m.email}: ${m.content}`).join("\n");
+  transporter.sendMail({
+    from: '"Escoob Admin" <escoob30@gmail.com>',
+    to: ['escoob30@gmail.com'],
+    subject: 'סיכום כולל מהמערכת',
+    text: summary
+  });
+  res.sendStatus(200);
+});
+
+// עוזר
+function parseUser(req) {
+  try {
+    const cookie = req.cookies.user;
+    return cookie ? JSON.parse(cookie) : null;
+  } catch { return null; }
+}
+
 app.listen(port, () => {
+  console.log(`✅ Help Center server running on port ${port}`);
+});
+
   console.log(`✅ Help Center server running on port ${port}`);
 });
