@@ -1,141 +1,92 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ניהול מערכת - Escoob</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <meta charset="UTF-8" />
+  <title>ניהול מרכז העזרה - Escoob</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: 'Segoe UI', sans-serif; }
-    td, th { padding: 8px; }
+    body { font-family: Arial, sans-serif; background: #eef2f7; margin: 0; color: #333; }
+    header { background: #222f5b; color: white; padding: 1rem; text-align: center; }
+    main { max-width: 960px; margin: 2rem auto; background: white; border-radius: 8px; padding: 2rem; box-shadow: 0 0 8px #ccc; }
+    h2 { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th, td { padding: 0.8rem; border: 1px solid #ddd; text-align: right; }
+    th { background: #f0f4fb; }
+    tr:hover { background-color: #f9f9f9; }
+    button { padding: 0.7rem 1.4rem; background: #222f5b; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 1rem; }
+    button:hover { background: #0d1d40; }
+    .section { margin-bottom: 3rem; }
   </style>
 </head>
-<body class="bg-gray-100">
-
-  <!-- סרגל עליון -->
-  <header class="bg-blue-800 text-white py-4 shadow">
-    <div class="container mx-auto px-4 flex justify-between items-center">
-      <div class="flex items-center space-x-4 rtl:space-x-reverse">
-        <i data-lucide="shield-check" class="w-6 h-6 text-white"></i>
-        <h1 class="text-xl font-bold">ניהול מערכת - Escoob</h1>
-      </div>
-      <a href="/index.html" class="text-sm underline hover:text-blue-200">חזרה לאתר</a>
-    </div>
+<body>
+  <header>
+    <h1>🎛️ דשבורד ניהול - Escoob Help Center</h1>
   </header>
 
-  <!-- תוכן -->
-  <main class="container mx-auto px-4 py-6 space-y-10">
-
-    <!-- סטטיסטיקות -->
-    <section class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-      <div class="bg-white shadow rounded-xl p-4">
-        <div class="text-gray-500 text-sm">סה"כ משתמשים</div>
-        <div id="total-users" class="text-2xl font-bold">--</div>
-      </div>
-      <div class="bg-white shadow rounded-xl p-4">
-        <div class="text-gray-500 text-sm">סה"כ שיחות</div>
-        <div id="total-messages" class="text-2xl font-bold">--</div>
-      </div>
-      <div class="bg-white shadow rounded-xl p-4 col-span-2 sm:col-span-1">
-        <input type="text" id="searchInput" placeholder="חפש משתמש..." class="w-full rounded-lg p-2 border border-gray-300 focus:ring-2 focus:ring-blue-400" />
-      </div>
+  <main>
+    <section class="section">
+      <h2>📨 סיכום כולל של כל השיחות</h2>
+      <button onclick="sendAllSummary()">שלח סיכום כולל למייל</button>
+      <p id="summaryStatus"></p>
     </section>
 
-    <!-- טבלת משתמשים -->
-    <section>
-      <h2 class="text-xl font-semibold mb-2">רשימת משתמשים</h2>
-      <div class="overflow-auto bg-white rounded-xl shadow">
-        <table class="min-w-full text-sm">
-          <thead class="bg-blue-50 font-bold text-gray-700">
-            <tr>
-              <th>שם</th>
-              <th>אימייל</th>
-              <th>תפקיד</th>
-              <th>שיחות</th>
-              <th>מחיקה</th>
-            </tr>
-          </thead>
-          <tbody id="userTableBody"></tbody>
-        </table>
-      </div>
+    <section class="section">
+      <h2>👥 רשימת משתמשים</h2>
+      <table>
+        <thead><tr><th>אימייל</th><th>שם</th><th>תפקיד</th></tr></thead>
+        <tbody id="usersTable"></tbody>
+      </table>
     </section>
 
-    <!-- תצוגת שיחות -->
-    <section class="hidden" id="chatSection">
-      <h2 class="text-xl font-semibold mb-2">שיחות של <span id="chatUser"></span></h2>
-      <div class="bg-white rounded-xl shadow p-4 space-y-2 max-h-96 overflow-y-auto" id="chatMessages"></div>
-      <button onclick="closeChat()" class="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">סגור</button>
+    <section class="section">
+      <h2>💬 הודעות מהמשתמשים</h2>
+      <table>
+        <thead><tr><th>זמן</th><th>אימייל</th><th>תוכן</th></tr></thead>
+        <tbody id="messagesTable"></tbody>
+      </table>
     </section>
-
   </main>
 
   <script>
-    lucide.createIcons();
-    let users = [];
-
-    function loadUsers() {
-      fetch('/admin/users').then(res => res.json()).then(data => {
-        users = data;
-        updateTable(data);
-        document.getElementById("total-users").textContent = data.length;
-      });
-      fetch('/admin/messages-count').then(res => res.json()).then(stat => {
-        document.getElementById("total-messages").textContent = stat.total;
-      });
-    }
-
-    function updateTable(list) {
-      const tbody = document.getElementById("userTableBody");
-      tbody.innerHTML = "";
-      list.forEach(user => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${user.name}</td>
-          <td>${user.email}</td>
-          <td>${user.role}</td>
-          <td><button onclick="viewChats('${user.email}', '${user.name}')" class="text-blue-600 underline text-xs">הצג</button></td>
-          <td><button onclick="deleteUser('${user.email}')" class="text-red-600 underline text-xs">מחק</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function viewChats(email, name) {
-      fetch('/admin/messages/' + encodeURIComponent(email))
-        .then(res => res.json())
-        .then(messages => {
-          const div = document.getElementById("chatMessages");
-          div.innerHTML = "";
-          messages.forEach(msg => {
-            const el = document.createElement("div");
-            el.className = "border-b pb-1 text-sm";
-            el.textContent = msg.content;
-            div.appendChild(el);
-          });
-          document.getElementById("chatUser").textContent = name;
-          document.getElementById("chatSection").classList.remove("hidden");
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    async function loadUsers() {
+      try {
+        const res = await fetch('/admin/users');
+        const users = await res.json();
+        const tbody = document.getElementById("usersTable");
+        users.forEach(u => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${u.email}</td><td>${u.name || ''}</td><td>${u.role}</td>`;
+          tbody.appendChild(tr);
         });
+      } catch (err) {
+        alert("שגיאה בטעינת המשתמשים");
+      }
     }
 
-    function closeChat() {
-      document.getElementById("chatSection").classList.add("hidden");
+    async function loadMessages() {
+      try {
+        const res = await fetch('/admin/messages');
+        const messages = await res.json();
+        const tbody = document.getElementById("messagesTable");
+        messages.forEach(m => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${new Date(m.timestamp).toLocaleString('he-IL')}</td><td>${m.email}</td><td>${m.content}</td>`;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        alert("שגיאה בטעינת ההודעות");
+      }
     }
 
-    function deleteUser(email) {
-      if (!confirm("האם למחוק את המשתמש?")) return;
-      fetch('/admin/delete-user/' + encodeURIComponent(email), { method: 'DELETE' })
-        .then(res => res.ok ? loadUsers() : alert("שגיאה במחיקה"));
+    async function sendAllSummary() {
+      const status = document.getElementById("summaryStatus");
+      status.textContent = "שולח...";
+      const res = await fetch("/admin/send-summary", { method: "POST" });
+      status.textContent = res.ok ? "📬 סיכום נשלח בהצלחה" : "❌ שגיאה בשליחה";
     }
-
-    document.getElementById("searchInput").addEventListener("input", e => {
-      const value = e.target.value.toLowerCase();
-      const filtered = users.filter(u => u.name.toLowerCase().includes(value) || u.email.toLowerCase().includes(value));
-      updateTable(filtered);
-    });
 
     loadUsers();
+    loadMessages();
   </script>
 </body>
 </html>
