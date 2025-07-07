@@ -1,52 +1,81 @@
+<!-- signup.html -->
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he">
 <head>
   <meta charset="UTF-8" />
   <title>הרשמה - Escoob</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f9fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      direction: rtl;
+    }
+    .signup-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 {
+      margin-bottom: 1rem;
+      color: #0055aa;
+      text-align: center;
+    }
+    label {
+      font-weight: bold;
+      color: #0055aa;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.6rem;
+      margin: 0.5rem 0 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #0055aa;
+      color: white;
+      border: none;
+      padding: 0.8rem;
+      width: 100%;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #003f7d;
+    }
+  </style>
 </head>
 <body>
+  <div class="signup-box">
+    <h2>הרשמה למערכת</h2>
+    <form action="/signup" method="POST">
+      <label for="name">שם מלא</label>
+      <input type="text" id="name" name="name" required />
 
-<nav>
-  <div class="logo font-bold text-white text-lg">Escoob</div>
-  <div class="links">
-    <a href="/index.html">בית</a>
-    <a href="/articles.html">מאמרים</a>
-    <a href="/chat.html">צ'אט</a>
-    <a href="/support.html">תמיכה</a>
-    <a href="/contact_send_mail.html">צור קשר</a>
-    <a href="/login.html">התחברות</a>
-    <a href="/signup.html">הרשמה</a>
+      <label for="email">אימייל</label>
+      <input type="email" id="email" name="email" required />
+
+      <label for="password">סיסמה</label>
+      <input type="password" id="password" name="password" required />
+
+      <label for="role">סוג משתמש</label>
+      <select name="role" required>
+        <option value="user">משתמש רגיל</option>
+        <option value="admin">מנהל</option>
+      </select>
+
+      <button type="submit">הרשמה</button>
+    </form>
   </div>
-</nav>
- class="bg-gray-100 flex items-center justify-center h-screen">
-  <form class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm space-y-4" id="signupForm">
-    <h2 class="text-center text-2xl font-bold text-blue-800">הרשמה</h2>
-    <input name="name" placeholder="שם מלא" required class="w-full p-2 border rounded" />
-    <input name="email" type="email" placeholder="אימייל" required class="w-full p-2 border rounded" />
-    <input name="password" type="password" placeholder="סיסמה" required class="w-full p-2 border rounded" />
-    <button class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded">הרשם</button>
-  </form>
-
-  <script>
-    document.getElementById('signupForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const data = {
-        name: form.name.value,
-        email: form.email.value,
-        password: form.password.value,
-      };
-      const res = await fetch('/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      const text = await res.text();
-      alert(text);
-      if (res.ok) location.href = '/login.html';
-    });
-  </script>
 </body>
 </html>
