@@ -1,101 +1,132 @@
-require('dotenv').config();
+// server.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
-const axios = require('axios');
+const fs = require('fs');
+const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser');
+const path = require('path');
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 10000;
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
+app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(express.static('public'));
 
-// הגדרת transport לשליחת מיילים (עדכן עם פרטי אימייל אמיתיים)
+const usersFile = './users.json';
+const messagesFile = './messages.json';
+
+// ====== תצורת מייל ======
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // או שירות אחר לפי הצורך
+  service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER, // מהקובץ .env
+    user: 'escoob30@gmail.com',
     pass: process.env.EMAIL_PASS,
   },
 });
 
-// נקודת קצה לטיפול בטופס צור קשר
-app.post('/submit-contact', async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: 'Missing fields' });
-    }
+// ====== פונקציית שליחת סיכום ======
+async function sendSummaryEmail(userEmail, conversation) {
+  const htmlContent = `
+    <h2>📄 סיכום שיחה מהאתר</h2>
+    ${conversation.map(m => `<p><strong>${m.role}:</strong> ${m.content}</p>`).join('')}
+  `;
+  const mailOptions = {
+    from: '"Help Center" <escoob30@gmail.com>',
+    to: ['escoob30@gmail.com', 'help-center@gmx.com', userEmail],
+    subject: '📨 סיכום שיחה ממרכז העזרה',
+    html: htmlContent,
+  };
+  await transporter.sendMail(mailOptions);
+}
 
-    const mailOptions = {
-      from: `"${name}" <${email}>`,
-      to: ['escoob30@gmail.com', 'help-center@gmx.com'],
-      subject: 'פנייה מאתר מרכז העזרה - צור קשר',
-      html: `<p>שם: ${name}</p><p>אימייל: ${email}</p><p>הודעה:</p><p>${message}</p>`,
-    };
-
-    await transporter.sendMail(mailOptions);
-    res.json({ message: 'פנייתך נשלחה בהצלחה' });
-  } catch (error) {
-    console.error('Error sending contact email:', error);
-    res.status(500).json({ error: 'Server error' });
+// ====== עזר: שמירת שיחות ======
+function saveMessage(email, content) {
+  let allMessages = [];
+  if (fs.existsSync(messagesFile)) {
+    allMessages = JSON.parse(fs.readFileSync(messagesFile));
   }
+  allMessages.push({ email, content, timestamp: Date.now() });
+  fs.writeFileSync(messagesFile, JSON.stringify(allMessages, null, 2));
+}
+
+// ====== רישום משתמש ======
+app.post('/signup', async (req, res) => {
+  const { name, email, password, role } = req.body;
+  if (!name || !email || !password) return res.status(400).send("שדות חסרים");
+  let users = fs.existsSync(usersFile) ? JSON.parse(fs.readFileSync(usersFile)) : [];
+
+  if (users.find(u => u.email === email)) return res.status(400).send("המשתמש קיים");
+
+  const hashed = await bcrypt.hash(password, 10);
+  users.push({ name, email, password: hashed, role: role || 'user' });
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+  res.sendStatus(200);
 });
 
-// נקודת קצה לטיפול בפניות תמיכה טכנית
-app.post('/submit-support', async (req, res) => {
-  try {
-    const { issue } = req.body;
-    if (!issue) {
-      return res.status(400).json({ error: 'Missing issue description' });
-    }
+// ====== התחברות ======
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  const users = fs.existsSync(usersFile) ? JSON.parse(fs.readFileSync(usersFile)) : [];
+  const user = users.find(u => u.email === email);
+  if (!user || !(await bcrypt.compare(password, user.password))) return res.status(401).send("שגוי");
 
-    const mailOptions = {
-      from: '"Support Form" <escoob30@gmail.com>',
-      to: ['escoob30@gmail.com', 'help-center@gmx.com'],
-      subject: 'פנייה לתמיכה טכנית',
-      html: `<p>בעיה:</p><p>${issue}</p>`,
-    };
-
-    await transporter.sendMail(mailOptions);
-    res.json({ message: 'הפנייה לתמיכה התקבלה, ניצור איתך קשר בהקדם' });
-  } catch (error) {
-    console.error('Error sending support email:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
+  res.cookie('user', JSON.stringify({ name: user.name, email: user.email, role: user.role }), {
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24,
+  });
+  res.redirect(user.role === 'admin' ? '/admin-panel.html' : '/dashboard.html');
 });
 
-// נקודת קצה לצ'אט עם Ollama
-app.post('/chat', async (req, res) => {
-  try {
-    const userMessage = req.body.message;
-    if (!userMessage) {
-      return res.status(400).json({ error: 'Missing message in request body' });
-    }
-
-    const response = await axios.post('https://api.ollama.com/v1/chat/completions', {
-      model: 'gemma:2b',
-      messages: [{ role: 'user', content: userMessage }],
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}`,
-      }
-    });
-
-    const botReply = response.data.choices[0].message.content;
-    res.json({ reply: botReply });
-  } catch (error) {
-    console.error('Error in /chat:', error.message || error);
-    res.status(500).json({ error: 'Server error' });
-  }
+// ====== שליחה לצ'אט ושמירה ======
+app.post('/save-message', (req, res) => {
+  const { email, content } = req.body;
+  if (!email || !content) return res.status(400).send("שדות חסרים");
+  saveMessage(email, content);
+  res.sendStatus(200);
 });
 
-// סטטית (אם יש לך תיקיית public עם קבצים סטטיים)
-app.use(express.static('public'));
+// ====== שליחת סיכום ======
+app.post('/user/send-summary', (req, res) => {
+  const userCookie = req.cookies.user;
+  if (!userCookie) return res.status(401).send("לא מחובר");
+  const user = JSON.parse(userCookie);
 
+  const allMessages = fs.existsSync(messagesFile) ? JSON.parse(fs.readFileSync(messagesFile)) : [];
+  const userMsgs = allMessages.filter(m => m.email === user.email);
+  sendSummaryEmail(user.email, userMsgs.map(m => ({ role: 'משתמש', content: m.content })))
+    .then(() => res.sendStatus(200))
+    .catch(() => res.status(500).send("שגיאה בשליחה"));
+});
+
+// ====== קבלת מידע אישי ======
+app.get('/me', (req, res) => {
+  const userCookie = req.cookies.user;
+  if (!userCookie) return res.status(401).send("לא מחובר");
+  const user = JSON.parse(userCookie);
+  res.json(user);
+});
+
+// ====== קבלת שיחות ======
+app.get('/user/messages', (req, res) => {
+  const userCookie = req.cookies.user;
+  if (!userCookie) return res.status(401).send("לא מחובר");
+  const user = JSON.parse(userCookie);
+  const messages = fs.existsSync(messagesFile) ? JSON.parse(fs.readFileSync(messagesFile)) : [];
+  res.json(messages.filter(m => m.email === user.email));
+});
+
+// ====== יציאה ======
+app.get('/logout', (req, res) => {
+  res.clearCookie('user');
+  res.redirect('/login.html');
+});
+
+// ====== הפעלת השרת ======
 app.listen(port, () => {
-  console.log(`Help Center server running on port ${port}`);
+  console.log(`✅ Help Center server running on port ${port}`);
 });
