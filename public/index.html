@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>מרכז העזרה - Escoob Help Center</title>
+  <title>Escoob - מרכז העזרה</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -44,39 +44,79 @@
       color: #0055aa;
       margin-bottom: 1rem;
     }
-    input[type="email"] {
-      width: 250px;
+    section.categories {
+      display: flex;
+      gap: 1rem;
+      justify-content: space-around;
+      margin-bottom: 3rem;
+    }
+    section.categories div {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      padding: 1rem;
+      width: 28%;
+      cursor: pointer;
+      text-align: center;
+      transition: box-shadow 0.3s;
+    }
+    section.categories div:hover {
+      box-shadow: 0 0 15px #0055aa;
+    }
+    section.categories div img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 0.8rem;
+    }
+    section.categories div h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #0055aa;
+    }
+    section.contact-form {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: #0055aa;
+    }
+    input, select, textarea {
+      width: 100%;
       padding: 0.6rem;
+      margin-top: 0.3rem;
       font-size: 1rem;
       border: 1.5px solid #0055aa;
       border-radius: 5px;
-      margin-left: 0.5rem;
+      resize: vertical;
     }
     button {
       background-color: #0055aa;
       color: white;
       border: none;
-      padding: 0.6rem 1.2rem;
-      font-size: 1rem;
+      padding: 0.8rem 1.5rem;
+      font-size: 1.1rem;
       border-radius: 5px;
       cursor: pointer;
       font-weight: 700;
+      margin-top: 1.5rem;
       transition: background-color 0.3s;
     }
     button:hover {
       background-color: #003f7d;
-    }
-    hr {
-      margin: 2rem 0;
-      border: none;
-      border-top: 1px solid #ccc;
     }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>מרכז העזרה - Escoob Help Center</h1>
+  <h1>Escoob - מרכז העזרה</h1>
   <nav>
     <a href="#home">בית</a>
     <a href="#faq">שאלות נפוצות</a>
@@ -84,53 +124,155 @@
   </nav>
 </header>
 
-<main>
-  <h2>ברוכים הבאים למרכז העזרה</h2>
-  <p>כאן תוכלו לקבל תמיכה, לשאול שאלות ולקבל סיוע מהיר.</p>
+<main id="home">
+  <h2>ברוכים הבאים ל-Escoob</h2>
+  <p>בחרו את התחום שבו תרצו לקבל תמיכה ומידע:</p>
 
-  <hr />
+  <section class="categories">
+    <div onclick="showCategory('restaurant')">
+      <img src="https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=600&q=80" alt="מסעדת הטעמים"/>
+      <h3>מסעדת הטעמים / החומוסלט</h3>
+    </div>
+    <div onclick="showCategory('theater')">
+      <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80" alt="תיאטרון"/>
+      <h3>תיאטרון כוית ומופסון</h3>
+    </div>
+    <div onclick="showCategory('comics')">
+      <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80" alt="קומיקס וסרטים"/>
+      <h3>גישה לקומיקסים וסרטים</h3>
+    </div>
+  </section>
 
-  <section id="end-chat-section">
-    <h2>📩 שלח סיכום שיחה למייל</h2>
-    <input type="email" id="userEmail" placeholder="הכנס את כתובת המייל שלך" />
-    <button onclick="sendSummary()">סיים שיחה ושלח מייל</button>
+  <section id="category-info" style="display:none; background:#e9f0ff; padding:1rem; border-radius:8px; margin-bottom:2rem;">
+    <h2 id="category-title"></h2>
+    <p id="category-desc"></p>
+  </section>
+
+  <section id="faq" style="display:none;">
+    <h2>שאלות נפוצות</h2>
+    <ul id="faq-list"></ul>
+  </section>
+
+  <section id="contact" class="contact-form" style="display:none;">
+    <h2>צור קשר</h2>
+    <form id="contactForm" onsubmit="return submitForm(event)">
+      <label for="contactCategory">בחר תחום:</label>
+      <select id="contactCategory" name="category" required>
+        <option value="">בחר...</option>
+        <option value="restaurant">מסעדה</option>
+        <option value="theater">תיאטרון</option>
+        <option value="comics">קומיקס וסרטים</option>
+      </select>
+
+      <label for="name">שם מלא:</label>
+      <input type="text" id="name" name="name" required />
+
+      <label for="email">אימייל:</label>
+      <input type="email" id="email" name="email" required />
+
+      <label for="message">הודעה:</label>
+      <textarea id="message" name="message" rows="5" required></textarea>
+
+      <button type="submit">שלח פניה</button>
+    </form>
   </section>
 </main>
 
 <script>
-  async function sendSummary() {
-    const userEmail = document.getElementById('userEmail').value.trim();
+  const categoriesData = {
+    restaurant: {
+      title: "מסעדת הטעמים / החומוסלט",
+      desc: "כל המידע על התפריטים, שעות הפעילות, אירועים ומבצעים במסעדה שלנו.",
+      faqs: [
+        { q: "מה שעות הפתיחה של המסעדה?", a: "אנו פתוחים בימים א'-ה' מ-12:00 עד 23:00 ובימי ו'-ש' מ-12:00 עד 00:00." },
+        { q: "האם יש תפריט טבעוני?", a: "כן, יש תפריט טבעוני מגוון." }
+      ]
+    },
+    theater: {
+      title: "תיאטרון כוית ומופסון",
+      desc: "מידע על ההצגות הקרובות, כרטיסים, חדשות ואירועים בתיאטרון.",
+      faqs: [
+        { q: "איפה ממוקם התיאטרון?", a: "התיאטרון נמצא ברחוב הראשי 12, תל אביב." },
+        { q: "איך מזמינים כרטיסים?", a: "ניתן להזמין באתר שלנו או בטלפון 03-1234567." }
+      ]
+    },
+    comics: {
+      title: "גישה לקומיקסים וסרטים",
+      desc: "גישה לספריית קומיקסים וסרטים לכל הגילאים, עם מנויים ואפשרויות צפייה.",
+      faqs: [
+        { q: "איך מקבלים גישה לקומיקסים?", a: "ניתן להירשם כמנוי באתר." },
+        { q: "איזה גילאים יכולים לצפות?", a: "יש תוכן מותאם לכל הגילאים כולל קטנטנים." }
+      ]
+    }
+  };
 
-    const conversation = [
-      { user: 'משתמש', text: 'שלום' },
-      { user: 'בוט', text: 'שלום! איך אפשר לעזור?' },
-      { user: 'משתמש', text: 'אני צריך עזרה' },
-      { user: 'בוט', text: 'בשמחה! תאר לי את הבעיה.' }
-    ];
+  function showCategory(cat) {
+    const infoSection = document.getElementById("category-info");
+    const faqSection = document.getElementById("faq");
+    const contactSection = document.getElementById("contact");
 
-    if (!userEmail) {
-      alert('אנא הכנס כתובת מייל תקינה');
-      return;
+    if (!categoriesData[cat]) return;
+
+    // הצגת מידע על הקטגוריה
+    document.getElementById("category-title").innerText = categoriesData[cat].title;
+    document.getElementById("category-desc").innerText = categoriesData[cat].desc;
+    infoSection.style.display = "block";
+
+    // הצגת שאלות נפוצות
+    const faqList = document.getElementById("faq-list");
+    faqList.innerHTML = "";
+    categoriesData[cat].faqs.forEach(faq => {
+      const li = document.createElement("li");
+      li.innerHTML = `<strong>שאלה:</strong> ${faq.q}<br/><strong>תשובה:</strong> ${faq.a}`;
+      faqList.appendChild(li);
+    });
+    faqSection.style.display = "block";
+
+    // הצגת טופס יצירת קשר ומילוי אוטומטי של הקטגוריה
+    contactSection.style.display = "block";
+    document.getElementById("contactCategory").value = cat;
+
+    // גלילה לטופס
+    contactSection.scrollIntoView({behavior: "smooth"});
+  }
+
+  async function submitForm(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = {
+      category: form.category.value,
+      name: form.name.value,
+      email: form.email.value,
+      message: form.message.value
+    };
+
+    if (!formData.category || !formData.name || !formData.email || !formData.message) {
+      alert("אנא מלא את כל השדות");
+      return false;
     }
 
     try {
-      const response = await fetch('/end-chat', {
+      const res = await fetch('/submit-contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userEmail, conversation })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(formData)
       });
-      const data = await response.json();
 
-      if (response.ok) {
-        alert('✅ סיכום השיחה נשלח למייל!');
+      if (res.ok) {
+        alert('תודה! הפנייתך נשלחה בהצלחה.');
+        form.reset();
       } else {
-        alert('❌ שגיאה בשליחת מייל: ' + data.error);
+        const errorData = await res.json();
+        alert('אירעה שגיאה: ' + errorData.error);
       }
-    } catch (error) {
-      alert('שגיאה בשליחה: ' + error.message);
+    } catch (err) {
+      alert('שגיאה בשרת: ' + err.message);
     }
+    return false;
   }
 </script>
 
 </body>
 </html>
+
