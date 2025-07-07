@@ -1,39 +1,79 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
+<<!DOCTYPE html>
+<html lang="en" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <title>מאמרי עזרה - Escoob</title>
+  <meta charset="UTF-8" />
+  <title>📚 Help Articles - Escoob Help Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 40px;
-      background-color: #f4f7fc;
+      font-family: Arial, sans-serif;
+      background: #f4f7f9;
+      margin: 0;
+      padding: 20px;
     }
-    input {
-      width: 300px;
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #searchInput {
+      display: block;
+      width: 90%;
+      max-width: 500px;
+      margin: 20px auto;
       padding: 12px;
-      margin-bottom: 30px;
-      border-radius: 30px;
+      font-size: 16px;
+      border-radius: 8px;
       border: 1px solid #ccc;
-      font-size: 1em;
     }
     .article {
       background: white;
-      padding: 20px;
-      margin: 10px auto;
-      width: 60%;
       border-radius: 10px;
-      box-shadow: 0 0 5px #ccc;
+      padding: 15px;
+      margin: 10px auto;
+      max-width: 700px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .article h2 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>📖 מאמרי עזרה</h1>
-  <p>חפש מתוך מאגר המאמרים שלנו:</p>
-  <input type="text" placeholder="הקלד מונח לחיפוש...">
-  <div class="article">איך לאפס סיסמה?</div>
-  <div class="article">הפעלת חשבון חדש</div>
-  <div class="article">פתרון בעיות חיבור</div>
+  <h1>📖 Help Articles</h1>
+  <input type="text" id="searchInput" placeholder="Search articles... 🔍" />
+
+  <div class="article">
+    <h2>How do I reset my password?</h2>
+    <p>Click on “Forgot Password” on the login page, enter your email, and follow the instructions sent to you.</p>
+  </div>
+  <div class="article">
+    <h2>How to contact technical support?</h2>
+    <p>You can use the “📨 Contact Us” or “🛠️ Support” buttons on the home page. Fill in your issue and we’ll get back to you.</p>
+  </div>
+  <div class="article">
+    <h2>Can I use the chat in multiple languages?</h2>
+    <p>Yes! The Escoob AI Chat understands and responds in many languages automatically.</p>
+  </div>
+  <div class="article">
+    <h2>How to update my email address?</h2>
+    <p>Log in, go to your profile settings, and update your email from there.</p>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const articles = document.querySelectorAll('.article');
+
+    searchInput.addEventListener('input', function() {
+      const term = this.value.toLowerCase();
+      articles.forEach(article => {
+        const text = article.textContent.toLowerCase();
+        article.classList.toggle('hidden', !text.includes(term));
+      });
+    });
+  </script>
 </body>
 </html>
