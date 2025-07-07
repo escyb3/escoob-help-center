@@ -1,1 +1,13 @@
-[]
+
+[
+  {
+    "email": "user@example.com",
+    "content": "שלום, רציתי לדעת על שעות הפתיחה.",
+    "timestamp": 1751901361.982437
+  },
+  {
+    "email": "user@example.com",
+    "content": "תודה רבה על השירות!",
+    "timestamp": 1751901361.982443
+  }
+]
