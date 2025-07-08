@@ -1,65 +1,50 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  const container = document.getElementById("articlesContainer");
-  const searchInput = document.getElementById("searchInput");
-  const categoryFilter = document.getElementById("categoryFilter");
+document.addEventListener('DOMContentLoaded', async () => {
+  const res = await fetch('data/articles.json');
+  const data = await res.json();
 
-  let articles = [];
+  const searchInput = document.getElementById('search');
+  const categoryFilter = document.getElementById('category-filter');
+  const faqList = document.getElementById('faq-list');
+  const articleList = document.getElementById('article-list');
 
-  async function fetchArticles() {
-    const res = await fetch("data/articles.json");
-    articles = await res.json();
-    renderArticles(articles);
-    renderCategories(articles);
-  }
+  const categories = [...new Set(data.map(item => item.category))];
+  categories.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    categoryFilter.appendChild(opt);
+  });
 
-  function renderCategories(articles) {
-    const categories = [...new Set(articles.map(a => a.category))];
-    categories.forEach(cat => {
-      const option = document.createElement("option");
-      option.value = cat;
-      option.textContent = cat;
-      categoryFilter.appendChild(option);
-    });
-  }
-
-  function renderArticles(data) {
-    container.innerHTML = "";
-    data.forEach(article => {
-      const articleEl = document.createElement("div");
-      articleEl.className = "article";
-
-      const header = document.createElement("div");
-      header.className = "article-header";
-      header.textContent = article.title;
-      header.addEventListener("click", () => {
-        content.style.display = content.style.display === "block" ? "none" : "block";
-      });
-
-      const content = document.createElement("div");
-      content.className = "article-content";
-      content.innerHTML = `
-        <div class="article-meta">קטגוריה: ${article.category} | עודכן לאחרונה: ${article.updated}</div>
-        <div>${article.content}</div>
-      `;
-
-      articleEl.appendChild(header);
-      articleEl.appendChild(content);
-      container.appendChild(articleEl);
-    });
-  }
-
-  function filterArticles() {
+  function render() {
     const keyword = searchInput.value.toLowerCase();
     const selectedCat = categoryFilter.value;
-    const filtered = articles.filter(a =>
-      (a.title.toLowerCase().includes(keyword) || a.content.toLowerCase().includes(keyword)) &&
-      (selectedCat === "" || a.category === selectedCat)
+
+    const filtered = data.filter(item =>
+      (selectedCat === 'all' || item.category === selectedCat) &&
+      (item.title.toLowerCase().includes(keyword) || item.content.toLowerCase().includes(keyword))
     );
-    renderArticles(filtered);
+
+    // שאלות נפוצות
+    faqList.innerHTML = '';
+    filtered.filter(item => item.type === 'faq').forEach(faq => {
+      const div = document.createElement('div');
+      div.className = 'faq';
+      div.innerHTML = `<strong>${faq.title}</strong><p>${faq.content}</p><div class="updated">עודכן: ${faq.updated}</div>`;
+      faqList.appendChild(div);
+    });
+
+    // מאמרים
+    articleList.innerHTML = '';
+    filtered.filter(item => item.type === 'article').forEach(article => {
+      const div = document.createElement('div');
+      div.className = 'article';
+      div.innerHTML = `<strong>${article.title}</strong><p>${article.content}</p><div class="updated">עודכן: ${article.updated}</div>`;
+      articleList.appendChild(div);
+    });
   }
 
-  searchInput.addEventListener("input", filterArticles);
-  categoryFilter.addEventListener("change", filterArticles);
+  searchInput.addEventListener('input', render);
+  categoryFilter.addEventListener('change', render);
 
-  fetchArticles();
+  render(); // הצגה ראשונית
 });
