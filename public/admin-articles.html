@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>ניהול מאמרים</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>ניהול מאמרים</h1>
+  <button onclick="logout()">התנתק</button>
+  <div id="form">
+    <h3>הוסף/ערוך מאמר</h3>
+    <input id="title" placeholder="כותרת">
+    <textarea id="content" placeholder="תוכן"></textarea>
+    <input id="category" placeholder="קטגוריה">
+    <select id="type">
+      <option value="article">מאמר</option>
+      <option value="faq">שאלה נפוצה</option>
+    </select>
+    <button onclick="saveArticle()">שמור</button>
+    <input type="hidden" id="editId">
+  </div>
+
+  <h2>מאמרים קיימים</h2>
+  <div id="articles"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
