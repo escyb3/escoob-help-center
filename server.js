@@ -7,35 +7,35 @@ const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const path = require('path');
-
 const app = express();
 const port = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static('public'));
 
 const USERS_FILE = './data/users.json';
 const MESSAGES_FILE = './data/messages.json';
 const ARTICLES_FILE = './data/articles.json';
+const COMMENTS_FILE = './data/comments.json';
 
-function loadJSON(file) {
+function loadJson(file, fallback = []) {
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch {
-    return [];
+    return fallback;
   }
 }
 
-function saveJSON(file, data) {
+function saveJson(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-let users = loadJSON(USERS_FILE);
-let messages = loadJSON(MESSAGES_FILE);
-let articles = loadJSON(ARTICLES_FILE);
+let users = loadJson(USERS_FILE);
+let messages = loadJson(MESSAGES_FILE);
+let articles = loadJson(ARTICLES_FILE);
+let comments = loadJson(COMMENTS_FILE);
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -45,7 +45,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// עזר
+// פונקציית עזר לניתוח משתמש
 function parseUser(req) {
   try {
     const cookie = req.cookies.user;
@@ -55,12 +55,12 @@ function parseUser(req) {
   }
 }
 
-// התחברות בסיסמה
+// --- מערכת התחברות ---
+
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = users.find(u => u.email === email);
   if (!user) return res.status(401).json({ error: 'User not found' });
-
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return res.status(401).json({ error: 'Invalid password' });
 
@@ -68,13 +68,12 @@ app.post('/login', async (req, res) => {
   res.redirect('/dashboard.html');
 });
 
-// התחברות OTP
 app.post('/login-otp', (req, res) => {
   const { email } = req.body;
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   users = users.filter(u => u.email !== email || u.passwordHash);
   users.push({ email, name: email.split('@')[0], role: 'user', otp: code });
-  saveJSON(USERS_FILE, users);
+  saveJson(USERS_FILE, users);
 
   transporter.sendMail({
     from: '"Escoob Help Center" <escoob30@gmail.com>',
@@ -83,7 +82,7 @@ app.post('/login-otp', (req, res) => {
     text: `קוד הכניסה שלך הוא: ${code}`
   });
 
-  res.send(`<h2>קוד נשלח למייל:</h2>
+  res.send(`<h2>קוד נשלח למייל. הזן אותו כאן:</h2>
     <form action="/verify-otp" method="POST">
       <input type="hidden" name="email" value="${email}" />
       <input name="code" placeholder="קוד שקיבלת" required />
@@ -95,75 +94,43 @@ app.post('/verify-otp', (req, res) => {
   const { email, code } = req.body;
   const user = users.find(u => u.email === email && u.otp === code);
   if (!user) return res.send('קוד שגוי');
+
   user.otp = null;
-  saveJSON(USERS_FILE, users);
+  saveJson(USERS_FILE, users);
+
   res.cookie("user", JSON.stringify({ email, name: user.name, role: user.role }), { httpOnly: true, maxAge: 604800000 });
   res.redirect('/dashboard.html');
 });
 
-// איפוס סיסמה
-app.post('/forgot-password', (req, res) => {
-  const { email } = req.body;
-  const resetToken = Math.random().toString(36).substring(2, 12);
-  const user = users.find(u => u.email === email);
-  if (!user) return res.status(404).json({ error: 'User not found' });
+// --- שמירת שיחות ---
 
-  user.resetToken = resetToken;
-  saveJSON(USERS_FILE, users);
-
-  const resetUrl = `${process.env.BASE_URL || 'http://localhost:' + port}/reset-password.html?token=${resetToken}&email=${email}`;
-  transporter.sendMail({
-    from: '"Escoob Help Center" <escoob30@gmail.com>',
-    to: email,
-    subject: 'איפוס סיסמה',
-    html: `<p>לאיפוס הסיסמה לחץ <a href="${resetUrl}">כאן</a></p>`
-  });
-
-  res.json({ success: true });
-});
-
-app.post('/reset-password', async (req, res) => {
-  const { email, token, password } = req.body;
-  const user = users.find(u => u.email === email && u.resetToken === token);
-  if (!user) return res.status(400).json({ error: 'Invalid token' });
-
-  user.passwordHash = await bcrypt.hash(password, 10);
-  delete user.resetToken;
-  saveJSON(USERS_FILE, users);
-
-  res.json({ success: true });
-});
-
-// מידע אישי
-app.get('/me', (req, res) => {
-  const user = parseUser(req);
-  if (!user) return res.sendStatus(401);
-  res.json(user);
-});
-
-// שמירת שיחה
 app.post('/chat/save', (req, res) => {
   const { email, content } = req.body;
   messages.push({ email, content, timestamp: Date.now() });
-  saveJSON(MESSAGES_FILE, messages);
+  saveJson(MESSAGES_FILE, messages);
   res.sendStatus(200);
 });
 
-// סיכום שיחה למייל
+// --- שליחת סיכום שיחה למייל ---
+
 app.post('/user/send-summary', (req, res) => {
   const user = parseUser(req);
   if (!user) return res.sendStatus(401);
+
   const conv = messages.filter(m => m.email === user.email).map(m => `• ${m.content}`).join("\n");
+
   transporter.sendMail({
     from: '"Escoob Help Center" <escoob30@gmail.com>',
     to: [user.email, 'escoob30@gmail.com'],
     subject: 'סיכום שיחה',
     text: `הנה סיכום השיחה שלך:\n${conv}`
   });
+
   res.sendStatus(200);
 });
 
-// פניות צור קשר
+// --- צור קשר ---
+
 app.post('/submit-contact', async (req, res) => {
   const { name, email, message, category } = req.body;
   const htmlContent = `
@@ -181,12 +148,28 @@ app.post('/submit-contact', async (req, res) => {
       html: htmlContent
     });
     res.json({ success: true });
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: 'שגיאה בשליחת המייל' });
   }
 });
 
-// דשבורד ניהול
+// --- מידע אישי והודעות ---
+
+app.get('/me', (req, res) => {
+  const user = parseUser(req);
+  if (!user) return res.sendStatus(401);
+  res.json(user);
+});
+
+app.get('/user/messages', (req, res) => {
+  const user = parseUser(req);
+  if (!user) return res.sendStatus(401);
+  const userMsgs = messages.filter(m => m.email === user.email);
+  res.json(userMsgs);
+});
+
+// --- ניהול עבור אדמין ---
+
 app.get('/admin/users', (req, res) => {
   const user = parseUser(req);
   if (!user || user.role !== 'admin') return res.sendStatus(403);
@@ -199,9 +182,24 @@ app.get('/admin/messages', (req, res) => {
   res.json(messages);
 });
 
+app.get('/admin/messages/by-date', (req, res) => {
+  const user = parseUser(req);
+  if (!user || user.role !== 'admin') return res.sendStatus(403);
+
+  const grouped = {};
+  messages.forEach(m => {
+    const date = new Date(m.timestamp).toISOString().split('T')[0];
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(m);
+  });
+
+  res.json(grouped);
+});
+
 app.post('/admin/send-summary', (req, res) => {
   const user = parseUser(req);
   if (!user || user.role !== 'admin') return res.sendStatus(403);
+
   const summary = messages.map(m => `${m.email}: ${m.content}`).join("\n");
   transporter.sendMail({
     from: '"Escoob Admin" <escoob30@gmail.com>',
@@ -212,33 +210,55 @@ app.post('/admin/send-summary', (req, res) => {
   res.sendStatus(200);
 });
 
-// --- מאמרים ---
-app.get('/articles', (req, res) => {
-  res.json(articles);
+// --- מאמרים ו-FAQ ---
+
+app.get('/articles/:lang?', (req, res) => {
+  const lang = req.params.lang || 'he';
+  const filtered = articles.filter(a => a.lang === lang || !a.lang);
+  res.json(filtered);
 });
 
-app.post('/articles', (req, res) => {
+app.get('/articles/search/:query', (req, res) => {
+  const query = req.params.query.toLowerCase();
+  const results = articles.filter(a =>
+    a.title.toLowerCase().includes(query) || a.content.toLowerCase().includes(query)
+  );
+  res.json(results);
+});
+
+app.post('/admin/import-articles', (req, res) => {
   const user = parseUser(req);
   if (!user || user.role !== 'admin') return res.sendStatus(403);
-  const newArticle = req.body;
-  newArticle.id = articles.length ? Math.max(...articles.map(a => a.id)) + 1 : 1;
-  newArticle.updated = new Date().toISOString().slice(0, 10);
-  articles.push(newArticle);
-  saveJSON(ARTICLES_FILE, articles);
+
+  const imported = req.body.articles;
+  if (!Array.isArray(imported)) return res.status(400).json({ error: 'Invalid format' });
+
+  articles = imported;
+  saveJson(ARTICLES_FILE, articles);
   res.json({ success: true });
 });
 
-app.put('/articles/:id', (req, res) => {
-  const user = parseUser(req);
-  if (!user || user.role !== 'admin') return res.sendStatus(403);
-  const id = parseInt(req.params.id);
-  const index = articles.findIndex(a => a.id === id);
-  if (index === -1) return res.sendStatus(404);
-  articles[index] = { ...articles[index], ...req.body, updated: new Date().toISOString().slice(0, 10) };
-  saveJSON(ARTICLES_FILE, articles);
+// --- תגובות למאמרים ---
+
+app.get('/comments/:articleId', (req, res) => {
+  const id = Number(req.params.articleId);
+  const articleComments = comments.filter(c => c.articleId === id);
+  res.json(articleComments);
+});
+
+app.post('/comments/:articleId', (req, res) => {
+  const articleId = Number(req.params.articleId);
+  const { name, text } = req.body;
+
+  const comment = { id: Date.now(), articleId, name, text, timestamp: Date.now() };
+  comments.push(comment);
+  saveJson(COMMENTS_FILE, comments);
   res.json({ success: true });
 });
+
+// --- התחלת השרת ---
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
