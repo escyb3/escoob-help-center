@@ -1,56 +1,35 @@
 body {
-  font-family: Arial, sans-serif;
-  background: #f8f9fa;
-  margin: 0;
-  padding: 0;
+  font-family: sans-serif;
+  background: #f9f9f9;
+  padding: 2rem;
   direction: rtl;
 }
 
-.container {
-  max-width: 900px;
-  margin: auto;
-  padding: 2rem;
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
 input, select {
+  padding: 0.5rem;
+  margin-bottom: 1rem;
   width: 100%;
-  padding: 10px;
-  margin-bottom: 1rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
+  max-width: 400px;
 }
 
-.article {
+section {
+  margin-top: 2rem;
+}
+
+h2 {
+  border-bottom: 2px solid #ccc;
+  padding-bottom: 0.5rem;
+}
+
+.article, .faq {
   background: white;
+  margin: 0.5rem 0;
+  padding: 1rem;
   border-radius: 8px;
-  margin-bottom: 1rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  overflow: hidden;
 }
 
-.article-header {
-  background: #007bff;
-  color: white;
-  padding: 1rem;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.article-content {
-  display: none;
-  padding: 1rem;
-  border-top: 1px solid #ddd;
-  background: #fff;
-}
-
-.article-meta {
-  font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 0.5rem;
+.updated {
+  font-size: 0.8em;
+  color: gray;
 }
