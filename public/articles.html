@@ -1,23 +1,28 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>מאמרים - מרכז העזרה</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>מרכז המאמרים וה־FAQ</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>מרכז העזרה - מאמרים</h1>
+  <main>
+    <h1>מרכז מידע</h1>
+    <input type="text" id="search" placeholder="חפש מאמר או שאלה...">
     
-    <input type="text" id="searchInput" placeholder="חפש מאמר..." />
+    <section>
+      <h2>שאלות נפוצות (FAQ)</h2>
+      <div id="faq-list"></div>
+    </section>
 
-    <select id="categoryFilter">
-      <option value="">הצג את כל הקטגוריות</option>
-    </select>
-
-    <div id="articlesContainer"></div>
-  </div>
+    <section>
+      <h2>מאמרים כלליים</h2>
+      <select id="category-filter">
+        <option value="all">כל הקטגוריות</option>
+      </select>
+      <div id="article-list"></div>
+    </section>
+  </main>
 
   <script src="script.js"></script>
 </body>
