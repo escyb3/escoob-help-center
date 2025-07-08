@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -18,37 +17,29 @@ app.use(express.static('public'));
 
 const USERS_FILE = './data/users.json';
 const MESSAGES_FILE = './data/messages.json';
+const ARTICLES_FILE = './data/articles.json';
 
-// קריאת משתמשים מהקובץ
-function loadUsers() {
+// ===== פונקציות עזר ===== //
+function loadJson(filePath) {
   try {
-    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch {
     return [];
   }
 }
-
-// שמירת משתמשים לקובץ
-function saveUsers(data) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(data, null, 2));
+function saveJson(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
-
-// קריאת הודעות
-function loadMessages() {
+function parseUser(req) {
   try {
-    return JSON.parse(fs.readFileSync(MESSAGES_FILE, 'utf8'));
-  } catch {
-    return [];
-  }
+    const cookie = req.cookies.user;
+    return cookie ? JSON.parse(cookie) : null;
+  } catch { return null; }
 }
 
-// שמירת הודעות
-function saveMessages(data) {
-  fs.writeFileSync(MESSAGES_FILE, JSON.stringify(data, null, 2));
-}
-
-let users = loadUsers();
-let messages = loadMessages();
+let users = loadJson(USERS_FILE);
+let messages = loadJson(MESSAGES_FILE);
+let articles = loadJson(ARTICLES_FILE);
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -58,7 +49,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// כניסה בסיסמה
+// ===== התחברות ===== //
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = users.find(u => u.email === email);
@@ -66,18 +57,16 @@ app.post('/login', async (req, res) => {
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) return res.status(401).json({ error: 'Invalid password' });
 
-  res.cookie("user", JSON.stringify({ email: user.email, name: user.name, role: user.role }), { httpOnly: true, maxAge: 604800000 }); // 7 ימים
+  res.cookie("user", JSON.stringify({ email: user.email, name: user.name, role: user.role }), { httpOnly: true, maxAge: 604800000 });
   res.redirect('/dashboard.html');
 });
 
-// כניסה עם OTP
 app.post('/login-otp', (req, res) => {
   const { email } = req.body;
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-  users = users.filter(u => u.email !== email || u.passwordHash); // מחק רק OTP קודמים
+  users = users.filter(u => u.email !== email || u.passwordHash); // מחיקת OTP ישנים
   users.push({ email, name: email.split('@')[0], role: 'user', otp: code });
-  saveUsers(users);
+  saveJson(USERS_FILE, users);
 
   transporter.sendMail({
     from: '"Escoob Help Center" <escoob30@gmail.com>',
@@ -94,32 +83,57 @@ app.post('/login-otp', (req, res) => {
     </form>`);
 });
 
-// אימות קוד OTP
 app.post('/verify-otp', (req, res) => {
   const { email, code } = req.body;
   const user = users.find(u => u.email === email && u.otp === code);
   if (!user) return res.send('קוד שגוי');
 
   user.otp = null;
-  saveUsers(users);
+  saveJson(USERS_FILE, users);
 
   res.cookie("user", JSON.stringify({ email, name: user.name, role: user.role }), { httpOnly: true, maxAge: 604800000 });
   res.redirect('/dashboard.html');
 });
 
-// שמירת שיחות
+// ===== הודעות / שיחות ===== //
 app.post('/chat/save', (req, res) => {
   const { email, content } = req.body;
   messages.push({ email, content, timestamp: Date.now() });
-  saveMessages(messages);
+  saveJson(MESSAGES_FILE, messages);
   res.sendStatus(200);
 });
 
-// סיכום שיחה למייל
+app.get('/user/messages', (req, res) => {
+  const user = parseUser(req);
+  if (!user) return res.sendStatus(401);
+  const userMsgs = messages.filter(m => m.email === user.email);
+  res.json(userMsgs);
+});
+
+app.get('/admin/messages', (req, res) => {
+  const user = parseUser(req);
+  if (!user || user.role !== 'admin') return res.sendStatus(403);
+  res.json(messages);
+});
+
+app.post('/admin/send-summary', (req, res) => {
+  const user = parseUser(req);
+  if (!user || user.role !== 'admin') return res.sendStatus(403);
+  const summary = messages.map(m => `${m.email}: ${m.content}`).join("\n");
+
+  transporter.sendMail({
+    from: '"Escoob Admin" <escoob30@gmail.com>',
+    to: ['escoob30@gmail.com'],
+    subject: 'סיכום כולל מהמערכת',
+    text: summary
+  });
+  res.sendStatus(200);
+});
+
+// ===== שליחת סיכום למייל ===== //
 app.post('/user/send-summary', (req, res) => {
   const user = parseUser(req);
   if (!user) return res.sendStatus(401);
-
   const conv = messages.filter(m => m.email === user.email).map(m => `• ${m.content}`).join("\n");
 
   transporter.sendMail({
@@ -132,7 +146,7 @@ app.post('/user/send-summary', (req, res) => {
   res.sendStatus(200);
 });
 
-// שמירת פניות "צור קשר"
+// ===== צור קשר ===== //
 app.post('/submit-contact', async (req, res) => {
   const { name, email, message, category } = req.body;
   const htmlContent = `
@@ -155,55 +169,41 @@ app.post('/submit-contact', async (req, res) => {
   }
 });
 
-// מידע אישי
+// ===== מידע אישי ===== //
 app.get('/me', (req, res) => {
   const user = parseUser(req);
   if (!user) return res.sendStatus(401);
   res.json(user);
 });
 
-// הודעות משתמש
-app.get('/user/messages', (req, res) => {
-  const user = parseUser(req);
-  if (!user) return res.sendStatus(401);
-  const userMsgs = messages.filter(m => m.email === user.email);
-  res.json(userMsgs);
-});
-
-// דשבורד ניהול
+// ===== משתמשים (מנהל) ===== //
 app.get('/admin/users', (req, res) => {
   const user = parseUser(req);
   if (!user || user.role !== 'admin') return res.sendStatus(403);
   res.json(users);
 });
 
-app.get('/admin/messages', (req, res) => {
-  const user = parseUser(req);
-  if (!user || user.role !== 'admin') return res.sendStatus(403);
-  res.json(messages);
+// ===== מאמרים ===== //
+app.get('/api/articles', (req, res) => {
+  res.json(loadJson(ARTICLES_FILE));
 });
 
-app.post('/admin/send-summary', (req, res) => {
+app.post('/api/articles', (req, res) => {
   const user = parseUser(req);
   if (!user || user.role !== 'admin') return res.sendStatus(403);
-
-  const summary = messages.map(m => `${m.email}: ${m.content}`).join("\n");
-  transporter.sendMail({
-    from: '"Escoob Admin" <escoob30@gmail.com>',
-    to: ['escoob30@gmail.com'],
-    subject: 'סיכום כולל מהמערכת',
-    text: summary
-  });
-  res.sendStatus(200);
+  const articles = req.body;
+  if (!Array.isArray(articles)) {
+    return res.status(400).json({ error: 'פורמט שגוי' });
+  }
+  saveJson(ARTICLES_FILE, articles);
+  res.json({ success: true });
 });
 
-// עוזר
-function parseUser(req) {
-  try {
-    const cookie = req.cookies.user;
-    return cookie ? JSON.parse(cookie) : null;
-  } catch { return null; }
-}
+// ===== הרצת השרת ===== //
+app.listen(port, () => {
+  console.log(`✅ Escoob Help Center server running on port ${port}`);
+});
+
 
 app.listen(port, () => {
   console.log(`✅ Help Center server running on port ${port}`);
