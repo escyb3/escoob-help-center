@@ -1,14 +1,61 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>מרכז המאמרים וה־FAQ</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* קצת עיצוב פשוט */
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      margin: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
+    main {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+    input, select {
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 15px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    h1, h2 {
+      color: #0055a5;
+    }
+    .item {
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
+    }
+    .item:last-child {
+      border-bottom: none;
+    }
+    .item-title {
+      font-weight: bold;
+      cursor: pointer;
+      color: #0077cc;
+    }
+    .item-content {
+      margin-top: 6px;
+      display: none;
+    }
+    .item-content.open {
+      display: block;
+    }
+  </style>
 </head>
 <body>
   <main>
     <h1>מרכז מידע</h1>
-    <input type="text" id="search" placeholder="חפש מאמר או שאלה...">
+    <input type="text" id="search" placeholder="חפש מאמר או שאלה..." autocomplete="off" />
     
     <section>
       <h2>שאלות נפוצות (FAQ)</h2>
@@ -24,6 +71,110 @@
     </section>
   </main>
 
-  <script src="script.js"></script>
+  <script>
+    let articles = [];
+    const faqList = document.getElementById('faq-list');
+    const articleList = document.getElementById('article-list');
+    const categoryFilter = document.getElementById('category-filter');
+    const searchInput = document.getElementById('search');
+
+    // טען את קובץ ה JSON
+    async function loadArticles() {
+      try {
+        const res = await fetch('/data/articles.json');
+        if (!res.ok) throw new Error('Failed to load articles.json');
+        articles = await res.json();
+        populateCategoryFilter();
+        render();
+      } catch (e) {
+        console.error(e);
+        faqList.innerHTML = '<p>לא ניתן לטעון את המאמרים.</p>';
+        articleList.innerHTML = '';
+      }
+    }
+
+    // מלא את רשימת הקטגוריות לסינון
+    function populateCategoryFilter() {
+      const categories = new Set();
+      articles.forEach(a => categories.add(a.category));
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categoryFilter.appendChild(option);
+      });
+    }
+
+    // הצגת פריטים לפי סינון וחיפוש
+    function render() {
+      const searchText = searchInput.value.trim().toLowerCase();
+      const selectedCategory = categoryFilter.value;
+
+      // סינון FAQ
+      const filteredFaqs = articles.filter(a =>
+        a.type === 'faq' &&
+        (selectedCategory === 'all' || a.category === selectedCategory) &&
+        (a.title.toLowerCase().includes(searchText) || a.content.toLowerCase().includes(searchText))
+      );
+
+      // סינון מאמרים
+      const filteredArticles = articles.filter(a =>
+        a.type === 'article' &&
+        (selectedCategory === 'all' || a.category === selectedCategory) &&
+        (a.title.toLowerCase().includes(searchText) || a.content.toLowerCase().includes(searchText))
+      );
+
+      // הצגת FAQ
+      faqList.innerHTML = '';
+      if (filteredFaqs.length === 0) {
+        faqList.innerHTML = '<p>אין שאלות מתאימות.</p>';
+      } else {
+        filteredFaqs.forEach(faq => {
+          const div = createItemElement(faq);
+          faqList.appendChild(div);
+        });
+      }
+
+      // הצגת מאמרים
+      articleList.innerHTML = '';
+      if (filteredArticles.length === 0) {
+        articleList.innerHTML = '<p>אין מאמרים מתאימים.</p>';
+      } else {
+        filteredArticles.forEach(article => {
+          const div = createItemElement(article);
+          articleList.appendChild(div);
+        });
+      }
+    }
+
+    // יצירת אלמנט לפריט (מאמר או שאלה)
+    function createItemElement(item) {
+      const div = document.createElement('div');
+      div.className = 'item';
+
+      const title = document.createElement('div');
+      title.className = 'item-title';
+      title.textContent = item.title;
+      title.onclick = () => {
+        content.classList.toggle('open');
+      };
+
+      const content = document.createElement('div');
+      content.className = 'item-content';
+      content.textContent = item.content;
+
+      div.appendChild(title);
+      div.appendChild(content);
+
+      return div;
+    }
+
+    // אירוע חיפוש וסינון
+    searchInput.addEventListener('input', render);
+    categoryFilter.addEventListener('change', render);
+
+    // אתחל טעינת המאמרים
+    loadArticles();
+  </script>
 </body>
 </html>
