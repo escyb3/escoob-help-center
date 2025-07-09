@@ -20,22 +20,53 @@ const MESSAGES_FILE = './data/messages.json';
 const ARTICLES_FILE = './data/articles.json';
 const COMMENTS_FILE = './data/comments.json';
 
-function loadJson(file, fallback = []) {
+// --- עזרה בקריאה וכתיבה לקבצים ---
+function loadJsonFile(filepath) {
   try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
+    return JSON.parse(fs.readFileSync(filepath, 'utf8'));
   } catch {
-    return fallback;
+    return [];
   }
 }
-
-function saveJson(file, data) {
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
+function saveJsonFile(filepath, data) {
+  fs.writeFileSync(filepath, JSON.stringify(data, null, 2));
 }
 
-let users = loadJson(USERS_FILE);
-let messages = loadJson(MESSAGES_FILE);
-let articles = loadJson(ARTICLES_FILE);
-let comments = loadJson(COMMENTS_FILE);
+// --- משתמשים ---
+function loadUsers() {
+  return loadJsonFile(USERS_FILE);
+}
+function saveUsers(data) {
+  saveJsonFile(USERS_FILE, data);
+}
+let users = loadUsers();
+
+// --- הודעות ---
+function loadMessages() {
+  return loadJsonFile(MESSAGES_FILE);
+}
+function saveMessages(data) {
+  saveJsonFile(MESSAGES_FILE, data);
+}
+let messages = loadMessages();
+
+// --- מאמרים ו-FAQ ---
+function loadArticles() {
+  return loadJsonFile(ARTICLES_FILE);
+}
+function saveArticles(data) {
+  saveJsonFile(ARTICLES_FILE, data);
+}
+let articles = loadArticles();
+
+// --- תגובות ---
+function loadComments() {
+  return loadJsonFile(COMMENTS_FILE);
+}
+function saveComments(data) {
+  saveJsonFile(COMMENTS_FILE, data);
+}
+let comments = loadComments();
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -45,18 +76,15 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// פונקציית עזר לניתוח משתמש
+// --- פונקציה לזיהוי משתמש מה-cookie ---
 function parseUser(req) {
   try {
     const cookie = req.cookies.user;
     return cookie ? JSON.parse(cookie) : null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
-// --- מערכת התחברות ---
-
+// --- כניסה בסיסמה ---
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = users.find(u => u.email === email);
@@ -68,12 +96,15 @@ app.post('/login', async (req, res) => {
   res.redirect('/dashboard.html');
 });
 
+// --- כניסה עם OTP ---
 app.post('/login-otp', (req, res) => {
   const { email } = req.body;
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  users = users.filter(u => u.email !== email || u.passwordHash);
+
+  // הסרת קודי OTP ישנים לאותו אימייל
+  users = users.filter(u => !(u.email === email && u.otp));
   users.push({ email, name: email.split('@')[0], role: 'user', otp: code });
-  saveJson(USERS_FILE, users);
+  saveUsers(users);
 
   transporter.sendMail({
     from: '"Escoob Help Center" <escoob30@gmail.com>',
@@ -90,29 +121,28 @@ app.post('/login-otp', (req, res) => {
     </form>`);
 });
 
+// --- אימות קוד OTP ---
 app.post('/verify-otp', (req, res) => {
   const { email, code } = req.body;
   const user = users.find(u => u.email === email && u.otp === code);
   if (!user) return res.send('קוד שגוי');
 
   user.otp = null;
-  saveJson(USERS_FILE, users);
+  saveUsers(users);
 
   res.cookie("user", JSON.stringify({ email, name: user.name, role: user.role }), { httpOnly: true, maxAge: 604800000 });
   res.redirect('/dashboard.html');
 });
 
 // --- שמירת שיחות ---
-
 app.post('/chat/save', (req, res) => {
   const { email, content } = req.body;
   messages.push({ email, content, timestamp: Date.now() });
-  saveJson(MESSAGES_FILE, messages);
+  saveMessages(messages);
   res.sendStatus(200);
 });
 
-// --- שליחת סיכום שיחה למייל ---
-
+// --- סיכום שיחה למייל ---
 app.post('/user/send-summary', (req, res) => {
   const user = parseUser(req);
   if (!user) return res.sendStatus(401);
@@ -129,8 +159,7 @@ app.post('/user/send-summary', (req, res) => {
   res.sendStatus(200);
 });
 
-// --- צור קשר ---
-
+// --- שמירת פניות "צור קשר" ---
 app.post('/submit-contact', async (req, res) => {
   const { name, email, message, category } = req.body;
   const htmlContent = `
@@ -148,19 +177,19 @@ app.post('/submit-contact', async (req, res) => {
       html: htmlContent
     });
     res.json({ success: true });
-  } catch {
+  } catch (err) {
     res.status(500).json({ error: 'שגיאה בשליחת המייל' });
   }
 });
 
-// --- מידע אישי והודעות ---
-
+// --- מידע אישי ---
 app.get('/me', (req, res) => {
   const user = parseUser(req);
   if (!user) return res.sendStatus(401);
   res.json(user);
 });
 
+// --- הודעות משתמש ---
 app.get('/user/messages', (req, res) => {
   const user = parseUser(req);
   if (!user) return res.sendStatus(401);
@@ -168,34 +197,20 @@ app.get('/user/messages', (req, res) => {
   res.json(userMsgs);
 });
 
-// --- ניהול עבור אדמין ---
-
+// --- דשבורד ניהול ---
+// משתמשים
 app.get('/admin/users', (req, res) => {
   const user = parseUser(req);
   if (!user || user.role !== 'admin') return res.sendStatus(403);
   res.json(users);
 });
-
+// הודעות
 app.get('/admin/messages', (req, res) => {
   const user = parseUser(req);
   if (!user || user.role !== 'admin') return res.sendStatus(403);
   res.json(messages);
 });
-
-app.get('/admin/messages/by-date', (req, res) => {
-  const user = parseUser(req);
-  if (!user || user.role !== 'admin') return res.sendStatus(403);
-
-  const grouped = {};
-  messages.forEach(m => {
-    const date = new Date(m.timestamp).toISOString().split('T')[0];
-    if (!grouped[date]) grouped[date] = [];
-    grouped[date].push(m);
-  });
-
-  res.json(grouped);
-});
-
+// סיכום כולל למייל
 app.post('/admin/send-summary', (req, res) => {
   const user = parseUser(req);
   if (!user || user.role !== 'admin') return res.sendStatus(403);
@@ -210,55 +225,88 @@ app.post('/admin/send-summary', (req, res) => {
   res.sendStatus(200);
 });
 
-// --- מאמרים ו-FAQ ---
+// ====================
+// ניהול מאמרים ו-FAQ
+// ====================
 
-app.get('/articles/:lang?', (req, res) => {
-  const lang = req.params.lang || 'he';
-  const filtered = articles.filter(a => a.lang === lang || !a.lang);
-  res.json(filtered);
+// קבלת כל המאמרים
+app.get('/articles', (req, res) => {
+  res.json(articles);
 });
 
-app.get('/articles/search/:query', (req, res) => {
-  const query = req.params.query.toLowerCase();
-  const results = articles.filter(a =>
-    a.title.toLowerCase().includes(query) || a.content.toLowerCase().includes(query)
-  );
-  res.json(results);
-});
-
-app.post('/admin/import-articles', (req, res) => {
+// הוספה / עדכון מאמר (או FAQ)
+app.post('/admin/articles', (req, res) => {
   const user = parseUser(req);
   if (!user || user.role !== 'admin') return res.sendStatus(403);
 
-  const imported = req.body.articles;
-  if (!Array.isArray(imported)) return res.status(400).json({ error: 'Invalid format' });
+  const article = req.body;
+  if (!article.id) {
+    // חדש
+    article.id = articles.length ? Math.max(...articles.map(a => a.id)) + 1 : 1;
+    articles.push(article);
+  } else {
+    // עדכון
+    const index = articles.findIndex(a => a.id === article.id);
+    if (index >= 0) {
+      articles[index] = article;
+    } else {
+      articles.push(article);
+    }
+  }
+  saveArticles(articles);
+  res.json({ success: true, article });
+});
 
-  articles = imported;
-  saveJson(ARTICLES_FILE, articles);
+// מחיקת מאמר
+app.delete('/admin/articles/:id', (req, res) => {
+  const user = parseUser(req);
+  if (!user || user.role !== 'admin') return res.sendStatus(403);
+
+  const id = parseInt(req.params.id);
+  articles = articles.filter(a => a.id !== id);
+  saveArticles(articles);
   res.json({ success: true });
 });
 
-// --- תגובות למאמרים ---
+// ====================
+// ניהול תגובות למאמרים
+// ====================
 
+// קבלת תגובות למאמר ספציפי
 app.get('/comments/:articleId', (req, res) => {
-  const id = Number(req.params.articleId);
-  const articleComments = comments.filter(c => c.articleId === id);
+  const articleId = parseInt(req.params.articleId);
+  const articleComments = comments.filter(c => c.articleId === articleId);
   res.json(articleComments);
 });
 
-app.post('/comments/:articleId', (req, res) => {
-  const articleId = Number(req.params.articleId);
-  const { name, text } = req.body;
+// הוספת תגובה למאמר
+app.post('/comments', (req, res) => {
+  const { articleId, author, content } = req.body;
+  if (!articleId || !author || !content) return res.status(400).json({ error: "Missing fields" });
 
-  const comment = { id: Date.now(), articleId, name, text, timestamp: Date.now() };
+  const comment = {
+    id: comments.length ? Math.max(...comments.map(c => c.id)) + 1 : 1,
+    articleId,
+    author,
+    content,
+    date: new Date().toISOString()
+  };
   comments.push(comment);
-  saveJson(COMMENTS_FILE, comments);
-  res.json({ success: true });
+  saveComments(comments);
+  res.json({ success: true, comment });
 });
 
-// --- התחלת השרת ---
+// מחיקת תגובה (למנהלים בלבד)
+app.delete('/admin/comments/:id', (req, res) => {
+  const user = parseUser(req);
+  if (!user || user.role !== 'admin') return res.sendStatus(403);
+
+  const id = parseInt(req.params.id);
+  comments = comments.filter(c => c.id !== id);
+  saveComments(comments);
+  res.json({ success: true });
+});
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
-
