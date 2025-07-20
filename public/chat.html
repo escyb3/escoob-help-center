@@ -2,158 +2,101 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Escoob - צ'אט תמיכה</title>
-  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ < a href #articles.html
+  <title>צ'אט תמיכה - מרכז העזרה</title>
+  <link rel="stylesheet" href="style.css" />
   <style>
     body {
-      font-family: 'Varela Round', sans-serif;
+      font-family: 'Arial', sans-serif;
+      background: #f2f2f2;
       margin: 0;
-      background: #f2f4f8;
       display: flex;
       flex-direction: column;
       height: 100vh;
     }
-
     header {
-      background-color: #133fa1;
+      background: #3b82f6;
       color: white;
       padding: 1rem;
       text-align: center;
-    }
-
-    header h1 {
-      margin: 0;
       font-size: 1.5rem;
     }
-
-    #chat-container {
+    #chat {
       flex: 1;
-      padding: 1rem;
       overflow-y: auto;
-      display: flex;
-      flex-direction: column;
+      padding: 1rem;
+      background: #ffffff;
     }
-
     .message {
-      max-width: 70%;
       margin: 0.5rem 0;
-      padding: 0.7rem 1rem;
-      border-radius: 12px;
-      line-height: 1.5;
-      white-space: pre-wrap;
+      max-width: 80%;
+      padding: 0.8rem;
+      border-radius: 15px;
+      position: relative;
+      clear: both;
     }
-
     .user {
-      background-color: #d2e3fc;
-      align-self: flex-start;
-      border-top-left-radius: 0;
+      background-color: #d1e7dd;
+      margin-left: auto;
+      text-align: right;
     }
-
     .bot {
-      background-color: #ffffff;
-      align-self: flex-end;
-      border-top-right-radius: 0;
-      border: 1px solid #d5d5d5;
+      background-color: #e2e3e5;
+      margin-right: auto;
+      text-align: left;
     }
-
-    #input-area {
+    #typingIndicator {
+      display: none;
+      padding: 0.5rem 1rem;
+      font-style: italic;
+      color: #777;
+    }
+    form {
       display: flex;
       padding: 1rem;
-      background: #fff;
-      border-top: 1px solid #ccc;
+      gap: 0.5rem;
+      background-color: #fff;
     }
-
-    #input-area input {
+    input[type="text"] {
       flex: 1;
-      padding: 0.8rem;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid #aaa;
-      margin-left: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 10px;
+      border: 1px solid #ccc;
     }
-
-    #input-area button {
-      background-color: #133fa1;
+    button {
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      background: #3b82f6;
       color: white;
       border: none;
-      padding: 0.8rem 1.2rem;
-      font-size: 1rem;
-      border-radius: 8px;
       cursor: pointer;
     }
-
-    .language-note {
+    #summarySection {
       text-align: center;
-      padding: 0.3rem;
-      font-size: 0.85rem;
-      color: #444;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 0.9rem;
-      color: #aaa;
       padding: 0.5rem;
-      background: #f2f2f2;
+    }
+    #emailInput {
+      margin: 0.5rem;
+      padding: 0.4rem;
+      width: 80%;
+      border-radius: 8px;
+      border: 1px solid #aaa;
     }
   </style>
 </head>
 <body>
-
-<header>
-  <h1>צ'אט תמיכה של Escoob</h1>
-</header>
-
-<div class="language-note">
-  🗣️ הצ'אט תומך בשפות שונות — פשוט כתוב, והמענה יופיע בשפה שלך
-</div>
-
-<main id="chat-container">
-  <!-- ההודעות יוצגו כאן -->
-</main>
-
-<div id="input-area">
-  <input type="text" id="user-input" placeholder="הקלד את ההודעה שלך..." />
-  <button onclick="sendMessage()">שלח</button>
-</div>
-
-<footer>
-  Escoob © 2025
-</footer>
-
-<script>
-  async function sendMessage() {
-    const input = document.getElementById("user-input");
-    const text = input.value.trim();
-    if (!text) return;
-
-    addMessage(text, "user");
-    input.value = "";
-
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
-      });
-
-      const data = await res.json();
-      addMessage(data.response, "bot");
-    } catch (err) {
-      addMessage("שגיאה בשרת. נסה שוב מאוחר יותר.", "bot");
-    }
-  }
-
-  function addMessage(text, sender) {
-    const container = document.getElementById("chat-container");
-    const div = document.createElement("div");
-    div.className = "message " + sender;
-    div.textContent = text;
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
-  }
-</script>
-
+  <header>🤖 צ'אט תמיכה טכנית</header>
+  <main id="chat"></main>
+  <div id="typingIndicator">הבוט כותב<span id="dots">...</span></div>
+  <div id="summarySection">
+    <input type="email" id="emailInput" placeholder="הכנס מייל לקבלת סיכום השיחה" />
+    <button onclick="sendSummary()">📧 שלח לי סיכום שיחה</button>
+  </div>
+  <form id="chatForm">
+    <input type="text" id="userInput" placeholder="הקלד הודעה..." required autocomplete="off" />
+    <button type="submit">שלח</button>
+  </form>
+  <script src="chat.js"></script>
 </body>
 </html>
