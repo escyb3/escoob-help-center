@@ -1,71 +1,78 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const chatForm = document.getElementById('chat-form');
-  const chatInput = document.getElementById('chat-input');
-  const chatBox = document.getElementById('chat-box');
-  const emailInput = document.getElementById('user-email');
-  const sendEmailBtn = document.getElementById('send-email');
+const chatContainer = document.getElementById('chat-container');
+const userInput = document.getElementById('user-input');
+const sendButton = document.getElementById('send-button');
+const emailInput = document.getElementById('email');
+const summaryButton = document.getElementById('send-summary');
 
-  const chatHistory = [];
+let conversationHistory = [];
 
-  function appendMessage(sender, text) {
-    const message = document.createElement('div');
-    message.className = sender === 'user' ? 'user-message' : 'bot-message';
-    message.innerText = text;
-    chatBox.appendChild(message);
-    chatBox.scrollTop = chatBox.scrollHeight;
+function appendMessage(sender, text, imageUrl = null) {
+  const messageElem = document.createElement('div');
+  messageElem.classList.add('message', sender === 'user' ? 'user' : 'bot');
+  messageElem.innerHTML = `
+    ${imageUrl ? `<img src="${imageUrl}" class="avatar">` : ''}
+    <div class="text">${text}</div>
+  `;
+  chatContainer.appendChild(messageElem);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+async function sendMessage() {
+  const message = userInput.value.trim();
+  if (!message) return;
+
+  appendMessage('user', message, 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png');
+  conversationHistory.push({ role: 'user', content: message });
+  userInput.value = '';
+  sendButton.disabled = true;
+
+  try {
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: conversationHistory })
+    });
+
+    const data = await response.json();
+    const reply = data.reply || 'שגיאה בהבאת תשובה מהשרת.';
+    appendMessage('bot', reply, 'https://cdn-icons-png.flaticon.com/512/4712/4712035.png');
+    conversationHistory.push({ role: 'assistant', content: reply });
+  } catch (error) {
+    console.error(error);
+    appendMessage('bot', '❌ שגיאה בשליחת ההודעה לשרת.');
+  } finally {
+    sendButton.disabled = false;
   }
+}
 
-  chatForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const userMessage = chatInput.value.trim();
-    if (!userMessage) return;
+async function sendSummaryEmail() {
+  const email = emailInput.value.trim();
+  if (!email) return alert('יש להזין כתובת אימייל תקינה.');
 
-    appendMessage('user', userMessage);
-    chatHistory.push(`אתה: ${userMessage}`);
-    chatInput.value = '';
+  try {
+    const response = await fetch('/api/summary-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        conversation: conversationHistory
+      })
+    });
 
-    try {
-      const response = await fetch('/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage })
-      });
-
-      const data = await response.json();
-      const botReply = data.reply || 'מצטער, לא הצלחתי להבין את הבקשה.';
-      appendMessage('bot', botReply);
-      chatHistory.push(`בוט: ${botReply}`);
-    } catch (err) {
-      appendMessage('bot', '❌ שגיאה בשליחת ההודעה לשרת');
-      console.error('שגיאה בצ\'אט:', err);
+    const data = await response.json();
+    if (response.ok) {
+      alert('הסיכום נשלח בהצלחה למייל 🎉');
+    } else {
+      alert('שגיאה בשליחת הסיכום: ' + (data.error || ''));
     }
-  });
+  } catch (err) {
+    console.error(err);
+    alert('שגיאה בשליחת הסיכום');
+  }
+}
 
-  sendEmailBtn.addEventListener('click', async () => {
-    const email = emailInput.value.trim();
-    if (!email || !email.includes('@')) {
-      alert('אנא הזן כתובת אימייל חוקית');
-      return;
-    }
-
-    try {
-      const response = await fetch('/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userEmail: email,
-          transcript: chatHistory.join('\n')
-        })
-      });
-
-      if (response.ok) {
-        alert('✅ הסיכום נשלח למייל בהצלחה!');
-      } else {
-        alert('❌ שליחת הסיכום נכשלה');
-      }
-    } catch (err) {
-      alert('⚠️ שגיאה בשליחת הסיכום');
-      console.error('Email error:', err);
-    }
-  });
+sendButton.addEventListener('click', sendMessage);
+userInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') sendMessage();
 });
+summaryButton.addEventListener('click', sendSummaryEmail);
