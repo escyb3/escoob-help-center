@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -386,20 +387,11 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, getDocs, addDoc, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-
         // --- Setup Firebase and Firestore ---
-                const firebaseConfig = {
-  apiKey: "AIzaSyAHY8jrJptQE8S6YYN101hb3ovJ9WAUdDY",
-  authDomain: "dvartorah-7f9dd.firebaseapp.com",
-  projectId: "dvartorah-7f9dd",
-  storageBucket: "dvartorah-7f9dd.firebasestorage.app",
-  messagingSenderId: "905832021676",
-  appId: "1:905832021676:web:02f084bb535ccd29d2a909",
-  measurementId: "G-2YVXMYSBCF"
-};
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=";
-        const API_KEY = "AIzaSyCRfkAJH1D5PAS9B6i_2KE3Ctob3FxzEVc"; // Canvas will automatically provide the API key
+        const API_KEY = ""; // Canvas will automatically provide the API key
         
         let db;
         let auth;
@@ -494,7 +486,8 @@
                         { category: "shop", categoryTitle: "חנות מזכרות וקודש", icon: "fas fa-shopping-bag", question: "אילו מוצרים נמכרים בחנות?", answer: "בחנות תוכלו למצוא מגוון של מזכרות, תשמישי קדושה, וספרי קודש ייחודיים." },
                         { category: "dvar-torah", categoryTitle: "דבר תורה שבועי", icon: "fas fa-book-open", question: "מהי מטרת אתר דבר תורה?", answer: "האתר הוא מיזם של מוסדות בית מדרש דבר תורה ומטרתו להביא את דבר ה' לכל בית יהודי. האתר מכיל סרטונים, דברי תורה כתובים וקישורים לשיעורים שבועיים." },
                         { category: "dvar-torah", categoryTitle: "דבר תורה שבועי", icon: "fas fa-book-open", question: "אילו תכנים ניתן למצוא באתר דבר תורה?", answer: "באתר ניתן למצוא שיעורים מרתקים, דברי תורה מפורשים ומתומצמים, ושיעורים חדשים המועלים מידי שבוע." },
-                        { category: "dvar-torah", categoryTitle: "דבר תורה שבועי", icon: "fas fa-book-open", question: "מי אחראי על השיעורים והתכנים באתר?", answer: "השיעורים והתכנים באתר מועברים על ידי הרב יהודה אביטן שליט''א." }
+                        { category: "dvar-torah", categoryTitle: "דבר תורה שבועי", icon: "fas fa-book-open", question: "כיצד האתר מתקיים?", answer: "אתר 'דבר תורה' מתקיים על בסיס תרומות בלבד. כל תרומה מאפשרת לנו להמשיך את הפעילות החשובה של הפצת התורה והיהדות." },
+                        { category: "dvar-torah", categoryTitle: "דבר תורה שבועי", icon: "fas fa-book-open", question: "האם ניתן לתרום לעמותה?", answer: "כן, ניתן לתרום לעמותה על ידי לחיצה על כפתור 'תרומות' באתר, או ישירות דרך קישור מאובטח." }
                     ];
                     for (const faq of initialData) {
                         await addDoc(faqsCollectionRef, faq);
