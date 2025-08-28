@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מרכז עזרה - מסעדה+ דבר תורה</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts for typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --primary-color: #4a2e1d; /* חום כהה */
+            --secondary-color: #7f5539; /* חום בהיר */
+            --background-color: #f7f3e9; /* צבע רקע קרם */
+        }
+        body {
+            font-family: 'Heebo', 'Inter', sans-serif;
+            background-color: var(--background-color);
+            direction: rtl;
+            text-align: right;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out, padding 0.4s ease-in-out;
+        }
+        .shadow-custom {
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(to left, var(--secondary-color), var(--primary-color));
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 500px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body class="bg-background-color text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- כותרת ראשית של העמוד -->
+        <header class="bg-primary-color text-white rounded-[3rem] p-8 mb-8 text-center shadow-2xl transform hover:scale-105 transition-transform duration-500">
+            <h1 class="text-3xl md:text-5xl font-extrabold mb-2">מרכז העזרה של <br class="md:hidden">מסעדה+ דבר תורה</h1>
+            <p class="text-base md:text-xl font-light">ברוכים הבאים! אנחנו כאן כדי לענות על כל שאלה ולסייע בכל נושא.</p>
+        </header>
+
+        <!-- סרגל חיפוש -->
+        <div class="mb-12 relative">
+            <input id="search-input" type="text" placeholder="חפשו שאלות, נושאים, או מוצרים..." class="w-full p-4 pl-12 rounded-full shadow-lg focus:outline-none focus:ring-4 focus:ring-secondary-color focus:border-transparent transition-all duration-300 border-2 border-transparent hover:border-secondary-color" dir="rtl">
+            <i class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        </div>
+
+        <!-- קטגוריות של שאלות נפוצות (תוכן דינמי מ-Firebase) -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-center mb-8 text-gradient">שאלות נפוצות</h2>
+            <div id="faq-container" class="space-y-6">
+                <!-- FAQ content will be dynamically loaded here by the JavaScript -->
+                <p id="loading-message" class="text-center text-gray-500 text-lg">טוען שאלות נפוצות...</p>
+            </div>
+        </section>
+
+        <div class="w-full h-1 bg-gray-300 rounded-full my-16 opacity-50"></div>
+
+        <!-- טופס יצירת קשר -->
+        <section class="mb-12">
+            <h2 class="text-3xl font-bold text-center mb-8 text-gradient">עדיין זקוקים לעזרה?</h2>
+            <div class="bg-white rounded-3xl p-8 shadow-custom">
+                <p class="text-xl text-center mb-6 text-gray-700">אם לא מצאתם תשובה לשאלתכם, מלאו את הטופס ונחזור אליכם בהקדם.</p>
+                <form id="contact-form" class="space-y-6">
+                    <div>
+                        <label for="name" class="block mb-2 font-semibold">שם מלא:</label>
+                        <input type="text" id="name" name="name" class="w-full p-3 rounded-lg text-gray-800 border-2 border-gray-200 focus:outline-none focus:ring-4 focus:ring-secondary-color/50 transition-all duration-300" required>
+                    </div>
+                    <div>
+                        <label for="email" class="block mb-2 font-semibold">כתובת דוא"ל:</label>
+                        <input type="email" id="email" name="email" class="w-full p-3 rounded-lg text-gray-800 border-2 border-gray-200 focus:outline-none focus:ring-4 focus:ring-secondary-color/50 transition-all duration-300" required>
+                    </div>
+                    <div>
+                        <label for="subject" class="block mb-2 font-semibold">נושא:</label>
+                        <input type="text" id="subject" name="subject" class="w-full p-3 rounded-lg text-gray-800 border-2 border-gray-200 focus:outline-none focus:ring-4 focus:ring-secondary-color/50 transition-all duration-300" required>
+                    </div>
+                    <div>
+                        <label for="message" class="block mb-2 font-semibold">הודעה:</label>
+                        <textarea id="message" name="message" rows="5" class="w-full p-3 rounded-lg text-gray-800 border-2 border-gray-200 focus:outline-none focus:ring-4 focus:ring-secondary-color/50 transition-all duration-300" required></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-secondary-color text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-opacity-90 transition-all duration-300">
+                        שליחה
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- כותרת תחתונה -->
+        <footer class="text-center text-gray-500 mt-8 mb-4">
+            <p>&copy; 2024 מסעדה+ דבר תורה. כל הזכויות שמורות.</p>
+        </footer>
+    </div>
+
+    <!-- Modal for form submission status -->
+    <div id="modal" class="modal">
+        <div class="modal-content text-center">
+            <div id="modal-icon" class="text-5xl mb-4"></div>
+            <p id="modal-message" class="text-xl font-bold mb-2"></p>
+            <p id="modal-sub-message" class="text-gray-600 mb-6"></p>
+            <button id="close-modal" class="bg-secondary-color text-white font-bold py-2 px-6 rounded-full shadow-lg hover:bg-opacity-90 transition-all duration-300">סגור</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the functions you need from the Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Setup Firebase and Firestore ---
+        // Use the global variables provided by the Canvas environment.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let db;
+        let auth;
+        let initialFaqs = [];
+
+        /**
+         * Initializes Firebase and authenticates the user.
+         * The correct sign-in method is used based on whether a custom auth token is available.
+         */
+        async function initFirebaseAndLoadData() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Use a custom token for authentication if provided, otherwise sign in anonymously.
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                console.log("Firebase authentication successful.");
+                await initializeFirestoreData();
+                listenForFAQs();
+
+            } catch (error) {
+                console.error("Firebase initialization or authentication failed:", error);
+                document.getElementById('loading-message').textContent = 'אירעה שגיאת התחברות. אנא נסו לרענן את העמוד.';
+            }
+        }
+
+        /**
+         * Checks if the FAQs collection is empty and populates it with initial data if needed.
+         */
+        async function initializeFirestoreData() {
+            const faqsCollectionRef = collection(db, `artifacts/${appId}/public/data/faqs`);
+            try {
+                const faqsSnapshot = await getDocs(faqsCollectionRef);
+                if (faqsSnapshot.empty) {
+                    console.log("FAQs collection is empty. Populating with initial data...");
+                    const initialData = [
+                        { category: "restaurant", categoryTitle: "מסעדה ואירועים", icon: "fas fa-utensils", question: "מהן שעות הפעילות של המסעדה?", answer: "המסעדה פתוחה בין השעות 12:00 בצהריים ועד 22:00 בערב, מראשון עד חמישי." },
+                        { category: "restaurant", categoryTitle: "מסעדה ואירועים", icon: "fas fa-utensils", question: "האם יש לכם תפריט כשרות מיוחד?", answer: "כל המנות שלנו כשרות למהדרין בהשגחת הרבנות הראשית." },
+                        { category: "dvar-torah", categoryTitle: "דבר תורה שבועי", icon: "fas fa-book-open", question: "האם דברי התורה מתאימים גם לילדים?", answer: "כן, דברי התורה מועברים בשפה קלה ומתאימים לכל המשפחה, כולל ילדים מגיל 6 ומעלה." },
+                        { category: "dvar-torah", categoryTitle: "דבר תורה שבועי", icon: "fas fa-book-open", question: "מתי מתקיים השיעור השבועי?", answer: "השיעור מתקיים מדי יום שלישי בשעה 19:00 בחדר ההרצאות במסעדה." },
+                        { category: "shop", categoryTitle: "חנות מזכרות וקודש", icon: "fas fa-shopping-bag", question: "אילו מוצרים נמכרים בחנות?", answer: "בחנות תוכלו למצוא מגוון של מזכרות, תשמישי קדושה, וספרי קודש ייחודיים." }
+                    ];
+                    for (const faq of initialData) {
+                        await addDoc(faqsCollectionRef, faq);
+                    }
+                    console.log("Initial data populated successfully.");
+                } else {
+                    console.log("FAQs collection already has data. Skipping population.");
+                }
+            } catch (error) {
+                console.error("Error initializing Firestore data:", error);
+            }
+        }
+
+        /**
+         * Listens for real-time changes to the FAQs collection and re-renders the UI.
+         */
+        function listenForFAQs() {
+            const faqsCollectionRef = collection(db, `artifacts/${appId}/public/data/faqs`);
+            const q = query(faqsCollectionRef);
+
+            onSnapshot(q, (querySnapshot) => {
+                initialFaqs = [];
+                querySnapshot.forEach((doc) => {
+                    initialFaqs.push({ id: doc.id, ...doc.data() });
+                });
+                renderFAQs(initialFaqs);
+            }, (error) => {
+                console.error("Error listening to FAQs:", error);
+                document.getElementById('loading-message').textContent = 'שגיאה בטעינת השאלות. אנא נסו שוב מאוחר יותר.';
+            });
+        }
+
+        /**
+         * Renders the FAQs to the UI, grouped by category.
+         * @param {Array<Object>} faqs The array of FAQ documents.
+         */
+        function renderFAQs(faqs) {
+            const faqContainer = document.getElementById('faq-container');
+            faqContainer.innerHTML = '';
+            document.getElementById('loading-message').style.display = 'none';
+
+            // Group FAQs by category
+            const categories = {};
+            faqs.forEach(faq => {
+                const category = faq.category;
+                if (!categories[category]) {
+                    categories[category] = { title: faq.categoryTitle, icon: faq.icon, items: [] };
+                }
+                categories[category].items.push(faq);
+            });
+
+            // Render each category with its questions
+            for (const category in categories) {
+                const categoryData = categories[category];
+                const cardHtml = `
+                    <div class="card bg-white rounded-3xl p-6 shadow-custom hover:shadow-2xl transition-all duration-300">
+                        <h3 class="text-2xl font-bold text-secondary-color mb-4 flex items-center gap-2">
+                            <i class="${categoryData.icon}"></i> ${categoryData.title}
+                        </h3>
+                        <div id="faq-${category}">
+                            ${categoryData.items.map(faq => `
+                                <div class="border-b border-gray-200 last:border-b-0">
+                                    <button class="accordion-button w-full text-right py-4 font-semibold text-primary-color flex justify-between items-center" data-question="${faq.question}">
+                                        <span>${faq.question}</span>
+                                        <i class="fas fa-chevron-down icon text-lg transition-transform duration-300"></i>
+                                    </button>
+                                    <div class="accordion-content p-0 text-gray-600">
+                                        <p class="pb-4">${faq.answer}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                faqContainer.innerHTML += cardHtml;
+            }
+
+            // Re-attach event listeners for the new elements
+            addAccordionListeners();
+        }
+
+        /**
+         * Handles the accordion toggle logic.
+         * @param {Event} event The click event.
+         */
+        function handleAccordionClick(event) {
+            const button = event.currentTarget;
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('.icon');
+
+            const isOpen = content.style.maxHeight !== '0px';
+
+            // Close all other open accordions
+            document.querySelectorAll('.accordion-content').forEach(item => {
+                if (item !== content) {
+                    item.style.maxHeight = '0px';
+                    item.style.padding = '0';
+                    item.previousElementSibling.querySelector('.icon').style.transform = 'rotate(0deg)';
+                }
+            });
+
+            // Toggle the clicked accordion
+            if (!isOpen) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                content.style.padding = '1rem 0';
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.style.maxHeight = '0px';
+                content.style.padding = '0';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        /**
+         * Attaches event listeners to all accordion buttons.
+         */
+        function addAccordionListeners() {
+            document.querySelectorAll('.accordion-button').forEach(button => {
+                button.removeEventListener('click', handleAccordionClick);
+                button.addEventListener('click', handleAccordionClick);
+            });
+        }
+
+        /**
+         * Handles the search input logic.
+         * It filters the initial FAQs array and re-renders the UI with the filtered results.
+         */
+        function handleSearch() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            const filteredFaqs = initialFaqs.filter(faq => 
+                faq.question.toLowerCase().includes(searchTerm) || 
+                faq.answer.toLowerCase().includes(searchTerm)
+            );
+            renderFAQs(filteredFaqs);
+        }
+
+        /**
+         * Displays a modal message to the user.
+         * @param {string} message The main message.
+         * @param {string} subMessage The sub-message.
+         * @param {string} type The message type ('success' or 'error').
+         */
+        function showModal(message, subMessage, type) {
+            const modal = document.getElementById('modal');
+            const modalMessage = document.getElementById('modal-message');
+            const modalSubMessage = document.getElementById('modal-sub-message');
+            const modalIcon = document.getElementById('modal-icon');
+
+            modalMessage.textContent = message;
+            modalSubMessage.textContent = subMessage;
+            
+            if (type === 'success') {
+                modalIcon.innerHTML = `<i class="fas fa-check-circle text-green-500"></i>`;
+            } else if (type === 'error') {
+                modalIcon.innerHTML = `<i class="fas fa-times-circle text-red-500"></i>`;
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        // Event listener for the form submission
+        document.addEventListener('DOMContentLoaded', () => {
+            const contactForm = document.getElementById('contact-form');
+            if (contactForm) {
+                contactForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const ticketsCollectionRef = collection(db, `artifacts/${appId}/public/data/tickets`);
+                    
+                    try {
+                        const newTicketData = {
+                            name: document.getElementById('name').value,
+                            email: document.getElementById('email').value,
+                            subject: document.getElementById('subject').value,
+                            message: document.getElementById('message').value,
+                            timestamp: new Date().toISOString(),
+                            status: 'חדשה'
+                        };
+
+                        const docRef = await addDoc(ticketsCollectionRef, newTicketData);
+                        console.log("Ticket created with ID: ", docRef.id);
+
+                        showModal('הפנייה נשלחה בהצלחה!', `מספר הפנייה שלך הוא: ${docRef.id}.`, 'success');
+                        contactForm.reset();
+                    } catch (error) {
+                        console.error("Error adding document:", error);
+                        showModal('אירעה שגיאה בשליחה.', 'אנא נסו שוב מאוחר יותר.', 'error');
+                    }
+                });
+            }
+
+            // Event listener for search input
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', handleSearch);
+
+            // Event listener to close the modal
+            const closeModalButton = document.getElementById('close-modal');
+            closeModalButton.addEventListener('click', () => {
+                document.getElementById('modal').style.display = 'none';
+            });
+
+            // Call the main function to start the app
+            initFirebaseAndLoadData();
+        });
+    </script>
+</body>
+</html>
