@@ -388,10 +388,18 @@
         import { getFirestore, collection, query, onSnapshot, getDocs, addDoc, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Setup Firebase and Firestore ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const firebaseConfig = {
+  apiKey: "AIzaSyAHY8jrJptQE8S6YYN101hb3ovJ9WAUdDY",
+  authDomain: "dvartorah-7f9dd.firebaseapp.com",
+  projectId: "dvartorah-7f9dd",
+  storageBucket: "dvartorah-7f9dd.firebasestorage.app",
+  messagingSenderId: "905832021676",
+  appId: "1:905832021676:web:02f084bb535ccd29d2a909",
+  measurementId: "G-2YVXMYSBCF"
+};
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=";
-        const API_KEY = ""; // Canvas will automatically provide the API key
+        const API_KEY = "AIzaSyCRfkAJH1D5PAS9B6i_2KE3Ctob3FxzEVc"; // Canvas will automatically provide the API key
         
         let db;
         let auth;
