@@ -1,71 +1,1091 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>תיאטרון כוית ומופסון</title>
-  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'Varela Round', sans-serif; margin:0; background:#f8f9fb; color:#333; }
-    header { background:#5a3180; color:white; padding:1rem 2rem; display:flex; justify-content:space-between; align-items:center; }
-    header h1 { margin:0; font-size:1.5rem; }
-    nav a { color:white; text-decoration:none; margin-left:1rem; font-weight:600; }
-    nav a:hover { text-decoration:underline; }
-    .hero { background:url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=1350&q=80') center/cover no-repeat; height:50vh; display:flex; align-items:center; justify-content:center; }
-    .hero button { padding:1rem 2rem; background:#5a3180; color:white; border:none; border-radius:8px; font-size:1.2rem; cursor: pointer; }
-    main { max-width:1000px; margin:2rem auto; padding:0 1rem; }
-    h2 { color:#5a3180; margin-bottom:1rem; text-align:center; }
-    .shows, .cast { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
-    .show-card, .actor-card { background:white; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); width:280px; overflow:hidden; text-align:center; }
-    .show-card img, .actor-card img { width:100%; height:180px; object-fit:cover; }
-    .show-card h3, .actor-card h3 { color:#5a3180; margin:0.8rem 0; }
-    .show-card p { margin:0.2rem 1rem; font-size:0.95rem; }
-    .show-card button { margin:1rem auto; display:block; background:#5a3180; color:white; padding:0.7rem 1rem; border:none; border-radius:6px; cursor:pointer; }
-    .contact { background:white; padding:1.5rem; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-top:3rem; }
-    .contact label { display:block; margin-top:1rem; font-weight:bold; }
-    .contact input, .contact textarea { width:100%; padding:0.6rem; margin-top:0.4rem; border:1px solid #ccc; border-radius:5px; }
-    .contact button { margin-top:1.2rem; background:#5a3180; color:white; padding:0.7rem 1.2rem; border:none; border-radius:6px; cursor:pointer; }
-    footer { text-align:center; padding:1rem; background:#eaeaea; font-size:0.9rem; color:#555; margin-top:2rem; }
-    @media(max-width:600px){ .show-card, .actor-card { width:100%; } header { flex-direction:column; gap:1rem; } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תיאטרון כוית ומופסון</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f3e9;
+            color: #333;
+        }
+
+        /* Gradient for buttons and cards */
+        .gradient-background {
+            background: linear-gradient(145deg, #a77756, #d49a75);
+        }
+
+        .gradient-text {
+            background-image: linear-gradient(145deg, #a77756, #d49a75);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d49a75;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a77756;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .view.hidden {
+            display: none;
+        }
+
+        /* Seat styles */
+        .seat {
+            width: 30px;
+            height: 30px;
+            background-color: #ccc;
+            border-radius: 5px;
+            margin: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            color: #333;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .seat:hover {
+            transform: scale(1.1);
+        }
+
+        .seat.available {
+            background-color: #d49a75;
+            color: white;
+        }
+
+        .seat.selected {
+            background-color: #a77756;
+            transform: scale(1.1);
+            position: relative;
+        }
+
+        .seat.selected::after {
+            content: '✔';
+            position: absolute;
+            font-size: 16px;
+            color: white;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .seat.reserved {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+
+        #stage {
+            width: 100%;
+            height: 60px;
+            background-color: #333;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
-<body>
 
-<header>
-  <h1>תיאטרון כוית ומופסון</h1>
-  <nav>
-    <a href="theater.html">בית</a>
-    <a href="#shows">הצגות קרובות</a>
-    <a href="#cast">הצוות שלנו</a>
-    <a href="contact_send_mail.html">צור קשר</a>
-  </nav>
-</header>
+<body class="bg-[#f7f3e9] flex flex-col items-center p-4 min-h-screen">
+    <div class="max-w-6xl w-full">
 
-<section class="hero">
-  <button onclick="location.href='#shows'">הזמן כרטיס</button>
-</section>
+        <!-- Header and Auth Section -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 p-4 bg-white rounded-xl shadow-md">
+            <h1 class="text-4xl font-bold gradient-text text-center md:text-right mb-4 md:mb-0">
+                תיאטרון כוית ומופסון
+            </h1>
+            <div id="auth-controls" class="flex items-center space-x-2 space-x-reverse text-sm font-medium text-gray-700">
+                <div id="logged-in-state" class="hidden flex items-center space-x-2 space-x-reverse">
+                    <span id="user-info" class="text-center md:text-right">שלום, משתמש</span>
+                    <button id="logout-button" class="py-1 px-3 rounded-md text-white text-xs gradient-background hover:opacity-90 transition-opacity">
+                        התנתק
+                    </button>
+                </div>
+                <div id="logged-out-state">
+                    <button id="login-button" class="py-1 px-3 rounded-md text-white text-xs gradient-background hover:opacity-90 transition-opacity">
+                        התחבר / הירשם
+                    </button>
+                </div>
+            </div>
+            <nav class="flex space-x-4 space-x-reverse mt-4 md:mt-0">
+                <button onclick="navigateTo('home')" class="py-2 px-4 rounded-md text-white font-medium gradient-background hover:opacity-90 transition-opacity">
+                    הצגות
+                </button>
+                <button onclick="navigateTo('my-orders')" class="py-2 px-4 rounded-md text-white font-medium gradient-background hover:opacity-90 transition-opacity">
+                    ההזמנות שלי
+                </button>
+                <button id="admin-dashboard-btn" onclick="navigateTo('admin-dashboard')" class="py-2 px-4 rounded-md text-white font-medium gradient-background hover:opacity-90 transition-opacity hidden">
+                    לוח בקרה למנהל
+                </button>
+            </nav>
+        </header>
 
-<main>
-  <section id="shows">
-    <h2>הצגות קרובות</h2>
-    <div class="shows">
-      <div class="show-card">
-        <img src="https://images.unsplash.com/photo-1508293968428-2f760a42bea6?auto=format&fit=crop&w=600&q=80" alt="הצגה א">
-        <h3>הצגה א'</h3>
-        <p>תאריך: 15 ביולי 2025</p>
-        <button>הזמן כרטיס</button>
-      </div>
-      <div class="show-card">
-        <img src="https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=600&q=80" alt="הצגה ב">
-        <h3>הצגה ב'</h3>
-        <p>תאריך: 22 ביולי 2025</p>
-        <button>הזמן כרטיס</button>
-      </div>
+        <!-- Main content area -->
+        <main class="w-full">
+            <!-- Home View (default) -->
+            <div id="home-view" class="view">
+                <div class="text-lg text-gray-700 mb-8 p-4 bg-white rounded-xl shadow-md">
+                    <p>
+                        תיאטרון כוית ומופסון הוקם מבית חברת אסקוב בע"מ בשנת 2020. אנו מציגים מגוון רחב של הצגות איכותיות.
+                    </p>
+                    <p class="mt-4">
+                        ברוכים הבאים לאתר התיאטרון שלנו! כאן תוכלו לראות את לוח ההצגות העדכני ולהזמין כרטיסים.
+                    </p>
+                </div>
+                
+                <!-- Recommended Plays Section -->
+                <section id="recommended-plays-section" class="hidden">
+                    <h2 class="text-2xl font-bold gradient-text mb-4 text-center">הצגות מומלצות עבורך</h2>
+                    <div id="recommended-plays-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <!-- Recommended play cards will be inserted here -->
+                    </div>
+                </section>
+
+                <!-- Search and Filter Section -->
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 md:space-x-4 md:space-x-reverse p-4 bg-white rounded-xl shadow-md">
+                    <input type="text" id="search-input" placeholder="חיפוש הצגה..." class="w-full md:w-1/2 rounded-md p-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    <select id="filter-select" class="w-full md:w-auto rounded-md p-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="all">כל הסוגים</option>
+                        <option value="קומדיה">קומדיה</option>
+                        <option value="דרמה">דרמה</option>
+                        <option value="ילדים">ילדים</option>
+                        <option value="מוזיקלי">מוזיקלי</option>
+                    </select>
+                </div>
+
+                <!-- Plays Section -->
+                <section>
+                    <h2 class="text-2xl font-bold gradient-text mb-4 text-center">כל ההצגות</h2>
+                    <div id="events-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Cards will be dynamically inserted here by JavaScript -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- My Orders View (hidden by default) -->
+            <div id="my-orders-view" class="view hidden">
+                <h2 class="text-2xl font-bold gradient-text mb-6 text-center">ההזמנות שלי</h2>
+                <div id="orders-container" class="space-y-4">
+                    <!-- Orders will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Admin Dashboard View (hidden by default) -->
+            <div id="admin-dashboard-view" class="view hidden">
+                <h2 class="text-2xl font-bold gradient-text mb-6 text-center">לוח בקרה למנהל</h2>
+                <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+                    <h3 class="text-xl font-bold mb-4">דוח מכירות</h3>
+                    <div id="sales-report">
+                        <p><strong>סה"כ הזמנות:</strong> <span id="total-orders">0</span></p>
+                        <p><strong>סה"כ הכנסות:</strong> <span id="total-revenue">0</span> ₪</p>
+                        <p><strong>הצגה נמכרת ביותר:</strong> <span id="best-selling-play">אין נתונים</span></p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+                    <h3 class="text-xl font-bold mb-4">ניהול הצגות</h3>
+                    <button id="add-play-btn" class="py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white gradient-background hover:opacity-90">הוסף הצגה חדשה</button>
+                    <div id="admin-plays-list" class="mt-4 space-y-4">
+                        <!-- Admin play cards will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment View -->
+            <div id="payment-view" class="view hidden">
+                <h2 class="text-2xl font-bold gradient-text mb-6 text-center">תשלום עבור ההזמנה</h2>
+                <div id="payment-card" class="bg-white p-6 rounded-xl shadow-md max-w-md mx-auto">
+                    <div id="payment-details" class="mb-4 text-right">
+                        <p><strong>הצגה:</strong> <span id="payment-play-title"></span></p>
+                        <p><strong>סה"כ לתשלום:</strong> <span id="payment-total-price"></span> ₪</p>
+                    </div>
+                    <form id="payment-form" class="space-y-4">
+                        <div>
+                            <label for="card-number" class="block text-sm font-medium text-gray-700">מספר כרטיס</label>
+                            <input type="text" id="card-number" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="xxxx-xxxx-xxxx-xxxx">
+                        </div>
+                        <div class="flex space-x-4 space-x-reverse">
+                            <div class="flex-1">
+                                <label for="card-expiry" class="block text-sm font-medium text-gray-700">תוקף</label>
+                                <input type="text" id="card-expiry" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="MM/YY">
+                            </div>
+                            <div class="flex-1">
+                                <label for="card-cvv" class="block text-sm font-medium text-gray-700">CVV</label>
+                                <input type="text" id="card-cvv" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="xxx">
+                            </div>
+                        </div>
+                        <div id="payment-message" class="mt-2 text-sm font-medium text-red-500 text-center"></div>
+                        <button type="submit" class="w-full py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white gradient-background">
+                            שלם עכשיו
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- Auth Modal -->
+        <div id="auth-modal" class="modal">
+            <div class="modal-content text-center">
+                <span class="close-button" onclick="closeModal('auth-modal')">&times;</span>
+                <h3 id="auth-modal-title" class="text-2xl font-semibold gradient-text mb-4">התחברות</h3>
+                <form id="auth-form" class="space-y-4">
+                    <div>
+                        <label for="auth-email" class="block text-sm font-medium text-gray-700">דוא"ל</label>
+                        <input type="email" id="auth-email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
+                    <div>
+                        <label for="auth-password" class="block text-sm font-medium text-gray-700">סיסמה</label>
+                        <input type="password" id="auth-password" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
+                    <div id="auth-message" class="mt-2 text-sm font-medium text-red-500"></div>
+                    <button type="submit" id="auth-submit-button" class="w-full py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white gradient-background">התחבר</button>
+                </form>
+                <button id="toggle-auth-mode" class="mt-4 text-sm text-gray-500 underline">אין לך חשבון? הירשם</button>
+            </div>
+        </div>
+
+        <!-- Booking Modal - Now for seat selection -->
+        <div id="booking-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('booking-modal')">&times;</span>
+                <h2 id="modal-play-title" class="text-2xl font-semibold gradient-text mb-4 text-center"></h2>
+                <p class="text-center text-gray-600 mb-4">בחר את המושבים שלך</p>
+                <div id="seating-map" class="flex flex-col items-center p-4 bg-gray-100 rounded-lg">
+                    <div id="stage">במה</div>
+                    <div id="seat-rows" class="flex flex-col items-center">
+                        <!-- Seats will be dynamically generated here -->
+                    </div>
+                    <div id="seat-selection-summary" class="mt-4 text-center font-bold text-gray-700">
+                        <p>סה"כ מושבים שנבחרו: <span id="selected-seats-count">0</span></p>
+                        <p>סה"כ לתשלום: <span id="selected-seats-price">0</span> ₪</p>
+                    </div>
+                </div>
+                <div class="flex justify-center mt-6">
+                    <button id="proceed-to-payment" class="py-2 px-6 rounded-md shadow-sm text-sm font-medium text-white gradient-background hover:opacity-90">
+                        המשך לתשלום
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Booking Confirmation Modal -->
+        <div id="confirmation-modal" class="modal">
+            <div class="modal-content text-center">
+                <h3 class="text-2xl font-semibold gradient-text mb-4">הזמנה אושרה!</h3>
+                <p class="text-lg font-medium mb-2">תודה על הזמנתך.</p>
+                <div id="confirmation-details" class="bg-gray-100 p-4 rounded-lg mt-4 text-right">
+                    <p><strong>הצגה:</strong> <span id="conf-play-title"></span></p>
+                    <p><strong>מספר כרטיסים:</strong> <span id="conf-tickets"></span></p>
+                    <p><strong>שם:</strong> <span id="conf-name"></span></p>
+                    <p><strong>דוא"ל:</strong> <span id="conf-email"></span></p>
+                    <p><strong>מושבים:</strong> <span id="conf-seats"></span></p>
+                    <p class="mt-2 text-sm text-gray-500"><strong>מספר הזמנה:</strong> <span id="conf-booking-id"></span></p>
+                </div>
+                <button onclick="closeModal('confirmation-modal')" class="mt-6 py-2 px-6 rounded-md shadow-sm text-sm font-medium text-white gradient-background">סגור</button>
+            </div>
+        </div>
+
+        <!-- Add/Edit Play Modal -->
+        <div id="play-form-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" onclick="closeModal('play-form-modal')">&times;</span>
+                <h3 id="play-form-title" class="text-2xl font-semibold gradient-text mb-4"></h3>
+                <form id="play-form" class="space-y-4">
+                    <div>
+                        <label for="play-title-input" class="block text-sm font-medium text-gray-700">שם הצגה</label>
+                        <input type="text" id="play-title-input" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                    </div>
+                    <div>
+                        <label for="play-description-input" class="block text-sm font-medium text-gray-700">תיאור</label>
+                        <textarea id="play-description-input" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"></textarea>
+                    </div>
+                    <div class="flex space-x-4 space-x-reverse">
+                        <div class="flex-1">
+                            <label for="play-type-input" class="block text-sm font-medium text-gray-700">סוג</label>
+                            <select id="play-type-input" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                                <option value="קומדיה">קומדיה</option>
+                                <option value="דרמה">דרמה</option>
+                                <option value="ילדים">ילדים</option>
+                                <option value="מוזיקלי">מוזיקלי</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label for="play-price-input" class="block text-sm font-medium text-gray-700">מחיר</label>
+                            <input type="number" id="play-price-input" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="play-image-input" class="block text-sm font-medium text-gray-700">כתובת תמונה</label>
+                        <input type="url" id="play-image-input" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div id="play-form-message" class="text-sm font-medium text-red-500"></div>
+                    <button type="submit" class="w-full py-2 px-4 rounded-md shadow-sm text-sm font-medium text-white gradient-background">שמור</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- General Message Modal (replaces alert/confirm) -->
+        <div id="message-modal" class="modal">
+            <div class="modal-content">
+                <p id="modal-text" class="text-center text-lg font-medium"></p>
+                <div class="mt-4 flex justify-center">
+                    <button onclick="closeModal('message-modal')" class="py-2 px-6 rounded-md shadow-sm text-sm font-medium text-white gradient-background">סגור</button>
+                </div>
+            </div>
+        </div>
     </div>
-  </section>
 
-  <section id="cast">
-    <h2>הצוות שלנו</h2>
-    <div class="cast">
-      <div class="actor-card">
-        <img src="https://images.unsplash.com/photo-1522071820081-009f
+    <script type="module">
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJi_DPggnBRL4FkdIW2xC6eGdH5NtHOZ4",
+            authDomain: "theater-escoob.firebaseapp.com",
+            projectId: "theater-escoob",
+            storageBucket: "theater-escoob.firebasestorage.app",
+            messagingSenderId: "381106635334",
+            appId: "1:381106635334:web:32f247f3ca7348229e8047",
+            measurementId: "G-G7JNK4N0VK"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, serverTimestamp, query, where, getDocs, setLogLevel, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase instances and state
+        let app, db, auth;
+        let userId = null;
+        let isAdmin = false;
+        let currentPlayId = null;
+        let allPlays = [];
+        let authMode = 'login'; // 'login' or 'signup'
+        let currentBooking = {};
+
+        // Expose functions to the global scope for event handlers
+        window.openBookingModal = openBookingModal;
+        window.openPlayFormModal = openPlayFormModal;
+        window.deletePlay = deletePlay;
+        window.closeModal = closeModal;
+        window.navigateTo = navigateTo;
+
+        // UI Elements
+        const loggedInStateEl = document.getElementById('logged-in-state');
+        const loggedOutStateEl = document.getElementById('logged-out-state');
+        const userInfoEl = document.getElementById('user-info');
+        const homeView = document.getElementById('home-view');
+        const myOrdersView = document.getElementById('my-orders-view');
+        const adminDashboardView = document.getElementById('admin-dashboard-view');
+        const paymentView = document.getElementById('payment-view');
+        const eventsContainer = document.getElementById('events-container');
+        const ordersContainer = document.getElementById('orders-container');
+        const searchInput = document.getElementById('search-input');
+        const filterSelect = document.getElementById('filter-select');
+        const bookingModalEl = document.getElementById('booking-modal');
+        const confirmationModalEl = document.getElementById('confirmation-modal');
+        const messageModalEl = document.getElementById('message-modal');
+        const modalPlayTitleEl = document.getElementById('modal-play-title');
+        const proceedToPaymentBtn = document.getElementById('proceed-to-payment');
+        const paymentForm = document.getElementById('payment-form');
+        const paymentMessageEl = document.getElementById('payment-message');
+        const paymentPlayTitleEl = document.getElementById('payment-play-title');
+        const paymentTotalPriceEl = document.getElementById('payment-total-price');
+
+        const authModalEl = document.getElementById('auth-modal');
+        const authForm = document.getElementById('auth-form');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const authModalTitleEl = document.getElementById('auth-modal-title');
+        const authSubmitButton = document.getElementById('auth-submit-button');
+        const authMessageEl = document.getElementById('auth-message');
+        const toggleAuthModeButton = document.getElementById('toggle-auth-mode');
+        const loginButton = document.getElementById('login-button');
+        const logoutButton = document.getElementById('logout-button');
+
+        const adminDashboardBtn = document.getElementById('admin-dashboard-btn');
+        const salesReportEl = document.getElementById('sales-report');
+        const adminPlaysListEl = document.getElementById('admin-plays-list');
+        const addPlayBtn = document.getElementById('add-play-btn');
+        const playFormModal = document.getElementById('play-form-modal');
+        const playFormTitle = document.getElementById('play-form-title');
+        const playForm = document.getElementById('play-form');
+        const playTitleInput = document.getElementById('play-title-input');
+        const playDescriptionInput = document.getElementById('play-description-input');
+        const playTypeInput = document.getElementById('play-type-input');
+        const playPriceInput = document.getElementById('play-price-input');
+        const playImageInput = document.getElementById('play-image-input');
+        const playFormMessageEl = document.getElementById('play-form-message');
+        const recommendedPlaysSection = document.getElementById('recommended-plays-section');
+        const recommendedPlaysContainer = document.getElementById('recommended-plays-container');
+
+
+        // Initial play data (will be added to Firestore if the collection is empty)
+        const initialPlays = [
+            { title: "כוית ומופסון", description: "קומדיה מרגשת על שני חברים טובים שמנסים להסתגל לעולם המודרני, תוך התמודדות עם אתגרים מצחיקים ומרגשים.", image: "https://placehold.co/600x400/d49a75/fff?text=Kavit+and+Mofson", type: "קומדיה", price: 85 },
+            { title: "מרי השלג", description: "הצגה דרמטית על מערכת יחסים בין אם לבתה על רקע נופי החורף הארקטי. סיפור נוגע ללב על אהבה, הקרבה וגאולה.", image: "https://placehold.co/600x400/a77756/fff?text=Snow+Mary", type: "דרמה", price: 100 },
+            { title: "בצליקו ותפוזיקו", description: "הצגת ילדים צבעונית ומלאת דמיון על שני חברים, בצל ותפוז, שיוצאים למסע למציאת המרכיב הסודי להכנת עוגה מיוחדת.", image: "https://placehold.co/600x400/98c1d9/fff?text=Btzaliko+and+Tapuziko", type: "ילדים", price: 50 },
+            { title: "מלחי ופלפל", description: "הצגה מוזיקלית קלילה ומהנה על שני תבלינים, מלח ופלפל, שרוצים להוסיף טעם לחיים.", image: "https://placehold.co/600x400/5c6b73/fff?text=Malahi+and+Pilpel", type: "מוזיקלי", price: 90 }
+        ];
+        const ADMIN_EMAIL = 'admin@example.com';
+
+        // Functions for modal messages
+        function showMessageModal(message) {
+            document.getElementById('modal-text').textContent = message;
+            messageModalEl.style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Navigate between views
+        function navigateTo(view) {
+            homeView.classList.add('hidden');
+            myOrdersView.classList.add('hidden');
+            paymentView.classList.add('hidden');
+            adminDashboardView.classList.add('hidden');
+            recommendedPlaysSection.classList.add('hidden');
+
+            if (view === 'home') {
+                homeView.classList.remove('hidden');
+                if (userId && !isAdmin) {
+                    showRecommendations();
+                }
+            } else if (view === 'my-orders') {
+                myOrdersView.classList.remove('hidden');
+                if (userId) {
+                    listenForOrders(userId);
+                } else {
+                    ordersContainer.innerHTML = `<p class="text-center text-gray-500">יש להתחבר כדי לראות את ההזמנות שלך.</p>`;
+                }
+            } else if (view === 'payment') {
+                paymentView.classList.remove('hidden');
+            } else if (view === 'admin-dashboard') {
+                adminDashboardView.classList.remove('hidden');
+                if (isAdmin) {
+                    loadAdminData();
+                } else {
+                    adminDashboardView.innerHTML = `<p class="text-center text-red-500">אין לך הרשאה לגשת לדף זה.</p>`;
+                }
+            }
+        }
+
+        // Initialize Firebase
+        window.onload = function() {
+            try {
+                if (Object.keys(firebaseConfig).length > 0) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    setLogLevel('debug'); // For debugging in the console
+                    handleAuthentication();
+                    requestNotificationPermission(); // Request permission for push notifications
+                    setupRecurringNotifications(); // Setup recurring notifications
+                } else {
+                    showMessageModal("שגיאת התחברות: הגדרות Firebase לא נמצאו. אנא בדוק את הקובץ.");
+                }
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                showMessageModal("שגיאת התחברות: " + error.message);
+            }
+        };
+
+        // Handle user authentication state
+        function handleAuthentication() {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    isAdmin = user.email === ADMIN_EMAIL;
+                    userInfoEl.textContent = `שלום, ${user.email}`;
+                    loggedInStateEl.classList.remove('hidden');
+                    loggedOutStateEl.classList.add('hidden');
+                    if (isAdmin) {
+                        adminDashboardBtn.classList.remove('hidden');
+                    } else {
+                        adminDashboardBtn.classList.add('hidden');
+                    }
+                    console.log("User is signed in with ID:", userId);
+                    listenForPlays();
+                } else {
+                    userId = null;
+                    isAdmin = false;
+                    loggedInStateEl.classList.add('hidden');
+                    loggedOutStateEl.classList.remove('hidden');
+                    adminDashboardBtn.classList.add('hidden');
+                    console.log("User is signed out.");
+                    listenForPlays(); // Still show plays, but booking is disabled
+                }
+            });
+        }
+
+        // Request permission for push notifications
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('Notification permission granted.');
+                    } else {
+                        console.log('Notification permission denied.');
+                    }
+                });
+            }
+        }
+
+        // Show a local push notification
+        function showPushNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, { body: body });
+            }
+        }
+
+        // Setup a simple recurring notification for demonstration
+        function setupRecurringNotifications() {
+            setInterval(() => {
+                if (Notification.permission === 'granted') {
+                    showPushNotification('הצגה חדשה!', 'אל תחמיצו את ההצגה החדשה שלנו "כוית ומופסון"!');
+                }
+            }, 60000); // Send a notification every minute for demo purposes
+        }
+
+        // Render the list of plays dynamically from Firestore
+        function renderPlays(plays, container) {
+            const searchQuery = searchInput.value.toLowerCase();
+            const filterType = filterSelect.value;
+            
+            const filteredPlays = plays.filter(play => {
+                const matchesSearch = play.title.toLowerCase().includes(searchQuery);
+                const matchesFilter = filterType === 'all' || play.type === filterType;
+                return matchesSearch && matchesFilter;
+            });
+
+            container.innerHTML = '';
+            if (filteredPlays.length === 0) {
+                container.innerHTML = `<p class="text-center col-span-full text-gray-500">לא נמצאו הצגות.</p>`;
+            } else {
+                filteredPlays.forEach(play => {
+                    const card = document.createElement('div');
+                    card.className = 'card bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1';
+                    card.innerHTML = `
+                        <img src="${play.image}" alt="${play.title}" class="w-full h-48 object-cover">
+                        <div class="p-6 flex flex-col items-start">
+                            <h3 class="text-xl font-bold gradient-text mb-2">${play.title}</h3>
+                            <p class="text-sm text-gray-600 mb-4">${play.description}</p>
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full text-white gradient-background mb-4">${play.type}</span>
+                            <span class="text-xl font-bold text-gray-800 self-end">${play.price} ₪</span>
+                            <button onclick="openBookingModal('${play.id}', '${play.title}')" class="w-full mt-4 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white gradient-background hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                הזמן כרטיסים
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+        }
+
+        // Listen for real-time updates to the 'plays' collection
+        async function listenForPlays() {
+            const playsCollectionRef = collection(db, `artifacts/${appId}/public/data/plays`);
+            // Add initial data if the collection is empty
+            const playsQuery = query(playsCollectionRef);
+            const initialDocs = await getDocs(playsQuery);
+            if (initialDocs.empty) {
+                console.log("Collection is empty, adding initial data...");
+                for (const play of initialPlays) {
+                    await addDoc(playsCollectionRef, {
+                        ...play,
+                        createdAt: serverTimestamp(),
+                        seating: generateInitialSeating() // Add initial seating data
+                    });
+                }
+            }
+
+            onSnapshot(playsQuery, (snapshot) => {
+                allPlays = [];
+                snapshot.forEach(doc => {
+                    allPlays.push({ id: doc.id, ...doc.data() });
+                });
+                // Sort plays by creation time, newest first
+                allPlays.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                renderPlays(allPlays, eventsContainer);
+            }, (error) => {
+                console.error("Error listening to plays:", error);
+                showMessageModal("שגיאה בטעינת ההצגות: " + error.message);
+            });
+        }
+        
+        // Show personalized recommendations based on past purchases
+        async function showRecommendations() {
+            if (!userId || isAdmin) return;
+
+            const ordersCollectionRef = collection(db, `artifacts/${appId}/public/data/bookings`);
+            const q = query(ordersCollectionRef, where("userId", "==", userId));
+            const querySnapshot = await getDocs(q);
+            const purchasedTypes = {};
+
+            querySnapshot.forEach(doc => {
+                const order = doc.data();
+                const play = allPlays.find(p => p.title === order.playTitle);
+                if (play) {
+                    purchasedTypes[play.type] = (purchasedTypes[play.type] || 0) + 1;
+                }
+            });
+
+            const userPreferredType = Object.keys(purchasedTypes).sort((a, b) => purchasedTypes[b] - purchasedTypes[a])[0];
+
+            if (userPreferredType) {
+                const recommendedPlays = allPlays.filter(p => p.type === userPreferredType && !querySnapshot.docs.some(d => d.data().playTitle === p.title));
+                if (recommendedPlays.length > 0) {
+                    recommendedPlaysSection.classList.remove('hidden');
+                    renderPlays(recommendedPlays, recommendedPlaysContainer);
+                }
+            }
+        }
+
+        // Generate initial seating map
+        function generateInitialSeating() {
+            const rows = ['A', 'B', 'C', 'D', 'E'];
+            const seatsPerRow = 10;
+            const seatingMap = {};
+            rows.forEach(row => {
+                for (let i = 1; i <= seatsPerRow; i++) {
+                    const seatId = `${row}-${i}`;
+                    seatingMap[seatId] = { isReserved: false };
+                }
+            });
+            return seatingMap;
+        }
+
+        // Render the seating map in the modal
+        function renderSeatingMap(seatingData) {
+            const seatRowsContainer = document.getElementById('seat-rows');
+            seatRowsContainer.innerHTML = '';
+
+            const selectedSeats = Object.keys(seatingData).filter(seatId => seatingData[seatId].isSelected);
+            document.getElementById('selected-seats-count').textContent = selectedSeats.length;
+
+            const play = allPlays.find(p => p.id === currentBooking.playId);
+            const totalPrice = (selectedSeats.length * (play?.price || 0)).toFixed(2);
+            document.getElementById('selected-seats-price').textContent = totalPrice;
+
+            const rows = ['A', 'B', 'C', 'D', 'E'];
+            const seatsPerRow = 10;
+
+            rows.forEach(row => {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'flex justify-center flex-wrap mb-2';
+
+                for (let i = 1; i <= seatsPerRow; i++) {
+                    const seatId = `${row}-${i}`;
+                    const seatInfo = seatingData[seatId];
+                    const seatEl = document.createElement('div');
+
+                    let seatClass = 'seat';
+                    if (seatInfo.isReserved) {
+                        seatClass += ' reserved';
+                    } else if (seatInfo.isSelected) {
+                        seatClass += ' selected';
+                    } else {
+                        seatClass += ' available';
+                    }
+
+                    seatEl.className = seatClass;
+                    seatEl.textContent = i;
+                    seatEl.dataset.seatId = seatId;
+
+                    if (!seatInfo.isReserved) {
+                        seatEl.addEventListener('click', () => toggleSeatSelection(seatId));
+                    }
+                    rowEl.appendChild(seatEl);
+                }
+                seatRowsContainer.appendChild(rowEl);
+            });
+        }
+
+        // Toggle seat selection
+        function toggleSeatSelection(seatId) {
+            const playIndex = allPlays.findIndex(p => p.id === currentBooking.playId);
+            if (playIndex > -1) {
+                const seatInfo = allPlays[playIndex].seating[seatId];
+                if (!seatInfo.isReserved) {
+                    seatInfo.isSelected = !seatInfo.isSelected;
+                    renderSeatingMap(allPlays[playIndex].seating);
+                }
+            }
+        }
+
+        // Open booking modal and load seating data
+        function openBookingModal(playId, playTitle) {
+            if (!userId) {
+                showMessageModal("יש להתחבר כדי להזמין כרטיסים.");
+                return;
+            }
+            currentBooking = { playId: playId, playTitle: playTitle };
+            modalPlayTitleEl.textContent = `הזמנת כרטיסים ל- ${playTitle}`;
+
+            const play = allPlays.find(p => p.id === playId);
+            if (play) {
+                // Ensure initial selection state is reset
+                const seatingDataWithSelection = JSON.parse(JSON.stringify(play.seating));
+                Object.keys(seatingDataWithSelection).forEach(seatId => {
+                    seatingDataWithSelection[seatId].isSelected = false;
+                });
+
+                // This is a bit of a hack to update the global state and then render
+                const playIndex = allPlays.findIndex(p => p.id === playId);
+                allPlays[playIndex].seating = seatingDataWithSelection;
+
+                renderSeatingMap(allPlays[playIndex].seating);
+                bookingModalEl.style.display = 'flex';
+            }
+        }
+
+        // Handle payment process
+        function handlePayment() {
+            const selectedSeats = Object.keys(allPlays.find(p => p.id === currentBooking.playId).seating).filter(seatId => allPlays.find(p => p.id === currentBooking.playId).seating[seatId].isSelected);
+
+            if (selectedSeats.length === 0) {
+                showMessageModal("אנא בחר מושבים לפני התשלום.");
+                return;
+            }
+
+            closeModal('booking-modal');
+            navigateTo('payment');
+
+            const play = allPlays.find(p => p.id === currentBooking.playId);
+            const totalPrice = selectedSeats.length * (play?.price || 0);
+
+            paymentPlayTitleEl.textContent = currentBooking.playTitle;
+            paymentTotalPriceEl.textContent = totalPrice.toFixed(2);
+        }
+
+        // Listen for real-time updates to the 'bookings' collection for the current user
+        function listenForOrders(currentUserId) {
+            const bookingsCollectionRef = collection(db, `artifacts/${appId}/public/data/bookings`);
+            const q = query(bookingsCollectionRef, where("userId", "==", currentUserId));
+
+            onSnapshot(q, (snapshot) => {
+                const orders = [];
+                snapshot.forEach(doc => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+                orders.sort((a, b) => (b.bookingTime?.seconds || 0) - (a.bookingTime?.seconds || 0));
+                renderOrders(orders);
+            }, (error) => {
+                console.error("Error listening to orders:", error);
+                ordersContainer.innerHTML = `<p class="text-center text-red-500">שגיאה בטעינת ההזמנות.</p>`;
+            });
+        }
+
+        // Render the list of orders dynamically from Firestore
+        function renderOrders(orders) {
+            ordersContainer.innerHTML = '';
+            if (orders.length === 0) {
+                ordersContainer.innerHTML = `<p class="text-center text-gray-500">אין לך הזמנות כרגע.</p>`;
+            } else {
+                orders.forEach(order => {
+                    const orderCard = document.createElement('div');
+                    orderCard.className = 'bg-white p-6 rounded-xl shadow-md';
+                    const seats = Array.isArray(order.seats) ? order.seats.join(', ') : '';
+                    orderCard.innerHTML = `
+                        <h3 class="text-lg font-bold gradient-text mb-2">${order.playTitle}</h3>
+                        <p class="text-sm text-gray-600"><strong>מושבים:</strong> ${seats}</p>
+                        <p class="text-sm text-gray-600"><strong>סה"כ לתשלום:</strong> ${order.totalPrice} ₪</p>
+                        <p class="text-sm text-gray-600"><strong>תאריך הזמנה:</strong> ${new Date(order.bookingTime.seconds * 1000).toLocaleDateString("he-IL")}</p>
+                        <p class="text-xs text-gray-400 mt-2"><strong>מספר הזמנה:</strong> ${order.id}</p>
+                    `;
+                    ordersContainer.appendChild(orderCard);
+                });
+            }
+        }
+
+        // Handle form submission for payment
+        paymentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const selectedSeats = Object.keys(allPlays.find(p => p.id === currentBooking.playId).seating).filter(seatId => allPlays.find(p => p.id === currentBooking.playId).seating[seatId].isSelected);
+            if (selectedSeats.length === 0) {
+                paymentMessageEl.textContent = 'אנא בחר מושבים לפני התשלום.';
+                return;
+            }
+
+            const play = allPlays.find(p => p.id === currentBooking.playId);
+            const totalPrice = selectedSeats.length * (play?.price || 0);
+
+            try {
+                // 1. Update seating in Firestore (transaction-like logic)
+                const playRef = doc(db, `artifacts/${appId}/public/data/plays`, currentBooking.playId);
+                const updatedSeating = { ...play.seating };
+                selectedSeats.forEach(seatId => {
+                    updatedSeating[seatId].isReserved = true;
+                    updatedSeating[seatId].isSelected = false;
+                });
+                await updateDoc(playRef, { seating: updatedSeating });
+
+                // 2. Add booking to Firestore
+                const bookingsCollectionRef = collection(db, `artifacts/${appId}/public/data/bookings`);
+                const newBookingDocRef = await addDoc(bookingsCollectionRef, {
+                    playTitle: currentBooking.playTitle,
+                    seats: selectedSeats,
+                    totalPrice: totalPrice,
+                    bookingTime: serverTimestamp(),
+                    userId: userId,
+                });
+
+                // 3. Show confirmation modal
+                document.getElementById('conf-play-title').textContent = currentBooking.playTitle;
+                document.getElementById('conf-tickets').textContent = selectedSeats.length;
+                document.getElementById('conf-seats').textContent = selectedSeats.join(', ');
+                document.getElementById('conf-booking-id').textContent = newBookingDocRef.id;
+                document.getElementById('conf-name').textContent = auth.currentUser.displayName || auth.currentUser.email;
+                document.getElementById('conf-email').textContent = auth.currentUser.email;
+
+                navigateTo('home');
+                confirmationModalEl.style.display = 'flex';
+
+                // 4. Show push notification
+                showPushNotification('ההזמנה אושרה!', `הזמנתך ל'${currentBooking.playTitle}' אושרה. המושבים שלך: ${selectedSeats.join(', ')}.`);
+
+            } catch (error) {
+                console.error("Error during booking process:", error);
+                paymentMessageEl.textContent = `שגיאה בתשלום: ${error.message}`;
+            }
+        });
+
+        // --- Admin Dashboard Functions ---
+        async function loadAdminData() {
+            if (!isAdmin) return;
+
+            // Load sales report
+            const bookingsCollectionRef = collection(db, `artifacts/${appId}/public/data/bookings`);
+            const querySnapshot = await getDocs(bookingsCollectionRef);
+            let totalRevenue = 0;
+            const playSales = {};
+
+            querySnapshot.forEach(doc => {
+                const order = doc.data();
+                totalRevenue += order.totalPrice;
+                playSales[order.playTitle] = (playSales[order.playTitle] || 0) + 1;
+            });
+
+            const bestSellingPlay = Object.keys(playSales).sort((a, b) => playSales[b] - playSales[a])[0];
+
+            document.getElementById('total-orders').textContent = querySnapshot.size;
+            document.getElementById('total-revenue').textContent = totalRevenue.toFixed(2);
+            document.getElementById('best-selling-play').textContent = bestSellingPlay || 'אין נתונים';
+
+            // Load and render admin plays list
+            renderAdminPlays();
+        }
+
+        function renderAdminPlays() {
+            adminPlaysListEl.innerHTML = '';
+            allPlays.forEach(play => {
+                const playCard = document.createElement('div');
+                playCard.className = 'bg-gray-100 p-4 rounded-lg flex justify-between items-center';
+                playCard.innerHTML = `
+                    <span>${play.title}</span>
+                    <div>
+                        <button onclick="openPlayFormModal('${play.id}')" class="py-1 px-3 rounded-md text-white text-xs gradient-background hover:opacity-90 transition-opacity">ערוך</button>
+                        <button onclick="deletePlay('${play.id}')" class="py-1 px-3 rounded-md text-white text-xs bg-red-500 hover:bg-red-600 transition-colors">מחק</button>
+                    </div>
+                `;
+                adminPlaysListEl.appendChild(playCard);
+            });
+        }
+
+        function openPlayFormModal(playId) {
+            playForm.reset();
+            playFormMessageEl.textContent = '';
+            if (playId) {
+                const play = allPlays.find(p => p.id === playId);
+                if (play) {
+                    playFormTitle.textContent = "ערוך הצגה";
+                    playTitleInput.value = play.title;
+                    playDescriptionInput.value = play.description;
+                    playTypeInput.value = play.type;
+                    playPriceInput.value = play.price;
+                    playImageInput.value = play.image;
+                    currentPlayId = playId;
+                }
+            } else {
+                playFormTitle.textContent = "הוסף הצגה חדשה";
+                currentPlayId = null;
+            }
+            playFormModal.style.display = 'flex';
+        }
+
+        playForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const playData = {
+                title: playTitleInput.value,
+                description: playDescriptionInput.value,
+                type: playTypeInput.value,
+                price: Number(playPriceInput.value),
+                image: playImageInput.value
+            };
+            try {
+                if (currentPlayId) {
+                    const playRef = doc(db, `artifacts/${appId}/public/data/plays`, currentPlayId);
+                    await updateDoc(playRef, playData);
+                    showMessageModal("הצגה עודכנה בהצלחה!");
+                } else {
+                    const playsCollectionRef = collection(db, `artifacts/${appId}/public/data/plays`);
+                    await addDoc(playsCollectionRef, {
+                        ...playData,
+                        createdAt: serverTimestamp(),
+                        seating: generateInitialSeating()
+                    });
+                    showMessageModal("הצגה נוספה בהצלחה!");
+                }
+                closeModal('play-form-modal');
+            } catch (error) {
+                console.error("Error saving play:", error);
+                playFormMessageEl.textContent = "שגיאה בשמירת ההצגה: " + error.message;
+            }
+        });
+
+        async function deletePlay(playId) {
+            if (confirm("האם אתה בטוח שברצונך למחוק הצגה זו?")) {
+                try {
+                    const playRef = doc(db, `artifacts/${appId}/public/data/plays`, playId);
+                    await deleteDoc(playRef);
+                    showMessageModal("הצגה נמחקה בהצלחה.");
+                } catch (error) {
+                    console.error("Error deleting play:", error);
+                    showMessageModal("שגיאה במחיקת ההצגה: " + error.message);
+                }
+            }
+        }
+        
+        // --- Auth Functions ---
+        loginButton.addEventListener('click', () => {
+            authMode = 'login';
+            authModalTitleEl.textContent = 'התחברות';
+            authSubmitButton.textContent = 'התחבר';
+            toggleAuthModeButton.textContent = 'אין לך חשבון? הירשם';
+            authModalEl.style.display = 'flex';
+            authMessageEl.textContent = '';
+        });
+
+        logoutButton.addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                navigateTo('home');
+                showMessageModal("התנתקת בהצלחה.");
+            } catch (error) {
+                console.error("Error signing out:", error);
+                showMessageModal("שגיאה בהתנתקות: " + error.message);
+            }
+        });
+
+        toggleAuthModeButton.addEventListener('click', () => {
+            authMode = authMode === 'login' ? 'signup' : 'login';
+            authModalTitleEl.textContent = authMode === 'login' ? 'התחברות' : 'הרשמה';
+            authSubmitButton.textContent = authMode === 'login' ? 'התחבר' : 'הירשם';
+            toggleAuthModeButton.textContent = authMode === 'login' ? 'אין לך חשבון? הירשם' : 'כבר יש לך חשבון? התחבר';
+            authMessageEl.textContent = '';
+        });
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+            authMessageEl.textContent = '';
+            try {
+                if (authMode === 'signup') {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showMessageModal("נרשמת בהצלחה! התחברות אוטומטית...");
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showMessageModal("התחברת בהצלחה!");
+                }
+                closeModal('auth-modal');
+                navigateTo('home');
+            } catch (error) {
+                console.error("Auth error:", error);
+                let message = "שגיאה בהתחברות/הרשמה.";
+                if (error.code === 'auth/email-already-in-use') {
+                    message = 'כתובת האימייל כבר בשימוש.';
+                } else if (error.code === 'auth/invalid-email' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    message = 'שם משתמש או סיסמה שגויים.';
+                } else if (error.code === 'auth/weak-password') {
+                    message = 'הסיסמה חלשה מדי. נסה סיסמה עם לפחות 6 תווים.';
+                }
+                authMessageEl.textContent = message;
+            }
+        });
+
+        // Initial listeners
+        searchInput.addEventListener('input', () => renderPlays(allPlays, eventsContainer));
+        filterSelect.addEventListener('change', () => renderPlays(allPlays, eventsContainer));
+        proceedToPaymentBtn.addEventListener('click', handlePayment);
+        addPlayBtn.addEventListener('click', () => openPlayFormModal(null));
+
+    </script>
+</body>
+</html>
