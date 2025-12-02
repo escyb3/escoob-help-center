@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מרכז העזרה של Escoob</title>
+    <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Base font and background styling */
+        body {
+            font-family: 'Varela Round', sans-serif;
+            background-color: #f5f7fa;
+            color: #2d3748;
+        }
+
+        /* Custom keyframes for fade-in animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Modal specific styling */
+        .modal-message {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+        }
+        .modal-success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .modal-error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Chat bubble styling for detailed ticket view */
+        .chat-bubble {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 1.5rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .user-bubble {
+            background-color: #1e40af; /* Blue-700 */
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 0.5rem;
+        }
+        .agent-bubble {
+            background-color: #e2e8f0; /* Gray-200 */
+            color: #2d3748;
+            align-self: flex-start;
+            border-bottom-left-radius: 0.5rem;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #1e40af;
+            animation: spin 1s ease infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen">
+
+    <!-- Header: Clean and minimal with a subtle shadow -->
+    <header class="bg-white text-gray-800 py-4 px-6 sm:px-8 border-b border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-center animate-fadeInUp">
+        <h1 class="text-2xl font-bold mb-2 sm:mb-0">מרכז העזרה של Escoob</h1>
+        <nav id="nav-menu" class="flex flex-wrap justify-center sm:justify-start gap-4">
+            <a href="#" id="articles-link" class="hidden sm:flex items-center gap-2 text-gray-600 hover:text-blue-600 hover:underline transition-all duration-300 font-semibold">
+                <i class="fas fa-book text-lg"></i>
+                <span>מאמרי עזרה</span>
+            </a>
+            <a href="#" id="tickets-link" class="hidden sm:flex items-center gap-2 text-gray-600 hover:text-blue-600 hover:underline transition-all duration-300 font-semibold">
+                <i class="fas fa-ticket-alt text-lg"></i>
+                <span>הפניות שלי</span>
+            </a>
+            <a href="#" id="contact-link" class="hidden sm:flex items-center gap-2 text-gray-600 hover:text-blue-600 hover:underline transition-all duration-300 font-semibold">
+                <i class="fas fa-envelope text-lg"></i>
+                <span>צור קשר</span>
+            </a>
+            <a href="#" id="logout-link" class="hidden sm:flex items-center gap-2 text-red-600 hover:text-red-800 hover:underline transition-all duration-300 font-semibold">
+                <i class="fas fa-sign-out-alt text-lg"></i>
+                <span>התנתק</span>
+            </a>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-8 flex-grow">
+        <!-- Main content section with a large, inviting search bar -->
+        <section id="articles-section" class="hidden text-center mb-16 py-16 animate-fadeInUp">
+            <h2 class="text-4xl sm:text-5xl font-extrabold mb-4 text-gray-800">כיצד נוכל לעזור לך?</h2>
+            <div class="relative max-w-3xl mx-auto mt-8">
+                <input type="text" id="search-input" placeholder="חפש שאלה, נושא או מדריך..." class="w-full py-4 px-8 text-xl border border-gray-300 rounded-full focus:outline-none focus:ring-4 focus:ring-blue-500 transition-all duration-300 shadow-md" />
+                <i class="fas fa-search absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <div class="text-center mt-6 text-gray-600 text-sm">🗣️ הצ'אט תומך בשפות שונות — פשוט כתוב, והמענה יופיע בשפה שלך</div>
+            <div id="articles-container" class="services mt-12"></div>
+        </section>
+
+        <!-- Single article section (hidden initially) -->
+        <section id="single-article-section" class="hidden my-8 animate-fadeInUp">
+            <button id="back-to-articles-btn" class="mb-6 flex items-center text-blue-600 hover:underline font-semibold transition-colors duration-300">
+                <i class="fas fa-arrow-right ml-2"></i> חזרה למאמרים
+            </button>
+            <div id="single-article-content" class="bg-white rounded-xl shadow-lg p-8">
+                <!-- Article content will be displayed here dynamically -->
+            </div>
+        </section>
+
+        <!-- Tickets list section (hidden initially) -->
+        <section id="tickets-section" class="hidden animate-fadeInUp">
+            <h2 class="text-3xl font-extrabold text-center mb-8 text-gray-800">הפניות שלי</h2>
+            <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <button data-status="all" class="filter-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-full font-semibold transition-colors duration-200 hover:bg-gray-300">כל הפניות</button>
+                <button data-status="נשלחה" class="filter-btn bg-blue-200 text-blue-800 px-4 py-2 rounded-full font-semibold transition-colors duration-200 hover:bg-blue-300">נשלחו</button>
+                <button data-status="בטיפול" class="filter-btn bg-yellow-200 text-yellow-800 px-4 py-2 rounded-full font-semibold transition-colors duration-200 hover:bg-yellow-300">בטיפול</button>
+                <button data-status="נפתרה" class="filter-btn bg-green-200 text-green-800 px-4 py-2 rounded-full font-semibold transition-colors duration-200 hover:bg-green-300">נפתרו</button>
+            </div>
+            <div id="tickets-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+                <!-- Tickets will be displayed here dynamically -->
+            </div>
+        </section>
+        
+        <!-- Single ticket section (hidden initially) -->
+        <section id="single-ticket-section" class="hidden my-8 max-w-2xl mx-auto animate-fadeInUp">
+            <button id="back-to-tickets-btn" class="mb-6 flex items-center text-blue-600 hover:underline font-semibold transition-colors duration-300">
+                <i class="fas fa-arrow-right ml-2"></i> חזרה לפניות
+            </button>
+            <div id="single-ticket-content" class="bg-white rounded-xl shadow-lg p-6 flex flex-col h-[70vh]">
+                <h3 id="ticket-subject" class="text-2xl font-bold mb-2 text-gray-800"></h3>
+                <div class="flex items-center text-sm text-gray-500 mb-4">
+                    <p id="ticket-id" class="ml-4 font-mono"></p>
+                    <p id="ticket-status-label" class="text-xs font-semibold px-2 py-1 rounded-full"></p>
+                </div>
+                <div id="ticket-conversation" class="flex-grow overflow-y-auto mb-4 p-4 rounded-lg bg-gray-100 flex flex-col-reverse">
+                    <!-- Conversation messages will be displayed here -->
+                </div>
+                <div class="flex items-center gap-2 mt-auto">
+                    <textarea id="reply-message" placeholder="הקלד את תגובתך כאן..." class="flex-grow px-4 py-2 border rounded-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    <button id="send-reply-btn" class="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold transition-colors duration-300 hover:bg-blue-700">שלח</button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Login/Signup Section -->
+        <section id="auth-section" class="flex items-center justify-center my-16 animate-fadeInUp">
+            <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+                <h2 id="auth-title" class="text-3xl font-bold text-center mb-6 text-gray-800">התחברות</h2>
+                <div id="auth-message" class="hidden mb-4 p-3 text-center rounded-md font-semibold"></div>
+                <form id="auth-form" class="space-y-4">
+                    <div>
+                        <input type="email" id="auth-email" placeholder="דוא''ל" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <div>
+                        <input type="password" id="auth-password" placeholder="סיסמה" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    </div>
+                    <button type="submit" id="auth-submit-btn" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors duration-300">התחבר</button>
+                </form>
+                <p class="text-center mt-4">
+                    <span id="auth-toggle-text">אין לך חשבון?</span>
+                    <a href="#" id="auth-toggle-link" class="text-blue-600 hover:underline font-semibold">הירשם</a>
+                </p>
+            </div>
+        </section>
+
+        <!-- Loading spinner -->
+        <div id="loading-spinner" class="hidden flex justify-center items-center mt-12">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+        </div>
+
+        <!-- Custom modal for contact form -->
+        <div id="contact-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-1/4 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white animate-fadeInUp">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">שלח פניית תמיכה חדשה</h3>
+                    <div id="modal-message-box" class="modal-message hidden mb-4"></div>
+                    <div class="mt-2 px-4 py-2">
+                        <input type="text" id="contact-name" placeholder="שם מלא" class="w-full px-3 py-2 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="email" id="contact-email" placeholder="דוא''ל" class="w-full px-3 py-2 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="text" id="contact-subject" placeholder="נושא הפנייה" class="w-full px-3 py-2 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <div id="gemini-suggestions" class="hidden p-3 mb-4 bg-yellow-50 rounded-lg border border-yellow-200 text-sm text-right">
+                            <p class="font-bold text-yellow-800 mb-2 flex items-center justify-end">
+                                <i class="fas fa-lightbulb ml-2"></i>
+                                <span>אולי זה יכול לעזור? ✨</span>
+                            </p>
+                            <ul id="suggestions-list" class="list-disc list-inside"></ul>
+                        </div>
+                        <select id="contact-category" class="w-full px-3 py-2 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">בחר קטגוריה</option>
+                            <option value="technical">בעיה טכנית</option>
+                            <option value="billing">בעיות חיוב</option>
+                            <option value="feedback">משוב</option>
+                            <option value="other">אחר</option>
+                        </select>
+                        <textarea id="contact-message" placeholder="תוכן הפנייה" class="w-full px-3 py-2 border rounded-md h-32 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="submit-contact" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            שלח פנייה
+                        </button>
+                        <button id="close-modal" class="mt-2 px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                            ביטול
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer: Clean and simple -->
+    <footer class="bg-white text-gray-600 text-center py-4 px-6 mt-16 border-t border-gray-200">
+        © Escoob Help Center 2025 | כל הזכויות שמורות
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, addDoc, query, where, onSnapshot, orderBy, doc, getDoc, addDoc as firebaseAddDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+          apiKey: "AIzaSyDnss-rZtFbPfAnZ-70uPuh5zNemupnvKk",
+          authDomain: "escoob-help-center.firebaseapp.com",
+          projectId: "escoob-help-center",
+          storageBucket: "escoob-help-center.firebasestorage.app",
+          messagingSenderId: "369557019780",
+          appId: "1:369557019780:web:0d2b017b93b3eb74adf6d1",
+          measurementId: "G-EVV2GQKQWB"
+        };
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        let db;
+        let auth;
+        let userId;
+        let isAuthReady = false;
+        let currentTicketId = null;
+        let unsubscribeFromTicketResponses = null;
+
+        // Initialize Firebase
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+        } catch (error) {
+            console.error("Firebase config is missing or invalid:", error);
+        }
+
+        // Get references to DOM elements
+        const articlesSection = document.getElementById('articles-section');
+        const singleArticleSection = document.getElementById('single-article-section');
+        const articlesContainer = document.getElementById('articles-container');
+        const singleArticleContent = document.getElementById('single-article-content');
+        const ticketsSection = document.getElementById('tickets-section');
+        const singleTicketSection = document.getElementById('single-ticket-section');
+        const ticketsList = document.getElementById('tickets-list');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const contactModal = document.getElementById('contact-modal');
+        const modalMessageBox = document.getElementById('modal-message-box');
+        const backToArticlesBtn = document.getElementById('back-to-articles-btn');
+        const backToTicketsBtn = document.getElementById('back-to-tickets-btn');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+
+        const articlesLink = document.getElementById('articles-link');
+        const ticketsLink = document.getElementById('tickets-link');
+        const contactLink = document.getElementById('contact-link');
+        const logoutLink = document.getElementById('logout-link');
+
+        const authSection = document.getElementById('auth-section');
+        const authTitle = document.getElementById('auth-title');
+        const authMessage = document.getElementById('auth-message');
+        const authForm = document.getElementById('auth-form');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const authToggleLink = document.getElementById('auth-toggle-link');
+        const authToggleText = document.getElementById('auth-toggle-text');
+
+        const ticketConversation = document.getElementById('ticket-conversation');
+        const replyMessageInput = document.getElementById('reply-message');
+        const sendReplyBtn = document.getElementById('send-reply-btn');
+        const ticketSubjectEl = document.getElementById('ticket-subject');
+        const ticketIdEl = document.getElementById('ticket-id');
+        const ticketStatusLabelEl = document.getElementById('ticket-status-label');
+
+        const contactSubjectInput = document.getElementById('contact-subject');
+        const geminiSuggestionsDiv = document.getElementById('gemini-suggestions');
+        const suggestionsList = document.getElementById('suggestions-list');
+        const searchInput = document.getElementById('search-input');
+        const submitContactButton = document.getElementById('submit-contact');
+        const closeModalButton = document.getElementById('close-modal');
+
+        let isLoginMode = true;
+
+        // List of all articles
+        const allArticles = [
+            {
+                id: "how-to-start",
+                title: "המדריך למתחילים: איך להתחיל עם Escoob",
+                description: "צעדים ראשונים, הגדרות חשבון וטיפים לשימוש יעיל בפלטפורמה שלנו.",
+                keywords: ["התחלה", "מדריך", "חשבון", "צעדים ראשונים"],
+                fullContent: "ברוכים הבאים ל-Escoob! כדי להתחיל, עליכם להירשם באמצעות כתובת אימייל או חשבון קיים. לאחר מכן, תוכלו להשלים את פרופיל המשתמש שלכם. אנו ממליצים בחום לעבור על המדריך המקוצר שלנו המכיל את כל הטיפים והטריקים שיעזרו לכם להתחיל לעבוד מהר ובצורה חכמה."
+            },
+            {
+                id: "billing-faq",
+                title: "שאלות נפוצות בנושאי חיוב ותשלום",
+                description: "תשובות לשאלות נפוצות על חשבוניות, תוכניות מנוי ואפשרויות תשלום.",
+                keywords: ["חיוב", "תשלום", "חשבונית", "מנוי", "מחירים"],
+                fullContent: "במרכז החיוב שלנו תוכלו לצפות בכל החשבוניות הקודמות, לשנות את שיטת התשלום או לשדרג את תוכנית המנוי שלכם. לכל שאלה נוספת, אנא צרו קשר עם צוות התמיכה שלנו דרך טופס 'צור קשר' או דרך הצ'אט."
+            },
+            {
+                id: "troubleshooting",
+                title: "פתרון בעיות נפוצות",
+                description: "מדריך לפתרון בעיות טכניות נפוצות כמו בעיות התחברות או תקלות בשימוש.",
+                keywords: ["פתרון בעיות", "תקלה", "באג", "בעיה טכנית", "שגיאה"],
+                fullContent: "נתקלתם בבעיה? ראשית, ודאו שחיבור האינטרנט שלכם יציב ושהדפדפן מעודכן. אם הבעיה ממשיכה, נסו לנקות את קובצי ה-cache וה-cookies. אם גם זה לא עזר, אנא דווחו לנו על התקלה דרך פנייה במרכז העזרה."
+            },
+            {
+                id: "manage-account",
+                title: "כיצד לנהל את החשבון והפרופיל שלך",
+                description: "מדריך להגדרות פרופיל, שינוי סיסמה, ועדכון פרטים אישיים.",
+                keywords: ["חשבון", "פרופיל", "סיסמה", "ניהול"],
+                fullContent: "עמוד ההגדרות האישיות מאפשר לכם לעדכן את פרטי הקשר, לשנות את שם המשתמש והסיסמה, ולהגדיר העדפות פרטיות. הקפידו לשמור על הסיסמה שלכם מאובטחת."
+            },
+            {
+                id: "product-features",
+                title: "מדריך למאפייני מוצר מתקדמים",
+                description: "גלה את כל היכולות המתקדמות של Escoob וכיצד להשתמש בהן בצורה מיטבית.",
+                keywords: ["תכונות", "מאפיינים", "מתקדמים", "מדריך"],
+                fullContent: "Escoob מציע מגוון רחב של כלים מתקדמים, כולל ניתוח נתונים, אוטומציה של תהליכים ואינטגרציות עם שירותים חיצוניים. מדריך זה יסביר כיצד להפיק את המיטב מכל תכונה."
+            },
+            {
+                id: "data-security",
+                title: "אבטחת נתונים ב-Escoob",
+                description: "מידע על האמצעים שאנו נוקטים כדי להגן על הנתונים שלכם.",
+                keywords: ["אבטחה", "נתונים", "פרטיות", "הגנה"],
+                fullContent: "אבטחת המידע שלכם היא בראש סדר העדיפויות שלנו. אנו משתמשים בפרוטוקולי הצפנה מתקדמים, מנגנוני גיבוי אוטומטיים ובדיקות אבטחה קבועות כדי להבטיח שהמידע האישי והעסקי שלכם יישאר מוגן."
+            },
+            {
+                id: "taste-restaurant",
+                title: "מסעדת הטעמים והחומוסלט: הזמנות והטבות",
+                description: "איך להזמין שולחן או משלוח במסעדת Escoob, כולל הטבות בלעדיות למשתמשים.",
+                keywords: ["מסעדה", "הזמנה", "אוכל", "הטבות", "טעמים", "חומוסלט"],
+                fullContent: "משתמשי Escoob יכולים ליהנות מהטבות מיוחדות במסעדת 'הטעמים והחומוסלט'. כדי לבצע הזמנה, היכנסו לאזור השירותים המיוחדים בפורטל שלכם, שם תוכלו להזמין שולחן או משלוח ישירות דרך המערכת שלנו ולקבל הנחה אוטומטית."
+            },
+            {
+                id: "theater-kofit-mufson",
+                title: "תיאטרון כוית ומופסון: רכישת כרטיסים והצגות",
+                description: "מדריך לרכישת כרטיסים להצגות בתיאטרון, צפייה בלוח ההצגות וקבלת מידע על מופעים.",
+                keywords: ["תיאטרון", "הצגה", "כרטיסים", "מופע", "תרבות"],
+                fullContent: "תיאטרון 'כוית ומופסון' הוא מרכז תרבותי מוביל לשותפי Escoob. במרכז השירותים שלכם תוכלו למצוא את לוח ההצגות המלא, לרכוש כרטיסים במחירים מיוחדים ולצפות בפרטים נוספים על השחקנים והעלילה של כל מופע."
+            },
+            {
+                id: "comics-movies",
+                title: "גישה לקומיקסים וסרטים: Escoob Streaming",
+                description: "איך לגשת לספריית הקומיקסים והסרטים העשירה של Escoob וליהנות מתוכן בלעדי.",
+                keywords: ["קומיקס", "סרטים", "הזרמה", "צפייה", "בידור"],
+                fullContent: "שירות Escoob Streaming מאפשר לכם גישה בלתי מוגבלת לספרייה ענקית של קומיקסים וסרטים. פשוט היכנסו ללשונית 'הזרמה' בפורטל המשתמש שלכם והתחילו לצפות. הספרייה מתעדכנת באופן קבוע עם תוכן חדש ובלעדי."
+            },
+            {
+                id: "preferences",
+                title: "הגדרת העדפות והתראות אישיות",
+                description: "מדריך מפורט להתאמה אישית של ממשק המשתמש והגדרת התראות.",
+                keywords: ["הגדרות", "התראות", "התאמה אישית", "ממשק"],
+                fullContent: "בממשק ההגדרות תוכלו לשנות את ערכת הנושא, להתאים אישית את סדר הכלים המופיעים בדף הבית, ולנהל את סוגי ההתראות שתרצו לקבל. אנו מאמינים בהתאמה אישית מקסימלית לחוויית משתמש נוחה."
+            },
+            {
+                id: "advanced-support",
+                title: "כיצד ליצור קשר עם התמיכה הטכנית המתקדמת",
+                description: "מדריך למקרים מורכבים הדורשים טיפול מומחה.",
+                keywords: ["תמיכה טכנית", "מומחה", "בעיה מורכבת", "תמיכה מתקדמת"],
+                fullContent: "לבעיות מורכבות, צוות התמיכה הטכנית המתקדם שלנו זמין עבורך. פתח פנייה דרך טופס 'צור קשר' ובחר בקטגוריה 'בעיה טכנית'. בתיאור הפנייה, פרט את הבעיה ככל הניתן ואנו נתאים לך את המומחה המתאים ביותר."
+            },
+            {
+                id: "project-creation",
+                title: "יצירת פרויקט חדש: מדריך צעד אחר צעד",
+                description: "הסבר מקיף על תהליך יצירת פרויקט חדש בפלטפורמה, כולל שיתוף פעולה.",
+                keywords: ["פרויקט", "חדש", "יצירה", "שיתוף פעולה"],
+                fullContent: "יצירת פרויקט חדש ב-Escoob היא תהליך פשוט ואינטואיטיבי. בעמוד הראשי, לחץ על 'פרויקט חדש', תן שם לפרויקט והגדר את שאר הפרמטרים. לאחר מכן תוכל להזמין חברים לצוות ולשתף פעולה על הפרויקט."
+            },
+            {
+                id: "api-integration",
+                title: "המדריך לשילוב API",
+                description: "כיצד לשלב את Escoob עם יישומים ושירותים חיצוניים באמצעות API.",
+                keywords: ["API", "שילוב", "אינטגרציה", "מתכנתים"],
+                fullContent: "Escoob מציעה מגוון רחב של API לשימוש מפתחים. תוכלו למצוא את התיעוד המלא ודוגמאות קוד במרכז המפתחים שלנו. לכל שאלה, ניתן לפתוח פנייה בנושא 'API' ולקבל תמיכה מהצוות הטכני."
+            },
+            {
+                id: "mobile-app-usage",
+                title: "שימוש באפליקציה לנייד: טיפים וטריקים",
+                description: "כל מה שצריך לדעת על השימוש באפליקציית Escoob למכשירים ניידים.",
+                keywords: ["אפליקציה", "נייד", "טיפים", "מובייל", "iOS", "אנדרואיד"],
+                fullContent: "אפליקציית Escoob לנייד מציעה חוויה חלקה ונוחה. ניתן לגשת לכל הכלים העיקריים, לצפות בנתונים בזמן אמת ולקבל התראות ישירות למכשיר. ודא שהאפליקציה שלך מעודכנת לגרסה האחרונה."
+            }
+        ];
+        
+        /**
+         * Helper function to show messages for the authentication form
+         * @param {string} message - The message to display.
+         * @param {boolean} isSuccess - True for a success message, false for an error.
+         */
+        const showAuthMessage = (message, isSuccess) => {
+            authMessage.textContent = message;
+            authMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            authMessage.classList.add(isSuccess ? 'bg-green-100' : 'bg-red-100', isSuccess ? 'text-green-800' : 'text-red-800');
+            authMessage.classList.remove('hidden');
+        };
+        
+        /**
+         * Helper function to show messages in the contact modal
+         * @param {string} message - The message to display.
+         * @param {boolean} isSuccess - True for a success message, false for an error.
+         */
+        const showModalMessage = (message, isSuccess) => {
+            modalMessageBox.textContent = message;
+            modalMessageBox.classList.remove('hidden', 'modal-success', 'modal-error');
+            modalMessageBox.classList.add(isSuccess ? 'modal-success' : 'modal-error');
+        };
+
+
+        /**
+         * Switches the view to the selected section.
+         * @param {string} sectionId - The ID of the section to show.
+         */
+        const switchView = (sectionId) => {
+            articlesSection.classList.add('hidden');
+            singleArticleSection.classList.add('hidden');
+            ticketsSection.classList.add('hidden');
+            singleTicketSection.classList.add('hidden');
+            authSection.classList.add('hidden');
+            
+            if (sectionId === 'articles') {
+                articlesSection.classList.remove('hidden');
+                renderArticles(allArticles.slice(0, 3), 'מאמרים מומלצים');
+            } else if (sectionId === 'single-article') {
+                singleArticleSection.classList.remove('hidden');
+            } else if (sectionId === 'tickets') {
+                if (isAuthReady) {
+                    ticketsSection.classList.remove('hidden');
+                    setupTicketsListener('all');
+                } else {
+                    // Redirect to auth section if not authenticated
+                    switchView('auth');
+                }
+            } else if (sectionId === 'single-ticket') {
+                singleTicketSection.classList.remove('hidden');
+            } else if (sectionId === 'auth') {
+                authSection.classList.remove('hidden');
+            }
+        };
+
+        /**
+         * Renders a list of articles to the DOM.
+         * @param {Array} articlesToRender - The array of articles to display.
+         * @param {string} title - The title for the section.
+         */
+        const renderArticles = (articlesToRender, title) => {
+            articlesContainer.innerHTML = '';
+            
+            const sectionTitle = document.createElement('h2');
+            sectionTitle.className = 'text-3xl font-extrabold text-center mb-8 text-gray-800 animate-fadeInUp';
+            sectionTitle.textContent = title;
+            articlesContainer.appendChild(sectionTitle);
+
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center';
+
+            if (articlesToRender.length === 0) {
+                const noResultsMessage = document.createElement('p');
+                noResultsMessage.className = 'text-center text-gray-500 text-lg col-span-full';
+                noResultsMessage.textContent = 'לא נמצאו תוצאות עבור החיפוש.';
+                gridContainer.appendChild(noResultsMessage);
+            } else {
+                articlesToRender.forEach(article => {
+                    const articleCard = document.createElement('div');
+                    articleCard.className = 'card bg-white rounded-xl shadow-lg overflow-hidden w-full max-w-xs transition-transform duration-300 hover:scale-[1.02] hover:shadow-2xl animate-fadeInUp';
+                    const image = document.createElement('img');
+                    image.src = `https://placehold.co/600x400/292b2c/fff?text=${encodeURIComponent(article.id)}`;
+                    image.alt = `Image for ${article.title}`;
+                    image.className = 'w-full h-40 object-cover transition-transform duration-300 transform hover:scale-110';
+                    articleCard.appendChild(image);
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'p-6 text-center';
+                    const titleEl = document.createElement('h3');
+                    titleEl.className = 'text-2xl font-semibold mb-2 text-gray-800';
+                    titleEl.textContent = article.title;
+                    contentDiv.appendChild(titleEl);
+                    const descriptionEl = document.createElement('p');
+                    descriptionEl.className = 'text-sm text-gray-600 mb-4';
+                    descriptionEl.textContent = article.description;
+                    contentDiv.appendChild(descriptionEl);
+                    const linkEl = document.createElement('a');
+                    linkEl.href = '#';
+                    linkEl.className = 'inline-block bg-blue-600 text-white py-2 px-6 rounded-full text-sm font-semibold hover:bg-blue-700 transition-colors duration-300';
+                    linkEl.innerHTML = `<span>קרא עוד</span>`;
+                    linkEl.dataset.articleId = article.id;
+                    contentDiv.appendChild(linkEl);
+                    articleCard.appendChild(contentDiv);
+                    gridContainer.appendChild(articleCard);
+
+                    linkEl.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        renderSingleArticle(article.id);
+                    });
+                });
+            }
+            articlesContainer.appendChild(gridContainer);
+        };
+        
+        /**
+         * Renders a single, full article to the DOM.
+         * @param {string} articleId - The ID of the article to render.
+         */
+        const renderSingleArticle = async (articleId) => {
+            switchView('single-article');
+            loadingSpinner.classList.remove('hidden');
+            loadingSpinner.classList.add('flex');
+            singleArticleContent.innerHTML = '';
+            
+            const article = allArticles.find(a => a.id === articleId);
+
+            if (article) {
+                singleArticleContent.innerHTML = `
+                    <h2 class="text-3xl font-bold mb-4">${article.title}</h2>
+                    <button id="gemini-summary-btn" class="bg-blue-600 text-white px-4 py-2 rounded-full font-semibold transition-colors duration-300 hover:bg-blue-700 mb-4 flex items-center gap-2">
+                        <i class="fas fa-gem text-lg"></i>
+                        <span>שאל את Gemini ✨</span>
+                    </button>
+                    <div id="gemini-response" class="hidden mt-4 p-4 bg-gray-100 rounded-lg border border-gray-200">
+                        <!-- Gemini summary will be displayed here -->
+                    </div>
+                    <div id="full-article-content" class="prose max-w-none text-gray-700">
+                        <p>${article.fullContent}</p>
+                    </div>
+                `;
+
+                const geminiSummaryBtn = document.getElementById('gemini-summary-btn');
+                geminiSummaryBtn.addEventListener('click', async () => {
+                    const geminiResponseDiv = document.getElementById('gemini-response');
+                    geminiResponseDiv.classList.remove('hidden');
+                    geminiResponseDiv.innerHTML = '<div class="flex items-center"><div class="spinner"></div><span class="ml-2">טוען סיכום...</span></div>';
+                    
+                    try {
+                        const summary = await callGeminiAPI(`Summarize the following article in Hebrew: "${article.fullContent}"`);
+                        geminiResponseDiv.innerHTML = `<p>${summary}</p>`;
+                    } catch (error) {
+                        console.error("Error calling Gemini API:", error);
+                        geminiResponseDiv.innerHTML = '<p class="text-red-500">שגיאה בטעינת הסיכום. אנא נסה שוב מאוחר יותר.</p>';
+                    }
+                });
+
+            } else {
+                singleArticleContent.innerHTML = '<p class="text-center text-red-500">המאמר לא נמצא.</p>';
+            }
+            loadingSpinner.classList.add('hidden');
+            loadingSpinner.classList.remove('flex');
+        };
+
+        /**
+         * Fetches and renders the user's support tickets in real-time using onSnapshot.
+         * @param {string} statusFilter - The status to filter by, or 'all' for no filter.
+         */
+        const setupTicketsListener = (statusFilter = 'all') => {
+            if (!db || !isAuthReady) {
+                console.error("Firestore or authentication is not ready.");
+                return;
+            }
+
+            loadingSpinner.classList.remove('hidden');
+            loadingSpinner.classList.add('flex');
+            ticketsList.innerHTML = '';
+            
+            if (unsubscribeFromTicketResponses) {
+                unsubscribeFromTicketResponses();
+                unsubscribeFromTicketResponses = null;
+            }
+            
+            const userTicketsPath = `/artifacts/${appId}/users/${userId}/support-tickets`;
+            let q = collection(db, userTicketsPath);
+            if (statusFilter !== 'all') {
+                q = query(q, where('status', '==', statusFilter));
+            }
+            
+            unsubscribeFromTicketResponses = onSnapshot(q, (querySnapshot) => {
+                let tickets = [];
+                querySnapshot.forEach((doc) => {
+                    tickets.push({ id: doc.id, ...doc.data() });
+                });
+                
+                tickets.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+
+                ticketsList.innerHTML = '';
+                if (tickets.length === 0) {
+                    const noTicketsMessage = document.createElement('p');
+                    noTicketsMessage.className = 'text-center text-gray-500 text-lg col-span-full';
+                    noTicketsMessage.textContent = 'עדיין לא שלחת פניות. אנא השתמש בטופס "צור קשר" כדי לפתוח פנייה חדשה.';
+                    ticketsList.appendChild(noTicketsMessage);
+                } else {
+                    tickets.forEach((ticket) => {
+                        const ticketCard = document.createElement('div');
+                        ticketCard.className = 'bg-white rounded-xl shadow-lg p-6 w-full max-w-xs transition-transform duration-300 hover:scale-[1.02] hover:shadow-2xl animate-fadeInUp cursor-pointer';
+                        
+                        let statusColor, statusText;
+                        switch (ticket.status) {
+                            case 'נשלחה':
+                                statusColor = 'bg-blue-200 text-blue-800';
+                                statusText = 'נשלחה';
+                                break;
+                            case 'בטיפול':
+                                statusColor = 'bg-yellow-200 text-yellow-800';
+                                statusText = 'בטיפול';
+                                break;
+                            case 'נפתרה':
+                                statusColor = 'bg-green-200 text-green-800';
+                                statusText = 'נפתרה';
+                                break;
+                            default:
+                                statusColor = 'bg-gray-200 text-gray-800';
+                                statusText = 'לא ידוע';
+                        }
+                        const timestamp = ticket.timestamp ? new Date(ticket.timestamp.toDate()).toLocaleString('he-IL') : 'אין תאריך';
+                        
+                        ticketCard.innerHTML = `
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold ${statusColor} px-2 py-1 rounded-full">${statusText}</span>
+                                <span class="text-xs text-gray-500">${timestamp}</span>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">${ticket.subject}</h3>
+                            <p class="text-sm text-gray-600 mb-4 truncate">${ticket.message}</p>
+                            <p class="text-xs font-mono text-gray-400">UID: ${userId}</p>
+                            <p class="text-xs font-mono text-gray-400">#${ticket.id}</p>
+                        `;
+                        ticketCard.addEventListener('click', () => renderSingleTicket(ticket.id));
+                        ticketsList.appendChild(ticketCard);
+                    });
+                }
+                loadingSpinner.classList.add('hidden');
+                loadingSpinner.classList.remove('flex');
+            }, (error) => {
+                console.error("Error fetching tickets: ", error);
+                loadingSpinner.classList.add('hidden');
+                loadingSpinner.classList.remove('flex');
+            });
+        };
+        
+        /**
+         * Renders a single ticket with its conversation history.
+         * @param {string} ticketId - The ID of the ticket to render.
+         */
+        const renderSingleTicket = async (ticketId) => {
+            if (!db || !isAuthReady) {
+                console.error("Firestore or authentication is not ready.");
+                return;
+            }
+            switchView('single-ticket');
+            loadingSpinner.classList.remove('hidden');
+            loadingSpinner.classList.add('flex');
+            ticketConversation.innerHTML = '';
+            currentTicketId = ticketId;
+
+            try {
+                const ticketDocRef = doc(db, `/artifacts/${appId}/users/${userId}/support-tickets`, ticketId);
+                const ticketSnap = await getDoc(ticketDocRef);
+
+                if (ticketSnap.exists()) {
+                    const ticket = ticketSnap.data();
+                    ticketSubjectEl.textContent = ticket.subject;
+                    ticketIdEl.textContent = `UID: ${userId} | Ticket ID: ${ticketId}`;
+                    ticketStatusLabelEl.textContent = ticket.status;
+                    let statusColor;
+                    switch (ticket.status) {
+                        case 'נשלחה': statusColor = 'bg-blue-200 text-blue-800'; break;
+                        case 'בטיפול': statusColor = 'bg-yellow-200 text-yellow-800'; break;
+                        case 'נפתרה': statusColor = 'bg-green-200 text-green-800'; break;
+                        default: statusColor = 'bg-gray-200 text-gray-800';
+                    }
+                    ticketStatusLabelEl.className = `text-sm font-semibold px-2 py-1 rounded-full ${statusColor}`;
+
+                } else {
+                    console.error("Ticket not found!");
+                    ticketSubjectEl.textContent = 'פנייה לא נמצאה';
+                }
+            } catch (error) {
+                console.error("Error fetching ticket details: ", error);
+            }
+
+            const responsesPath = `/artifacts/${appId}/users/${userId}/support-tickets/${ticketId}/responses`;
+            const responsesQuery = query(collection(db, responsesPath), orderBy('timestamp', 'asc'));
+            
+            if (unsubscribeFromTicketResponses) {
+                unsubscribeFromTicketResponses();
+            }
+
+            unsubscribeFromTicketResponses = onSnapshot(responsesQuery, (snapshot) => {
+                ticketConversation.innerHTML = '';
+                snapshot.forEach(responseDoc => {
+                    const response = responseDoc.data();
+                    const sender = response.sender === 'user' ? 'user-bubble' : 'agent-bubble';
+                    const bubble = document.createElement('div');
+                    bubble.className = `chat-bubble ${sender} self-${response.sender === 'user' ? 'end' : 'start'}`;
+                    bubble.textContent = response.message;
+                    ticketConversation.appendChild(bubble);
+                });
+                ticketConversation.scrollTop = ticketConversation.scrollHeight;
+                loadingSpinner.classList.add('hidden');
+                loadingSpinner.classList.remove('flex');
+            }, (error) => {
+                console.error("Error listening to responses: ", error);
+                loadingSpinner.classList.add('hidden');
+                loadingSpinner.classList.remove('flex');
+            });
+        };
+
+        sendReplyBtn.addEventListener('click', async () => {
+            if (!currentTicketId || !isAuthReady) {
+                console.error("Cannot send reply. Auth or ticket ID is missing.");
+                return;
+            }
+
+            const message = replyMessageInput.value.trim();
+            if (message === "") return;
+
+            try {
+                const responsesPath = `/artifacts/${appId}/users/${userId}/support-tickets/${currentTicketId}/responses`;
+                await firebaseAddDoc(collection(db, responsesPath), {
+                    message: message,
+                    timestamp: new Date(),
+                    sender: 'user'
+                });
+                replyMessageInput.value = '';
+            } catch (error) {
+                console.error("Error adding reply: ", error);
+            }
+        });
+
+        searchInput.addEventListener('input', (event) => {
+            const query = event.target.value.toLowerCase().trim();
+            if (query === '') {
+                renderArticles(allArticles.slice(0, 3), 'מאמרים מומלצים');
+            } else {
+                const filteredArticles = allArticles.filter(article => {
+                    const titleMatch = article.title.toLowerCase().includes(query);
+                    const descMatch = article.description.toLowerCase().includes(query);
+                    const keywordsMatch = article.keywords.some(keyword => keyword.toLowerCase().includes(query));
+                    return titleMatch || descMatch || keywordsMatch;
+                });
+                renderArticles(filteredArticles, `תוצאות חיפוש עבור "${query}"`);
+            }
+        });
+
+        contactLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            contactModal.classList.remove('hidden');
+        });
+
+        closeModalButton.addEventListener('click', () => {
+            contactModal.classList.add('hidden');
+            modalMessageBox.classList.add('hidden');
+        });
+
+        submitContactButton.addEventListener('click', async () => {
+            if (!isAuthReady) {
+                showModalMessage('שגיאה: מערכת התחברות לא זמינה. נסה לרענן את העמוד.', false);
+                return;
+            }
+
+            const name = document.getElementById('contact-name').value;
+            const email = document.getElementById('contact-email').value;
+            const subject = document.getElementById('contact-subject').value;
+            const category = document.getElementById('contact-category').value;
+            const message = document.getElementById('contact-message').value;
+
+            if (name && email && subject && category && message) {
+                submitContactButton.disabled = true;
+                submitContactButton.textContent = 'שולח...';
+                try {
+                    const userTicketsPath = `/artifacts/${appId}/users/${userId}/support-tickets`;
+                    const docRef = await addDoc(collection(db, userTicketsPath), {
+                        name: name,
+                        email: email,
+                        subject: subject,
+                        category: category,
+                        message: message,
+                        timestamp: new Date(),
+                        status: 'נשלחה',
+                        userId: userId
+                    });
+                    console.log("Document written with ID: ", docRef.id);
+                    showModalMessage(`הפנייה נשלחה בהצלחה! מספר הפנייה שלך הוא: ${docRef.id}`, true);
+                    document.getElementById('contact-name').value = '';
+                    document.getElementById('contact-email').value = '';
+                    document.getElementById('contact-subject').value = '';
+                    document.getElementById('contact-category').value = '';
+                    document.getElementById('contact-message').value = '';
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                    showModalMessage("שגיאה בשליחת הפנייה. אנא נסה שוב.", false);
+                } finally {
+                    submitContactButton.disabled = false;
+                    submitContactButton.textContent = 'שלח פנייה';
+                }
+            } else {
+                showModalMessage("אנא מלא את כל השדות.", false);
+            }
+        });
+
+        articlesLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView('articles');
+        });
+
+        ticketsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView('tickets');
+        });
+
+        backToArticlesBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView('articles');
+        });
+
+        backToTicketsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView('tickets');
+        });
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const status = btn.dataset.status;
+                setupTicketsListener(status);
+            });
+        });
+
+        // --- Authentication Logic ---
+
+        authToggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLoginMode = !isLoginMode;
+            if (isLoginMode) {
+                authTitle.textContent = 'התחברות';
+                authSubmitBtn.textContent = 'התחבר';
+                authToggleText.textContent = 'אין לך חשבון?';
+                authToggleLink.textContent = 'הירשם';
+            } else {
+                authTitle.textContent = 'הרשמה';
+                authSubmitBtn.textContent = 'הירשם';
+                authToggleText.textContent = 'כבר יש לך חשבון?';
+                authToggleLink.textContent = 'התחבר';
+            }
+            authMessage.classList.add('hidden');
+        });
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = authEmailInput.value;
+            const password = authPasswordInput.value;
+
+            if (!email || !password) {
+                showAuthMessage('אנא מלא את כל השדות.', false);
+                return;
+            }
+
+            // Client-side password validation
+            if (password.length < 6) {
+                showAuthMessage('הסיסמה צריכה להיות באורך של 6 תווים לפחות.', false);
+                return;
+            }
+
+            authSubmitBtn.disabled = true;
+            authSubmitBtn.textContent = isLoginMode ? 'מתחבר...' : 'נרשם...';
+
+            try {
+                if (isLoginMode) {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } else {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                }
+            } catch (error) {
+                console.error("Authentication error:", error);
+                let errorMessage;
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'כתובת האימייל כבר בשימוש.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'כתובת האימייל לא חוקית.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'הסיסמה חלשה מדי. נדרשת סיסמה של לפחות 6 תווים.';
+                        break;
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                        errorMessage = 'אימייל או סיסמה שגויים.';
+                        break;
+                    case 'auth/operation-not-allowed':
+                        errorMessage = 'שגיאת התחברות: אימות באמצעות אימייל/סיסמה אינו מופעל בפרויקט Firebase.';
+                        break;
+                    default:
+                        errorMessage = `שגיאה לא ידועה: ${error.message}`;
+                }
+                showAuthMessage(errorMessage, false);
+            } finally {
+                authSubmitBtn.disabled = false;
+                authSubmitBtn.textContent = isLoginMode ? 'התחבר' : 'הירשם';
+            }
+        });
+
+        logoutLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Logout error:", error);
+            }
+        });
+
+        contactSubjectInput.addEventListener('input', debounce(async () => {
+            const query = contactSubjectInput.value.trim();
+            if (query.length > 3) {
+                geminiSuggestionsDiv.classList.remove('hidden');
+                suggestionsList.innerHTML = '<div class="flex items-center justify-end"><div class="spinner"></div><span class="mr-2">טוען הצעות...</span></div>';
+                
+                try {
+                    const prompt = `Based on the following user query about a support issue, suggest three concise, relevant help center article titles in Hebrew. Provide the titles in a numbered list, without any introductory or concluding text. Do not provide a list if a relevant article cannot be found.
+                    User query: "${query}"
+                    Available articles: ${allArticles.map(a => a.title).join(', ')}
+                    
+                    Example response format for 'בעיה טכנית':
+                    1. פתרון בעיות נפוצות
+                    2. כיצד לנהל את החשבון והפרופיל שלך
+                    3. המדריך למאפייני מוצר מתקדמים
+                    `;
+
+                    const suggestions = await callGeminiAPI(prompt);
+                    suggestionsList.innerHTML = '';
+                    if (suggestions.trim() !== '') {
+                         const lines = suggestions.split('\n').filter(line => line.trim() !== '');
+                         lines.forEach(line => {
+                             const li = document.createElement('li');
+                             li.textContent = line.replace(/^\d+\./, '').trim();
+                             li.className = 'cursor-pointer text-blue-600 hover:underline mb-1';
+                             li.addEventListener('click', () => {
+                                 const articleTitle = line.replace(/^\d+\./, '').trim();
+                                 const article = allArticles.find(a => a.title === articleTitle);
+                                 if (article) {
+                                     contactModal.classList.add('hidden');
+                                     renderSingleArticle(article.id);
+                                 }
+                             });
+                             suggestionsList.appendChild(li);
+                         });
+                    } else {
+                         suggestionsList.innerHTML = '<p class="text-gray-500">אין הצעות רלוונטיות כרגע.</p>';
+                    }
+                } catch (error) {
+                    console.error("Error fetching Gemini suggestions:", error);
+                    suggestionsList.innerHTML = '<p class="text-red-500">שגיאה בטעינת הצעות.</p>';
+                }
+            } else {
+                geminiSuggestionsDiv.classList.add('hidden');
+            }
+        }, 500));
+
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        const callGeminiAPI = async (prompt) => {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+            };
+
+            const maxRetries = 5;
+            let attempt = 0;
+            while (attempt < maxRetries) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 429 && attempt < maxRetries - 1) {
+                            const delay = Math.pow(2, attempt) * 1000;
+                            console.warn(`Rate limit exceeded. Retrying in ${delay}ms...`);
+                            await new Promise(res => setTimeout(res, delay));
+                            attempt++;
+                            continue;
+                        }
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || 'No response found.';
+                    return text;
+                } catch (error) {
+                    console.error(`Attempt ${attempt + 1} failed:`, error);
+                    attempt++;
+                    if (attempt >= maxRetries) {
+                        throw error;
+                    }
+                }
+            }
+        };
+
+        const updateUIForAuthState = (user) => {
+            if (user) {
+                // User is signed in. Show main content.
+                userId = user.uid;
+                isAuthReady = true;
+                console.log("User authenticated with ID:", userId);
+                authSection.classList.add('hidden');
+                
+                articlesLink.classList.remove('hidden');
+                ticketsLink.classList.remove('hidden');
+                contactLink.classList.remove('hidden');
+                logoutLink.classList.remove('hidden');
+                
+                switchView('articles');
+
+            } else {
+                // User is signed out. Show login/signup form
+                userId = null;
+                isAuthReady = false;
+                console.log("User is not authenticated. Showing auth form.");
+                
+                articlesLink.classList.add('hidden');
+                ticketsLink.classList.add('hidden');
+                contactLink.classList.add('hidden');
+                logoutLink.classList.add('hidden');
+                
+                switchView('auth');
+            }
+        };
+
+        const handleAuthAndInitialize = async () => {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    // UI will handle sign-in via the form
+                    updateUIForAuthState(null); 
+                }
+            } catch (error) {
+                console.error("Authentication failed:", error);
+                // Even if token sign-in fails, show the auth form for manual sign-in
+                updateUIForAuthState(null);
+            }
+        };
+
+        onAuthStateChanged(auth, updateUIForAuthState);
+
+        handleAuthAndInitialize();
+    </script>
+</body>
+</html>
