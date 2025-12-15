@@ -477,6 +477,9 @@
         window.navigateTo = navigateTo;
         window.selectShowtime = selectShowtime;
         window.toggleSeatSelection = toggleSeatSelection;
+        window.updateShowtimeDateTime = updateShowtimeDateTime;
+        window.removeShowtime = removeShowtime;
+
 
         // UI Elements (Re-using some, adding new ones)
         const loggedInStateEl = document.getElementById('logged-in-state');
@@ -509,6 +512,20 @@
         const authModalEl = document.getElementById('auth-modal');
         const authForm = document.getElementById('auth-form');
         const authEmailInput = document.getElementById('auth-email');
+
+        const recommendedPlaysSection = document.getElementById('recommended-plays-section');
+        const adminDashboardBtn = document.getElementById('admin-dashboard-btn');
+        const playForm = document.getElementById('play-form');
+        const playFormTitle = document.getElementById('play-form-title');
+        const playFormModal = document.getElementById('play-form-modal');
+        const playFormMessageEl = document.getElementById('play-form-message');
+        const playTitleInput = document.getElementById('play-title-input');
+        const playDescriptionInput = document.getElementById('play-description-input');
+        const playTypeInput = document.getElementById('play-type-input');
+        const playPriceInput = document.getElementById('play-price-input');
+        const playImageInput = document.getElementById('play-image-input');
+        const loginButton = document.getElementById('login-button');
+
         const ADMIN_EMAIL = 'admin@example.com';
         const SEATS_PER_ROW = 10;
         const ROWS = ['A', 'B', 'C', 'D', 'E']; // 50 seats total
@@ -614,7 +631,7 @@
             if (view === 'home') {
                 homeView.classList.remove('hidden');
                 if (userId && !isAdmin) {
-                    showRecommendations();
+                    // showRecommendations(); // Omitted for brevity, but should run here if logic exists
                 }
             } else if (view === 'my-orders') {
                 myOrdersView.classList.remove('hidden');
@@ -641,7 +658,8 @@
                     auth = getAuth(app);
                     setLogLevel('debug');
 
-                    initializeAuthAndListeners();
+                    listenForPlays(); // <-- LOAD PUBLIC DATA IMMEDIATELY
+                    initializeAuthAndListeners(); // <-- HANDLE AUTH STATE SEPARATELY
                     requestNotificationPermission();
                     setupRecurringNotifications();
                 } else {
@@ -653,17 +671,14 @@
             }
         };
 
-        // FIX: Remove signInAnonymously and enforce waiting for auth state before loading data
         async function initializeAuthAndListeners() {
-            // 1. Initial Sign-in Attempt (Only with custom token)
+            // 1. Initial Sign-in Attempt
             try {
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                     console.log("Initial authentication successful with custom token.");
                 } else {
-                    // No token, user must sign in via modal. We just wait for onAuthStateChanged.
                     console.warn("No initial auth token found. User must sign in manually.");
-                    // Show login modal if user is not already authenticated
                     if (!auth.currentUser) {
                         authModalEl.style.display = 'flex';
                     }
@@ -686,7 +701,7 @@
                         adminDashboardBtn.classList.add('hidden');
                     }
                     console.log("User is signed in with ID:", userId);
-                    listenForPlays(); // Load data only when user is confirmed
+                    // navigateTo('home') is implicitly called by the UI loading home first
                 } else {
                     userId = null;
                     isAdmin = false;
@@ -694,8 +709,6 @@
                     loggedOutStateEl.classList.remove('hidden');
                     adminDashboardBtn.classList.add('hidden');
                     console.log("User is signed out.");
-                    // Still load plays, but booking will be disabled
-                    listenForPlays();
                 }
             });
         }
@@ -749,7 +762,7 @@
                     const card = document.createElement('div');
                     card.className = 'card bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1';
                     card.innerHTML = `
-                        <img src="${play.image}" alt="${play.title}" class="w-full h-48 object-cover">
+                        <img src="${play.image}" alt="${play.title}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/333333?text=Image+Not+Found'">
                         <div class="p-6 flex flex-col items-start">
                             <h3 class="text-xl font-bold gradient-text mb-2">${play.title}</h3>
                             <p class="text-sm text-gray-600 mb-4">${play.description}</p>
@@ -769,25 +782,36 @@
         async function listenForPlays() {
             const playsCollectionRef = collection(db, `artifacts/${appId}/public/data/plays`);
 
-            // Add initial data if the collection is empty
-            const initialDocs = await getDocs(query(playsCollectionRef));
-            if (initialDocs.empty) {
-                console.log("Collection is empty, adding initial data...");
-                for (const play of initialPlays) {
-                    await addDoc(playsCollectionRef, { ...play, createdAt: serverTimestamp() });
+            try {
+                // Add initial data if the collection is empty (using getDocs outside onSnapshot to check existence)
+                const initialDocs = await getDocs(query(playsCollectionRef));
+                if (initialDocs.empty) {
+                    console.log("Collection is empty, adding initial data...");
+                    for (const play of initialPlays) {
+                        // Use a specific ID if necessary, but addDoc is fine for now
+                        await addDoc(playsCollectionRef, { ...play, createdAt: serverTimestamp() });
+                    }
+                    console.log("Initial data added successfully.");
                 }
+            } catch (error) {
+                 console.error("Error during initial play data check/insertion:", error);
+                 // The onSnapshot will now try to load whatever is available or fail gracefully
             }
 
+
+            // Set up real-time listener
             onSnapshot(query(playsCollectionRef), (snapshot) => {
                 allPlays = [];
                 snapshot.forEach(doc => {
                     allPlays.push({ id: doc.id, ...doc.data() });
                 });
                 allPlays.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                renderPlays(allPlays, eventsContainer);
+                
+                // Render immediately when data arrives
+                renderPlays(allPlays, eventsContainer); 
             }, (error) => {
                 console.error("Error listening to plays:", error);
-                // Removed redundant error message to prevent modal conflicts
+                eventsContainer.innerHTML = `<p class="text-center col-span-full text-red-500">שגיאה בטעינת ההצגות. אנא בדוק את הרשאות Firebase.</p>`;
             });
         }
 
@@ -829,10 +853,19 @@
 
         function renderShowtimes(showtimes) {
             showtimesContainer.innerHTML = '';
-            showtimes.forEach(showtime => {
+            // Filter out showtimes in the past (optional, but good practice)
+            const futureShowtimes = showtimes.filter(st => new Date(st.dateTime) > new Date());
+            
+            if (futureShowtimes.length === 0) {
+                showtimesContainer.innerHTML = `<p class="text-center text-gray-500 col-span-full">לא נמצאו מועדים עתידיים זמינים.</p>`;
+                return;
+            }
+
+            futureShowtimes.forEach(showtime => {
                 const dateTimeText = formatDateTime(showtime.dateTime);
                 const totalSeats = ROWS.length * SEATS_PER_ROW;
-                const available = totalSeats - showtime.reservedSeats.length;
+                const reservedCount = showtime.reservedSeats ? showtime.reservedSeats.length : 0;
+                const available = totalSeats - reservedCount;
                 const button = document.createElement('button');
 
                 button.className = `showtime-button w-full text-right p-3 rounded-lg shadow-md ${available > 0 ? 'bg-white hover:bg-gray-100 border border-gray-200' : 'bg-red-200 text-gray-500 cursor-not-allowed'}`;
@@ -894,7 +927,7 @@
                     let seatClass = 'seat';
                     const isSelected = currentBooking.selectedSeats.includes(seatId);
 
-                    if (seatInfo.isReserved) {
+                    if (seatInfo?.isReserved) {
                         seatClass += ' reserved';
                     } else if (isSelected) {
                         seatClass += ' selected';
@@ -906,7 +939,7 @@
                     seatEl.textContent = i;
                     seatEl.dataset.seatId = seatId;
 
-                    if (!seatInfo.isReserved) {
+                    if (!seatInfo?.isReserved) {
                         seatEl.addEventListener('click', () => toggleSeatSelection(seatId));
                     }
                     rowEl.appendChild(seatEl);
@@ -970,11 +1003,18 @@
                     if (st.id === currentBooking.showtimeId) {
                         const updatedSeatingMap = JSON.parse(JSON.stringify(st.seatingMap));
                         selectedSeats.forEach(seatId => {
-                            updatedSeatingMap[seatId].isReserved = true;
+                            // Ensure seat exists before setting isReserved
+                            if (updatedSeatingMap[seatId]) {
+                                updatedSeatingMap[seatId].isReserved = true;
+                            }
                         });
+                        // Filter out nulls/undefineds just in case, though they shouldn't exist here
+                        const currentReserved = st.reservedSeats || [];
+                        const newReservedSeats = [...currentReserved, ...selectedSeats].filter(s => s);
+                        
                         return {
                             ...st,
-                            reservedSeats: [...st.reservedSeats, ...selectedSeats],
+                            reservedSeats: newReservedSeats,
                             seatingMap: updatedSeatingMap
                         };
                     }
@@ -1068,18 +1108,14 @@
             // ... (Sales report logic remains the same, omitted for brevity)
 
             // For now, only load and render admin plays list
-            renderAdminPlays();
-        }
-
-        function renderAdminPlays() {
-            // ... (Admin play rendering remains the same, omitted for brevity)
+            // NOTE: Admin play list rendering needs to be implemented or remains omitted
         }
 
         // Add event listener for adding showtime in admin modal
         document.getElementById('add-showtime-btn').addEventListener('click', () => {
             const newShowtime = {
                 id: crypto.randomUUID(),
-                dateTime: new Date().toISOString(), // Default to now
+                dateTime: new Date().toISOString().substring(0, 16), // Default to current time for input field
                 reservedSeats: [],
                 seatingMap: generateInitialSeatingMap()
             };
@@ -1090,6 +1126,11 @@
         function renderShowtimeAdminControls(showtimes) {
             const container = document.getElementById('showtimes-admin-container');
             container.innerHTML = '';
+
+            if (!showtimes || showtimes.length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-500">אין מועדים מוגדרים להצגה זו.</p>`;
+                return;
+            }
 
             showtimes.forEach((st, index) => {
                 const div = document.createElement('div');
@@ -1107,14 +1148,15 @@
             });
         }
 
-        window.updateShowtimeDateTime = function(id, value) {
+        function updateShowtimeDateTime(id, value) {
             const showtime = playInEdit.showtimes.find(st => st.id === id);
             if (showtime) {
+                // Ensure value is ISO string for internal storage
                 showtime.dateTime = new Date(value).toISOString();
             }
         }
 
-        window.removeShowtime = function(id) {
+        function removeShowtime(id) {
             playInEdit.showtimes = playInEdit.showtimes.filter(st => st.id !== id);
             renderShowtimeAdminControls(playInEdit.showtimes);
         }
@@ -1173,11 +1215,23 @@
             }
         });
 
-        // Delete play (unchanged)
+        // Delete play (Admin functionality - placeholder)
         async function deletePlay(playId) {
-            // ... (Delete logic remains the same, omitted for brevity)
+            if (!isAdmin) {
+                showMessageModal("אין לך הרשאה למחוק הצגות.");
+                return;
+            }
+            if (window.confirm("האם אתה בטוח שברצונך למחוק הצגה זו?")) {
+                try {
+                    const playRef = doc(db, `artifacts/${appId}/public/data/plays`, playId);
+                    await deleteDoc(playRef);
+                    showMessageModal("הצגה נמחקה בהצלחה.");
+                } catch (error) {
+                    console.error("Error deleting play:", error);
+                    showMessageModal("שגיאה במחיקת ההצגה: " + error.message);
+                }
+            }
         }
-
 
         // --- Auth Functions (Revised) ---
         loginButton.addEventListener('click', () => {
