@@ -542,6 +542,7 @@
             
             // מאזין לציונים של הסטודנט הנוכחי
             // שימוש ב-GRADES_COL המוגדר
+            // **תיקון: חובה להוסיף את המסנן where("studentId", "==", userId) כדי לעמוד בכללי האבטחה.**
             const q = query(collection(db, GRADES_COL), where("studentId", "==", userId));
             
             onSnapshot(q, (snapshot) => {
@@ -550,6 +551,10 @@
             }, (error) => {
                 // שגיאה זו נגרמת אם ה-UID לא תואם לכלל האבטחה
                 console.error("Error listening to student grades:", error);
+                
+                // כדאי להציג הודעה ברורה יותר ב-UI
+                const tableBody = document.getElementById('grades-table-body');
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">שגיאת הרשאה: הציונים לא נטענו. אנא ודא שהוזנו ציונים עבורך ושכללי האבטחה תקינים.</td></tr>';
             });
         }
 
@@ -711,7 +716,7 @@
             }
         });
 
-        // עדכון ציונים
+        // עדכון ציונים - פונקציה מתוקנת שמוודאת שה-studentId הוא ה-UID הנכון
         document.getElementById('update-grade-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
