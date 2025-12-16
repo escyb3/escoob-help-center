@@ -400,6 +400,9 @@
         // --- Firebase Init and Auth Handlers ---
 
         async function initFirebase() {
+            // אם המערכת כבר הופעלה (App כבר קיים), אין צורך לאתחל שוב
+            if (app) return;
+
             if (!firebaseConfig.apiKey) {
                 console.error("Firebase config not found.");
                 showLoginScreen("שגיאת מערכת: קונפיגורציית Firebase חסרה.");
@@ -419,6 +422,7 @@
                     if (user) {
                         userId = user.uid;
                         userEmail = user.email;
+                        // ודא שהאפליקציה תטען רק לאחר שיש משתמש מאומת
                         await handleAuthenticatedUser(user.email);
                     } else {
                         // אם המשתמש התנתק או אין משתמש מאומת
@@ -437,9 +441,10 @@
         }
 
         async function handleAuthenticatedUser(email) {
-            showLoading("מאמת משתמש...");
+            showLoading("מאמת משתמש וטוען פרופיל...");
 
             // הנתיב למסמך המשתמש הוא: artifacts/{appId}/public/data/users/{userId}
+            // חשוב להשתמש ב-userId כ-docId, כמצופה בכללי האבטחה
             const userDocRef = doc(db, USERS_COL, userId);
             
             try {
@@ -453,6 +458,7 @@
                     await setupAppUI(userData);
                 } else {
                     // 2. המשתמש מאומת ב-Auth אך אין לו פרופיל ב-Firestore. צריך ליצור אותו.
+                    
                     let role = 'student';
                     let name = `סטודנט ${userId.substring(0, 4)}`;
                     let studentClass = 'טרם הוגדר';
@@ -464,7 +470,7 @@
                     }
                     
                     const newUserData = {
-                        uid: userId, // חובה: ה-UID חייב להיות בשדה, בהתאם ל-Rules
+                        uid: userId, // חובה: ה-UID חייב להיות בשדה, אבל בעיקר חשוב שה-doc ID יהיה userId
                         name: name,
                         email: email,
                         role: role,
@@ -484,8 +490,12 @@
 
             } catch (error) {
                 console.error("Error handling authenticated user (Permissions or DB issue):", error);
-                // הצג את שגיאת ההרשאות בצורה ברורה
-                const errorMessage = `שגיאת הרשאות: ${error.message}. אנא ודא שכללי האבטחה (Firestore Rules) עודכנו כראוי כדי לאפשר קריאה/כתיבה בנתיב users/${userId}.`;
+                
+                // טיפול משופר בשגיאות הרשאה
+                let errorMessage = `שגיאה בטעינת פרופיל: ${error.message}.`;
+                if (error.code === 'permission-denied') {
+                    errorMessage = "שגיאת הרשאות: נכשל ניסיון לקרוא או ליצור את פרופיל המשתמש ב-Firestore. אנא ודא שכללי האבטחה מעודכנים כראוי (ראה את הכללים שסופקו).";
+                }
                 showLoginScreen(errorMessage);
             }
         }
@@ -524,15 +534,21 @@
         // --- מאזיני נתונים (onSnapshot) ---
 
         function listenToStudentData() {
+            // ודא ש-db קיים ו-userId נטען לפני הפעלת onSnapshot (תיקון השגיאה)
+            if (!db || !userId) {
+                console.warn("Firestore not initialized or userId is missing. Cannot listen to student data.");
+                return; 
+            }
+            
             // מאזין לציונים של הסטודנט הנוכחי
+            // שימוש ב-GRADES_COL המוגדר
             const q = query(collection(db, GRADES_COL), where("studentId", "==", userId));
-            // בדיקה ש-userId קיים לפני הפעלת onSnapshot (למרות שכבר עברנו אימות)
-            if (!userId) return; 
-
+            
             onSnapshot(q, (snapshot) => {
                 const gradesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderGradesTable(gradesData);
             }, (error) => {
+                // שגיאה זו נגרמת אם ה-UID לא תואם לכלל האבטחה
                 console.error("Error listening to student grades:", error);
             });
         }
@@ -541,6 +557,12 @@
         let allSubjects = [];
 
         function listenToManagerData() {
+            // ודא ש-db קיים ושמשתמש מאומת לפני הפעלת onSnapshot
+            if (!db || !userId) {
+                console.warn("Firestore not initialized or userId is missing. Cannot listen to manager data.");
+                return;
+            }
+
             // מאזין לכל המקצועות
             onSnapshot(collection(db, SUBJECTS_COL), (snapshot) => {
                 allSubjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -550,9 +572,11 @@
             });
 
             // מאזין לכל הסטודנטים
+            // חשוב: השאילתה מחזירה את ה-doc ID שהוא ה-UID של הסטודנט
             const q = query(collection(db, USERS_COL), where("role", "==", "student"));
             onSnapshot(q, (snapshot) => {
-                allStudents = snapshot.docs.map(doc => ({ id: doc.id, docId: doc.id, ...doc.data(), uid: doc.id })); // ודא ש-UID הוא ה-doc.id
+                // שמור את ה-doc.id גם כ-uid
+                allStudents = snapshot.docs.map(doc => ({ id: doc.id, docId: doc.id, ...doc.data(), uid: doc.id })); 
                 renderStudentSelect(allStudents, document.getElementById('grade-student-select'));
             }, (error) => {
                 console.error("Error listening to students:", error);
@@ -615,7 +639,8 @@
                 const uid = student.uid || student.id; 
                 if (uid) {
                     const option = document.createElement('option');
-                    option.value = uid;
+                    // חשוב: הערך של ה-select הוא ה-UID, כי הוא השדה שמשמש לסינון ב-Firestore
+                    option.value = uid; 
                     option.textContent = `${student.name} (${student.email || 'אין אימייל'})`;
                     selectElement.appendChild(option);
                 }
@@ -624,9 +649,7 @@
 
         // --- פונקציות ניהול (CRUD) ---
         
-        // יצירת פרופיל סטודנט - פונקציה זו כבר לא רלוונטית כשיש אימות מלא,
-        // מכיוון שפרופיל נוצר אוטומטית בכניסה הראשונה.
-        // אבל נשאיר אותה למקרה שהמנהל רוצה להוסיף פרופיל לפני שהסטודנט נכנס
+        // יצירת פרופיל סטודנט 
         document.getElementById('add-student-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
@@ -639,16 +662,18 @@
             msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
 
             try {
-                // נשתמש ב-addDoc אבל עם הערה: ה-UID האמיתי יקבע רק כשהסטודנט יתחבר
+                // המנהל צריך להיות מאומת כדי לבצע את הפעולה הזו (write: if isManager() ).
+                // השמירה כרגע היא עם UID זמני. ה-UID האמיתי של המסמך יוגדר כאשר המשתמש יתחבר לראשונה.
                 await addDoc(collection(db, USERS_COL), {
                     name,
                     email,
                     class: studentClass,
                     role: 'student',
-                    uid: `placeholder_${Date.now()}` // UID זמני
+                    // שימו לב: ה-UID האמיתי יוגדר רק בכניסה הראשונה
+                    uid: `placeholder_${Date.now()}` 
                 });
 
-                msgElement.textContent = `פרופיל סטודנט נוסף בהצלחה! הסטודנט צריך להירשם ב-Firebase Auth עם האימייל הזה.`;
+                msgElement.textContent = `פרופיל סטודנט נוסף בהצלחה! יש ליצור משתמש ב-Firebase Auth עם האימייל הזה.`;
                 msgElement.className = 'text-green-600 text-sm pt-2 text-right';
                 form.reset();
             } catch (error) {
@@ -669,7 +694,7 @@
             msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
 
             try {
-                // המקצועות נשמרים ב-Firestore עם ID אוטומטי. רק מנהל יכול לכתוב.
+                // רק מנהל יכול לכתוב כאן.
                 await addDoc(collection(db, SUBJECTS_COL), {
                     name,
                     teacherId: userId,
@@ -690,7 +715,7 @@
         document.getElementById('update-grade-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
-            const studentId = form['grade-student-select'].value;
+            const studentId = form['grade-student-select'].value; // זהו ה-UID האמיתי
             const subjectId = form['grade-subject-select'].value;
             const submissionGrade = parseInt(form['grade-submission'].value);
             const examGrade = parseInt(form['grade-exam'].value);
@@ -708,14 +733,16 @@
 
             try {
                 // מציאת פרטי המקצוע והסטודנט לשמירה כטקסט קריא (de-normalization)
-                const student = allStudents.find(s => (s.uid === studentId || s.id === studentId));
+                // חשוב למצוא את הסטודנט לפי ה-UID שנבחר
+                const student = allStudents.find(s => (s.uid === studentId)); 
                 const subject = allSubjects.find(s => s.id === subjectId);
                 
                 // ה-ID הייחודי לציון הוא שילוב של studentId_subjectId_year
                 const gradeDocId = `${studentId}_${subjectId}_2025`; // שנה קבועה כרגע
 
+                // רק מנהל יכול לכתוב כאן.
                 await setDoc(doc(db, GRADES_COL, gradeDocId), {
-                    studentId,
+                    studentId, // חובה: שדה זה חייב להתאים ל-UID המאומת של הסטודנט
                     subjectId,
                     studentName: student ? student.name : 'לא ידוע',
                     subjectName: subject ? subject.name : 'לא ידוע',
@@ -760,9 +787,7 @@
                     friendlyMessage = 'פורמט דוא"ל לא תקין.';
                 } else if (error.code === 'auth/too-many-requests') {
                     friendlyMessage = 'הוגבלת זמנית בשל ניסיונות כניסה מרובים כושלים.';
-                } 
-                // בדיקה מפורשת לשגיאה auth/invalid-credential
-                else if (error.code === 'auth/invalid-credential') {
+                } else if (error.code === 'auth/invalid-credential') {
                     friendlyMessage = 'שם משתמש או סיסמה שגויים.';
                 } else if (error.code === 'auth/network-request-failed') {
                     friendlyMessage = 'שגיאת רשת. אנא בדוק את חיבור האינטרנט שלך.';
