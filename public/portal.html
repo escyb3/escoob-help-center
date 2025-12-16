@@ -81,11 +81,12 @@
                     <span class="text-sm hidden sm:inline" id="user-greeting">שלום, אורח</span>
                     <span id="user-role-display" class="bg-accent-green text-white text-xs font-semibold px-2 py-1 rounded-full"></span>
                     
-                    <!-- איקון פרופיל (Placeholder SVG) -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 01-6 0 3 3 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14c-4.418 0-8 2.015-8 4.5v2h16v-2c0-2.485-3.582-4.5-8-4.5z" />
+                    <!-- אייקון פרופיל Lucide -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
                     </svg>
+
                     <button id="logout-button" class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-1 px-3 rounded-full transition duration-150">
                         יציאה
                     </button>
@@ -189,9 +190,9 @@
 
                         <!-- הוספת משתמש חדש (סטודנט) -->
                         <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-                            <h3 class="text-xl font-semibold mb-4 text-primary-blue">2. יצירת משתמש (סטודנט)</h3>
+                            <h3 class="text-xl font-semibold mb-4 text-primary-blue">2. יצירת פרופיל משתמש (סטודנט)</h3>
+                            <p class="text-sm text-gray-600">יש להשתמש בדוא"ל ייחודי לכל סטודנט. המשתמש עדיין צריך להירשם ב-Firebase Auth.</p>
                             <form id="add-student-form" class="space-y-3">
-                                <p class="text-sm text-gray-600">יש להשתמש בדוא"ל ייחודי לכל סטודנט (מזהה כניסה). המשתמש יצטרך להירשם עם דוא"ל וסיסמה.</p>
                                 <div>
                                     <label for="student-name" class="block text-sm font-medium text-gray-700">שם מלא</label>
                                     <input type="text" id="student-name" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right">
@@ -274,12 +275,12 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, getDocs, where, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, where, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // --- קונפיגורציית Firebase והגדרות ---
         
-        // קונפיגורציה שסופקה על ידי המשתמש
+        // קונפיגורציה שסופקה על ידי המשתמש (יש להחליף בנתונים האמיתיים שלך)
         const firebaseConfig = {
             apiKey: "AIzaSyA51KrL8gBgBiFGiR0zHda4_T9cR5dSEmo",
             authDomain: "escoobportalscores.firebaseapp.com",
@@ -302,6 +303,7 @@
         let db;
         let auth;
         let userId = null;
+        let userEmail = null;
         let userRole = 'guest'; // 'student' or 'manager'
         
         // --- פונקציות עזר כלליות ---
@@ -324,6 +326,8 @@
         }
 
         function showLoginScreen(error = null) {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-overlay').classList.remove('opacity-0');
             document.getElementById('loading-message').textContent = '';
             document.getElementById('login-screen').classList.remove('hidden');
             const errorElement = document.getElementById('auth-error-message');
@@ -406,16 +410,23 @@
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+                
+                // שימור מצב האימות לאורך הסשן בדפדפן
+                await setPersistence(auth, browserSessionPersistence);
 
                 // מאזין לשינויים במצב האימות
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         userId = user.uid;
+                        userEmail = user.email;
                         await handleAuthenticatedUser(user.email);
                     } else {
                         // אם המשתמש התנתק או אין משתמש מאומת
                         showLoginScreen();
                         document.getElementById('app-container').classList.add('hidden');
+                        userId = null;
+                        userEmail = null;
+                        userRole = 'guest';
                     }
                 });
 
@@ -428,44 +439,55 @@
         async function handleAuthenticatedUser(email) {
             showLoading("מאמת משתמש...");
 
+            // הנתיב למסמך המשתמש הוא: artifacts/{appId}/public/data/users/{userId}
             const userDocRef = doc(db, USERS_COL, userId);
             
-            // ננסה למשוך את פרטי המשתמש מהדאטה-בייס הציבורי לפי ה-UID החדש
-            const userSnapshot = await getDocs(query(collection(db, USERS_COL), where("uid", "==", userId)));
-            
-            let userData = null;
+            try {
+                // 1. נסה לקרוא את פרופיל המשתמש לפי ה-UID
+                const docSnap = await getDoc(userDocRef);
 
-            if (!userSnapshot.empty) {
-                // המשתמש קיים ב-Firestore
-                userData = userSnapshot.docs[0].data();
-                userRole = userData.role;
-            } else if (email === MANAGER_EMAIL) {
-                // כניסה ראשונית של המנהל (יצירת פרופיל מנהל חדש ב-Firestore)
-                userRole = 'manager';
-                userData = {
-                    uid: userId,
-                    name: 'מנהל ראשי',
-                    email: MANAGER_EMAIL,
-                    role: userRole,
-                    class: 'מערכת',
-                };
-                await setDoc(userDocRef, userData);
-            } else {
-                 // כניסה של משתמש מאומת (Email/Password) שאין לו עדיין פרופיל Firestore
-                userRole = 'student';
-                userData = {
-                    uid: userId,
-                    name: `סטודנט חדש`, // ניתן לשנות לשם שייקלט בעתיד
-                    email: email,
-                    role: userRole,
-                    class: 'טרם הוגדר',
-                };
-                await setDoc(userDocRef, userData);
+                if (docSnap.exists()) {
+                    // המשתמש כבר קיים ב-Firestore
+                    const userData = docSnap.data();
+                    userRole = userData.role;
+                    await setupAppUI(userData);
+                } else {
+                    // 2. המשתמש מאומת ב-Auth אך אין לו פרופיל ב-Firestore. צריך ליצור אותו.
+                    let role = 'student';
+                    let name = `סטודנט ${userId.substring(0, 4)}`;
+                    let studentClass = 'טרם הוגדר';
+
+                    if (email === MANAGER_EMAIL) {
+                        role = 'manager';
+                        name = 'מנהל ראשי';
+                        studentClass = 'מערכת';
+                    }
+                    
+                    const newUserData = {
+                        uid: userId, // חובה: ה-UID חייב להיות בשדה, בהתאם ל-Rules
+                        name: name,
+                        email: email,
+                        role: role,
+                        class: studentClass,
+                        createdAt: new Date().toISOString()
+                    };
+
+                    // שימוש ב-setDoc עם ה-UID כ-docId כדי לעמוד בכלל 'allow create: if request.auth.uid == userId;'
+                    await setDoc(userDocRef, newUserData);
+                    
+                    // כעת, השתמש בנתונים החדשים שהרגע יצרנו
+                    userRole = role;
+                    await setupAppUI(newUserData);
+                }
+
+                hideLoading();
+
+            } catch (error) {
+                console.error("Error handling authenticated user (Permissions or DB issue):", error);
+                // הצג את שגיאת ההרשאות בצורה ברורה
+                const errorMessage = `שגיאת הרשאות: ${error.message}. אנא ודא שכללי האבטחה (Firestore Rules) עודכנו כראוי כדי לאפשר קריאה/כתיבה בנתיב users/${userId}.`;
+                showLoginScreen(errorMessage);
             }
-
-            // הפעלת ממשק בהתאם לתפקיד
-            await setupAppUI(userData);
-            hideLoading();
         }
 
         async function setupAppUI(userData) {
@@ -504,6 +526,9 @@
         function listenToStudentData() {
             // מאזין לציונים של הסטודנט הנוכחי
             const q = query(collection(db, GRADES_COL), where("studentId", "==", userId));
+            // בדיקה ש-userId קיים לפני הפעלת onSnapshot (למרות שכבר עברנו אימות)
+            if (!userId) return; 
+
             onSnapshot(q, (snapshot) => {
                 const gradesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderGradesTable(gradesData);
@@ -524,11 +549,10 @@
                 console.error("Error listening to subjects:", error);
             });
 
-            // מאזין לכל המשתמשים (רק סטודנטים לצורך הניהול)
+            // מאזין לכל הסטודנטים
             const q = query(collection(db, USERS_COL), where("role", "==", "student"));
             onSnapshot(q, (snapshot) => {
-                // סינון ידני של סטודנטים ללא UID (פרופילים זמניים)
-                allStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(s => s.uid && s.uid.length > 5);
+                allStudents = snapshot.docs.map(doc => ({ id: doc.id, docId: doc.id, ...doc.data(), uid: doc.id })); // ודא ש-UID הוא ה-doc.id
                 renderStudentSelect(allStudents, document.getElementById('grade-student-select'));
             }, (error) => {
                 console.error("Error listening to students:", error);
@@ -587,16 +611,22 @@
         function renderStudentSelect(students, selectElement) {
             selectElement.innerHTML = '<option value="">בחר סטודנט...</option>';
             students.forEach(student => {
-                const option = document.createElement('option');
-                option.value = student.uid;
-                option.textContent = `${student.name} (${student.email})`;
-                selectElement.appendChild(option);
+                // ה-UID הוא ה-doc.id שהוחזר מהשאילתה של המנהל
+                const uid = student.uid || student.id; 
+                if (uid) {
+                    const option = document.createElement('option');
+                    option.value = uid;
+                    option.textContent = `${student.name} (${student.email || 'אין אימייל'})`;
+                    selectElement.appendChild(option);
+                }
             });
         }
 
         // --- פונקציות ניהול (CRUD) ---
         
-        // יצירת משתמש סטודנט
+        // יצירת פרופיל סטודנט - פונקציה זו כבר לא רלוונטית כשיש אימות מלא,
+        // מכיוון שפרופיל נוצר אוטומטית בכניסה הראשונה.
+        // אבל נשאיר אותה למקרה שהמנהל רוצה להוסיף פרופיל לפני שהסטודנט נכנס
         document.getElementById('add-student-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
@@ -608,28 +638,17 @@
             msgElement.textContent = 'מבצע בדיקה...';
             msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
 
-            // 1. בדיקה אם פרופיל Firestore קיים עם המייל הזה (לפני אימות)
-            const existingQuery = query(collection(db, USERS_COL), where("email", "==", email));
-            const existingSnapshot = await getDocs(existingQuery);
-
-            if (!existingSnapshot.empty) {
-                msgElement.textContent = 'שגיאה: פרופיל קיים כבר נוצר עם דוא"ל זה. עליך למחוק אותו לפני הוספה מחדש.';
-                msgElement.className = 'text-red-600 text-sm pt-2 text-right';
-                return;
-            }
-
             try {
-                // 2. יצירת פרופיל סטודנט ב-Firestore (עדיין ללא UID אימות)
-                // ה-UID האמיתי ייקבע רק כשהסטודנט יירשם בפועל ל-Firebase Auth עם המייל הזה.
+                // נשתמש ב-addDoc אבל עם הערה: ה-UID האמיתי יקבע רק כשהסטודנט יתחבר
                 await addDoc(collection(db, USERS_COL), {
                     name,
                     email,
                     class: studentClass,
                     role: 'student',
-                    uid: `pending_${Date.now()}` // מזהה זמני
+                    uid: `placeholder_${Date.now()}` // UID זמני
                 });
 
-                msgElement.textContent = `פרופיל סטודנט נוסף בהצלחה! הסטודנט צריך להירשם עם המייל הזה ב-Firebase.`;
+                msgElement.textContent = `פרופיל סטודנט נוסף בהצלחה! הסטודנט צריך להירשם ב-Firebase Auth עם האימייל הזה.`;
                 msgElement.className = 'text-green-600 text-sm pt-2 text-right';
                 form.reset();
             } catch (error) {
@@ -650,10 +669,10 @@
             msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
 
             try {
-                // המקצועות נשמרים ב-Firestore עם ID אוטומטי
+                // המקצועות נשמרים ב-Firestore עם ID אוטומטי. רק מנהל יכול לכתוב.
                 await addDoc(collection(db, SUBJECTS_COL), {
                     name,
-                    teacherId: userId, // המנהל הוא המורה המוגדר כברירת מחדל
+                    teacherId: userId,
                     teacherName: 'המנהל/ת',
                     createdAt: new Date().toISOString()
                 });
@@ -689,7 +708,7 @@
 
             try {
                 // מציאת פרטי המקצוע והסטודנט לשמירה כטקסט קריא (de-normalization)
-                const student = allStudents.find(s => s.uid === studentId);
+                const student = allStudents.find(s => (s.uid === studentId || s.id === studentId));
                 const subject = allSubjects.find(s => s.id === subjectId);
                 
                 // ה-ID הייחודי לציון הוא שילוב של studentId_subjectId_year
@@ -732,18 +751,21 @@
                 // שימוש באימות רגיל של Firebase Email/Password
                 await signInWithEmailAndPassword(auth, email, password);
                 // onAuthStateChanged יטפל בשאר דרך handleAuthenticatedUser
-                hideLoading();
             } catch (error) {
                 console.error("Login failed:", error);
                 
                 // המרת שגיאות נפוצות לשפה העברית
-                let friendlyMessage = 'שגיאה כללית בהתחברות.';
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                    friendlyMessage = 'שם משתמש או סיסמה שגויים.';
-                } else if (error.code === 'auth/invalid-email') {
+                let friendlyMessage = 'שם משתמש או סיסמה שגויים.';
+                if (error.code === 'auth/invalid-email') {
                     friendlyMessage = 'פורמט דוא"ל לא תקין.';
                 } else if (error.code === 'auth/too-many-requests') {
                     friendlyMessage = 'הוגבלת זמנית בשל ניסיונות כניסה מרובים כושלים.';
+                } 
+                // בדיקה מפורשת לשגיאה auth/invalid-credential
+                else if (error.code === 'auth/invalid-credential') {
+                    friendlyMessage = 'שם משתמש או סיסמה שגויים.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    friendlyMessage = 'שגיאת רשת. אנא בדוק את חיבור האינטרנט שלך.';
                 } else {
                     friendlyMessage = `שגיאה: ${error.message}`;
                 }
@@ -760,7 +782,16 @@
             } catch (error) {
                 console.error("Logout failed:", error);
                 // הצג הודעת שגיאה במקרה של כשל ביציאה
-                alert('שגיאה ביציאה: ' + error.message); 
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-right">
+                        <h3 class="text-lg font-bold text-red-600 mb-4">שגיאה ביציאה</h3>
+                        <p class="text-gray-700 text-sm mb-4">${error.message}</p>
+                        <button onclick="this.closest('.fixed').remove()" class="bg-primary-blue text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-150">סגור</button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
             }
         });
 
