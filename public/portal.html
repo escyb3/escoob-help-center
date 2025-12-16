@@ -443,8 +443,6 @@
         async function handleAuthenticatedUser(email) {
             showLoading("מאמת משתמש וטוען פרופיל...");
 
-            // הנתיב למסמך המשתמש הוא: artifacts/{appId}/public/data/users/{userId}
-            // חשוב להשתמש ב-userId כ-docId, כמצופה בכללי האבטחה
             const userDocRef = doc(db, USERS_COL, userId);
             
             try {
@@ -453,7 +451,22 @@
 
                 if (docSnap.exists()) {
                     // המשתמש כבר קיים ב-Firestore
-                    const userData = docSnap.data();
+                    let userData = docSnap.data();
+                    
+                    // *** התיקון הקריטי: עדכון מסמך המשתמש אם חסרים בו נתונים קריטיים ***
+                    // זה מטפל במקרה שהמנהל יצר פרופיל, ואז הסטודנט נכנס וצריך לעדכן את ה-UID
+                    if (!userData.uid || userData.uid !== userId) {
+                         console.log("Updating user profile with correct UID and email...");
+                         await setDoc(userDocRef, { 
+                            ...userData, 
+                            uid: userId, 
+                            email: email || userData.email // ודא שהאימייל תקין
+                         }, { merge: true });
+                         userData.uid = userId;
+                         userData.email = email;
+                    }
+                    // *** סוף התיקון הקריטי ***
+
                     userRole = userData.role;
                     await setupAppUI(userData);
                 } else {
@@ -478,7 +491,7 @@
                         createdAt: new Date().toISOString()
                     };
 
-                    // שימוש ב-setDoc עם ה-UID כ-docId כדי לעמוד בכלל 'allow create: if request.auth.uid == userId;'
+                    // שימוש ב-setDoc עם ה-UID כ-docId
                     await setDoc(userDocRef, newUserData);
                     
                     // כעת, השתמש בנתונים החדשים שהרגע יצרנו
@@ -491,7 +504,6 @@
             } catch (error) {
                 console.error("Error handling authenticated user (Permissions or DB issue):", error);
                 
-                // טיפול משופר בשגיאות הרשאה
                 let errorMessage = `שגיאה בטעינת פרופיל: ${error.message}.`;
                 if (error.code === 'permission-denied') {
                     errorMessage = "שגיאת הרשאות: נכשל ניסיון לקרוא או ליצור את פרופיל המשתמש ב-Firestore. אנא ודא שכללי האבטחה מעודכנים כראוי (ראה את הכללים שסופקו).";
@@ -534,15 +546,13 @@
         // --- מאזיני נתונים (onSnapshot) ---
 
         function listenToStudentData() {
-            // ודא ש-db קיים ו-userId נטען לפני הפעלת onSnapshot (תיקון השגיאה)
+            // ודא ש-db קיים ו-userId נטען לפני הפעלת onSnapshot
             if (!db || !userId) {
                 console.warn("Firestore not initialized or userId is missing. Cannot listen to student data.");
                 return; 
             }
             
-            // מאזין לציונים של הסטודנט הנוכחי
-            // שימוש ב-GRADES_COL המוגדר
-            // **תיקון: חובה להוסיף את המסנן where("studentId", "==", userId) כדי לעמוד בכללי האבטחה.**
+            // **השאילתה המדויקת שדורשת את הכלל LIST ב-firestore.rules**
             const q = query(collection(db, GRADES_COL), where("studentId", "==", userId));
             
             onSnapshot(q, (snapshot) => {
@@ -552,9 +562,14 @@
                 // שגיאה זו נגרמת אם ה-UID לא תואם לכלל האבטחה
                 console.error("Error listening to student grades:", error);
                 
-                // כדאי להציג הודעה ברורה יותר ב-UI
+                // הוספת הודעה קריטית אם השגיאה היא PERMISSION_DENIED
+                let errorMessage = 'שגיאה כללית בטעינת הציונים.';
+                if (error.code === 'permission-denied') {
+                    errorMessage = "שגיאת הרשאה! הציונים לא נטענו. אנא ודא: 1. הכללים נפרסו (LIST תקין). 2. מסמכי הציונים מכילים שדה studentId התואם ל-UID שלך.";
+                }
+
                 const tableBody = document.getElementById('grades-table-body');
-                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">שגיאת הרשאה: הציונים לא נטענו. אנא ודא שהוזנו ציונים עבורך ושכללי האבטחה תקינים.</td></tr>';
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">${errorMessage}</td></tr>`;
             });
         }
 
@@ -577,7 +592,7 @@
             });
 
             // מאזין לכל הסטודנטים
-            // חשוב: השאילתה מחזירה את ה-doc ID שהוא ה-UID של הסטודנט
+            // השאילתה מחזירה את ה-doc ID שהוא ה-UID של הסטודנט
             const q = query(collection(db, USERS_COL), where("role", "==", "student"));
             onSnapshot(q, (snapshot) => {
                 // שמור את ה-doc.id גם כ-uid
@@ -615,7 +630,7 @@
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-gray-900">${g.subjectName || 'מקצוע לא ידוע'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${gradeClass(g.submissionGrade)}">${g.submissionGrade}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${gradeClass(g.examGrade)}">${g.examGrade}</td>
+                    <td class-="px-6 py-4 whitespace-nowrap text-sm text-center ${gradeClass(g.examGrade)}">${g.examGrade}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-lg text-center font-extrabold ${gradeClass(g.finalGrade)}">${g.finalGrade}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">${g.teacherName || 'לא הוגדר'}</td>
                 `;
@@ -668,14 +683,15 @@
 
             try {
                 // המנהל צריך להיות מאומת כדי לבצע את הפעולה הזו (write: if isManager() ).
-                // השמירה כרגע היא עם UID זמני. ה-UID האמיתי של המסמך יוגדר כאשר המשתמש יתחבר לראשונה.
+                // שימוש ב-addDoc ייצור docId אוטומטי. 
+                // חשוב: הפרופיל הזה יצטרך עדכון UID כאשר הסטודנט יתחבר לראשונה (מטופל ב-handleAuthenticatedUser).
                 await addDoc(collection(db, USERS_COL), {
                     name,
                     email,
                     class: studentClass,
                     role: 'student',
-                    // שימו לב: ה-UID האמיתי יוגדר רק בכניסה הראשונה
-                    uid: `placeholder_${Date.now()}` 
+                    uid: null, // UID יהיה null עד שהסטודנט יתחבר ו-handleAuthenticatedUser יעדכן אותו
+                    createdAt: new Date().toISOString()
                 });
 
                 msgElement.textContent = `פרופיל סטודנט נוסף בהצלחה! יש ליצור משתמש ב-Firebase Auth עם האימייל הזה.`;
@@ -738,7 +754,6 @@
 
             try {
                 // מציאת פרטי המקצוע והסטודנט לשמירה כטקסט קריא (de-normalization)
-                // חשוב למצוא את הסטודנט לפי ה-UID שנבחר
                 const student = allStudents.find(s => (s.uid === studentId)); 
                 const subject = allSubjects.find(s => s.id === subjectId);
                 
