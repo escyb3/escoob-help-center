@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>פורטל Escoob - ציונים ונתונים אישיים</title>
+    <!-- טעינת Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#1D4ED8',
+                        'secondary-gray': '#F3F4F6',
+                        'accent-green': '#10B981',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Arial', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #F9FAFB;
+        }
+        .nav-link.active {
+            background-color: #EBF8FF;
+            color: #1D4ED8;
+            border-right-width: 4px;
+            border-color: #1D4ED8;
+            font-weight: 600;
+        }
+        .main-content-area {
+            max-height: calc(100vh - 64px); 
+            overflow-y: auto;
+        }
+        /* סגנון לגלוליות */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+    </style>
+</head>
+<body class="min-h-screen">
+    
+    <!-- מסך טעינה/כניסה (Login Screen/Loading Overlay) -->
+    <div id="loading-overlay" class="fixed inset-0 bg-gray-50 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div id="login-screen" class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-200 hidden">
+            <h2 class="text-3xl font-extrabold text-primary-blue mb-6 text-center">כניסה לפורטל Escoob</h2>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 text-right">דוא"ל</label>
+                    <input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:ring-primary-blue focus:border-primary-blue text-right" placeholder="הכנס אימייל">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 text-right">סיסמה</label>
+                    <input type="password" id="password" name="password" required class="mt-1 block w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:ring-primary-blue focus:border-primary-blue text-right" placeholder="הכנס סיסמה">
+                </div>
+                <div id="auth-error-message" class="text-red-600 text-sm hidden text-right"></div>
+                <button type="submit" class="w-full bg-primary-blue hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-150 shadow-md">
+                    התחבר
+                </button>
+                <p class="text-center text-sm text-gray-500 pt-2">עבור כניסת מנהל: יש להזין את המייל: manager@escoob.org ואת הסיסמה שיצרת ב-Firebase.</p>
+            </form>
+        </div>
+        <p id="loading-message" class="text-lg text-primary-blue font-semibold">טוען מערכת...</p>
+    </div>
+
+    <!-- גוף האפליקציה (Hidden until authenticated) -->
+    <div id="app-container" class="hidden">
+        
+        <!-- ראש העמוד (Header) -->
+        <header class="bg-primary-blue text-white shadow-lg p-4 sticky top-0 z-10">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">פורטל Escoob</h1>
+                <div class="flex items-center space-x-4 space-x-reverse">
+                    <span class="text-sm hidden sm:inline" id="user-greeting">שלום, אורח</span>
+                    <span id="user-role-display" class="bg-accent-green text-white text-xs font-semibold px-2 py-1 rounded-full"></span>
+                    
+                    <!-- איקון פרופיל (Placeholder SVG) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 01-6 0 3 3 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14c-4.418 0-8 2.015-8 4.5v2h16v-2c0-2.485-3.582-4.5-8-4.5z" />
+                    </svg>
+                    <button id="logout-button" class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-1 px-3 rounded-full transition duration-150">
+                        יציאה
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- גוף האפליקציה: סרגל צד ותוכן ראשי -->
+        <div class="flex flex-col md:flex-row min-h-[calc(100vh-64px)]">
+            
+            <!-- סרגל צד (Sidebar) -->
+            <aside id="sidebar" class="w-full md:w-64 bg-white border-l md:border-l-0 md:border-r border-gray-200 p-4 shadow-xl md:shadow-none">
+                <nav>
+                    <ul id="nav-list">
+                        <!-- Navigation items will be added here based on role -->
+                    </ul>
+                </nav>
+                <div class="mt-8 pt-4 border-t border-gray-200 text-sm text-gray-500 text-center">
+                    &copy; 2025 Escoob. כל הזכויות שמורות.
+                </div>
+            </aside>
+
+            <!-- אזור התוכן הראשי -->
+            <main class="flex-1 p-6 lg:p-10 main-content-area">
+                
+                <!-- 1. כרטיס נתונים אישיים (Student/Manager Profile) -->
+                <section id="personal-data" class="tab-content hidden">
+                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">נתונים אישיים</h2>
+                    <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Data will be populated here -->
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium text-gray-500">שם מלא</span>
+                            <span class="text-lg font-semibold text-gray-800" id="info-name">טוען...</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium text-gray-500">דוא"ל</span>
+                            <span class="text-lg font-semibold text-gray-800" id="info-email">טוען...</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium text-gray-500">תפקיד</span>
+                            <span class="text-lg font-semibold text-primary-blue" id="info-role">טוען...</span>
+                        </div>
+                        <div id="class-info-container" class="flex flex-col">
+                            <span class="text-sm font-medium text-gray-500">כיתה</span>
+                            <span class="text-lg font-semibold text-gray-800" id="info-class"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. כרטיס ציונים (Student Only) -->
+                <section id="grades" class="tab-content hidden">
+                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">ציונים</h2>
+                    <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                        <h3 class="text-xl font-semibold mb-4">ציוני מחצית עדכניים</h3>
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-secondary-gray">
+                                    <tr>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">מקצוע</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ציון הגשה</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ציון מבחן</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ציון סופי</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">מורה</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="grades-table-body">
+                                    <tr><td colspan="5" class="text-center py-4 text-gray-500">אין ציונים להצגה.</td></tr>
+                                </tbody>
+                                <tfoot class="bg-gray-50 font-bold">
+                                    <tr>
+                                        <td class="px-6 py-3 text-right text-sm text-gray-900">ממוצע כללי</td>
+                                        <td colspan="2" class="px-6 py-3 text-center text-sm text-gray-900"></td>
+                                        <td class="px-6 py-3 text-center text-lg text-primary-blue" id="overall-average">--</td>
+                                        <td class="px-6 py-3 text-center text-sm text-gray-900"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. פאנל ניהול (Manager Only) -->
+                <section id="manager-panel" class="tab-content hidden">
+                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">פאנל ניהול</h2>
+                    <div class="space-y-8">
+                        
+                        <!-- הוספת מקצוע חדש -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                            <h3 class="text-xl font-semibold mb-4 text-primary-blue">1. הוספת מקצוע</h3>
+                            <form id="add-subject-form" class="space-y-3">
+                                <div>
+                                    <label for="subject-name" class="block text-sm font-medium text-gray-700">שם מקצוע</label>
+                                    <input type="text" id="subject-name" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right">
+                                </div>
+                                <button type="submit" class="bg-accent-green hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
+                                    הוסף מקצוע
+                                </button>
+                                <div id="subject-msg" class="text-sm pt-2 text-right"></div>
+                            </form>
+                        </div>
+
+                        <!-- הוספת משתמש חדש (סטודנט) -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                            <h3 class="text-xl font-semibold mb-4 text-primary-blue">2. יצירת משתמש (סטודנט)</h3>
+                            <form id="add-student-form" class="space-y-3">
+                                <p class="text-sm text-gray-600">יש להשתמש בדוא"ל ייחודי לכל סטודנט (מזהה כניסה). המשתמש יצטרך להירשם עם דוא"ל וסיסמה.</p>
+                                <div>
+                                    <label for="student-name" class="block text-sm font-medium text-gray-700">שם מלא</label>
+                                    <input type="text" id="student-name" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right">
+                                </div>
+                                <div>
+                                    <label for="student-email" class="block text-sm font-medium text-gray-700">דוא"ל</label>
+                                    <input type="email" id="student-email" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right">
+                                </div>
+                                <div>
+                                    <label for="student-class" class="block text-sm font-medium text-gray-700">כיתה</label>
+                                    <input type="text" id="student-class" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right" placeholder="לדוגמא: יב' 3">
+                                </div>
+                                <button type="submit" class="bg-accent-green hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
+                                    צור פרופיל סטודנט
+                                </button>
+                                <div id="student-msg" class="text-sm pt-2 text-right"></div>
+                            </form>
+                        </div>
+
+                        <!-- עדכון ציונים -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                            <h3 class="text-xl font-semibold mb-4 text-primary-blue">3. עדכון ציונים</h3>
+                            <p class="text-sm text-gray-600 mb-4">בחר סטודנט ומקצוע לעדכון ציון.</p>
+                            <form id="update-grade-form" class="space-y-4">
+                                <div>
+                                    <label for="grade-student-select" class="block text-sm font-medium text-gray-700">בחר סטודנט</label>
+                                    <select id="grade-student-select" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right bg-white">
+                                        <option value="">טוען סטודנטים...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="grade-subject-select" class="block text-sm font-medium text-gray-700">בחר מקצוע</label>
+                                    <select id="grade-subject-select" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right bg-white">
+                                        <option value="">טוען מקצועות...</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label for="grade-submission" class="block text-sm font-medium text-gray-700">הגשה</label>
+                                        <input type="number" id="grade-submission" min="0" max="100" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-center">
+                                    </div>
+                                    <div>
+                                        <label for="grade-exam" class="block text-sm font-medium text-gray-700">מבחן</label>
+                                        <input type="number" id="grade-exam" min="0" max="100" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-center">
+                                    </div>
+                                    <div>
+                                        <label for="grade-final" class="block text-sm font-medium text-gray-700">סופי (מחושב)</label>
+                                        <input type="number" id="grade-final" min="0" max="100" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-center">
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full bg-primary-blue hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
+                                    עדכן ציון
+                                </button>
+                                <div id="grade-msg" class="text-sm pt-2 text-right"></div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. כרטיס הודעות (Placeholder for both) -->
+                <section id="messages" class="tab-content hidden">
+                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">הודעות ועדכונים</h2>
+                    <div class="space-y-4">
+                        <div class="bg-yellow-50 border-r-4 border-yellow-400 p-4 rounded-lg shadow-md">
+                            <p class="font-semibold text-yellow-800">עדכון חשוב!</p>
+                            <p class="text-sm text-yellow-700">המערכת פועלת כעת עם אימות מלא (Email/Password) ונתונים בזמן אמת (Firebase Firestore).</p>
+                        </div>
+                         <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
+                            <p class="font-semibold text-gray-800">ברוכים הבאים!</p>
+                            <p class="text-sm text-gray-600">הפורטל החדש של Escoob הושק בהצלחה.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, getDocs, where, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- קונפיגורציית Firebase והגדרות ---
+        
+        // קונפיגורציה שסופקה על ידי המשתמש
+        const firebaseConfig = {
+            apiKey: "AIzaSyA51KrL8gBgBiFGiR0zHda4_T9cR5dSEmo",
+            authDomain: "escoobportalscores.firebaseapp.com",
+            projectId: "escoobportalscores",
+            storageBucket: "escoobportalscores.firebasestorage.app",
+            messagingSenderId: "621287386562",
+            appId: "1:621287386562:web:f508838a32c371a948ba5b"
+        };
+        
+        const appId = firebaseConfig.projectId; // משתמשים ב-projectId כמזהה האפליקציה
+
+        // נתיבים ציבוריים (חובה לאפליקציה רבת משתמשים)
+        const USERS_COL = `artifacts/${appId}/public/data/users`;
+        const SUBJECTS_COL = `artifacts/${appId}/public/data/subjects`;
+        const GRADES_COL = `artifacts/${appId}/public/data/grades`;
+
+        const MANAGER_EMAIL = 'manager@escoob.org'; // המייל הקבוע של המנהל
+
+        let app;
+        let db;
+        let auth;
+        let userId = null;
+        let userRole = 'guest'; // 'student' or 'manager'
+        
+        // --- פונקציות עזר כלליות ---
+
+        function showLoading(message = 'טוען מערכת...') {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-overlay').classList.add('opacity-100');
+            document.getElementById('loading-message').textContent = message;
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('opacity-0');
+            setTimeout(() => {
+                document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('loading-overlay').classList.remove('opacity-0');
+            }, 300);
+            document.getElementById('app-container').classList.remove('hidden');
+        }
+
+        function showLoginScreen(error = null) {
+            document.getElementById('loading-message').textContent = '';
+            document.getElementById('login-screen').classList.remove('hidden');
+            const errorElement = document.getElementById('auth-error-message');
+            if (error) {
+                errorElement.textContent = error;
+                errorElement.classList.remove('hidden');
+            } else {
+                errorElement.classList.add('hidden');
+            }
+        }
+        
+        // --- פונקציות UI וניווט ---
+        
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            const activeContent = document.getElementById(tabId);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+            }
+            const activeLink = document.querySelector(`.nav-link[data-tab="${tabId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+        }
+
+        function updateSidebar(role) {
+            const navList = document.getElementById('nav-list');
+            navList.innerHTML = '';
+            
+            // תמיד מציגים פרופיל והודעות
+            const commonTabs = [
+                { id: 'personal-data', title: 'נתונים אישיים' },
+                { id: 'messages', title: 'הודעות ועדכונים' }
+            ];
+
+            if (role === 'student') {
+                commonTabs.splice(1, 0, { id: 'grades', title: 'ציונים' }); // הוסף ציונים לסטודנט
+            } else if (role === 'manager') {
+                commonTabs.push({ id: 'manager-panel', title: 'פאנל ניהול' });
+            }
+
+            commonTabs.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'mb-2';
+                li.innerHTML = `
+                    <a href="#" data-tab="${item.id}" class="nav-link block p-3 rounded-lg text-gray-700 hover:bg-secondary-gray transition duration-150 border-r-4 border-transparent text-right">
+                        ${item.title}
+                    </a>
+                `;
+                navList.appendChild(li);
+            });
+
+            // הוספת Event Listeners חדשים
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showTab(link.getAttribute('data-tab'));
+                });
+            });
+
+            showTab(commonTabs[0].id); // הצג את הטאב הראשון כברירת מחדל
+        }
+
+        // --- Firebase Init and Auth Handlers ---
+
+        async function initFirebase() {
+            if (!firebaseConfig.apiKey) {
+                console.error("Firebase config not found.");
+                showLoginScreen("שגיאת מערכת: קונפיגורציית Firebase חסרה.");
+                return;
+            }
+            
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // מאזין לשינויים במצב האימות
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        await handleAuthenticatedUser(user.email);
+                    } else {
+                        // אם המשתמש התנתק או אין משתמש מאומת
+                        showLoginScreen();
+                        document.getElementById('app-container').classList.add('hidden');
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                showLoginScreen(`שגיאת אתחול: ${error.message}`);
+            }
+        }
+
+        async function handleAuthenticatedUser(email) {
+            showLoading("מאמת משתמש...");
+
+            const userDocRef = doc(db, USERS_COL, userId);
+            
+            // ננסה למשוך את פרטי המשתמש מהדאטה-בייס הציבורי לפי ה-UID החדש
+            const userSnapshot = await getDocs(query(collection(db, USERS_COL), where("uid", "==", userId)));
+            
+            let userData = null;
+
+            if (!userSnapshot.empty) {
+                // המשתמש קיים ב-Firestore
+                userData = userSnapshot.docs[0].data();
+                userRole = userData.role;
+            } else if (email === MANAGER_EMAIL) {
+                // כניסה ראשונית של המנהל (יצירת פרופיל מנהל חדש ב-Firestore)
+                userRole = 'manager';
+                userData = {
+                    uid: userId,
+                    name: 'מנהל ראשי',
+                    email: MANAGER_EMAIL,
+                    role: userRole,
+                    class: 'מערכת',
+                };
+                await setDoc(userDocRef, userData);
+            } else {
+                 // כניסה של משתמש מאומת (Email/Password) שאין לו עדיין פרופיל Firestore
+                userRole = 'student';
+                userData = {
+                    uid: userId,
+                    name: `סטודנט חדש`, // ניתן לשנות לשם שייקלט בעתיד
+                    email: email,
+                    role: userRole,
+                    class: 'טרם הוגדר',
+                };
+                await setDoc(userDocRef, userData);
+            }
+
+            // הפעלת ממשק בהתאם לתפקיד
+            await setupAppUI(userData);
+            hideLoading();
+        }
+
+        async function setupAppUI(userData) {
+            userRole = userData.role;
+
+            // עדכון פרטי המשתמש בהאדר
+            document.getElementById('user-greeting').textContent = `שלום, ${userData.name}`;
+            document.getElementById('user-role-display').textContent = userRole === 'manager' ? 'מנהל מערכת' : 'סטודנט';
+            
+            // עדכון סרגל צד וטאבים
+            updateSidebar(userRole);
+            
+            // עדכון נתונים אישיים
+            document.getElementById('info-name').textContent = userData.name;
+            document.getElementById('info-email').textContent = userData.email;
+            document.getElementById('info-role').textContent = userRole === 'manager' ? 'מנהל ראשי' : 'סטודנט';
+            
+            const classContainer = document.getElementById('class-info-container');
+            const classDisplay = document.getElementById('info-class');
+
+            if (userRole === 'student') {
+                classContainer.classList.remove('hidden');
+                classDisplay.textContent = userData.class || 'לא ידוע';
+                // הפעלת מאזיני הנתונים של הסטודנט
+                listenToStudentData();
+            } else {
+                // מנהל לא צריך שדה כיתה
+                classContainer.classList.add('hidden');
+                // הפעלת מאזיני הנתונים של המנהל
+                listenToManagerData();
+            }
+        }
+
+        // --- מאזיני נתונים (onSnapshot) ---
+
+        function listenToStudentData() {
+            // מאזין לציונים של הסטודנט הנוכחי
+            const q = query(collection(db, GRADES_COL), where("studentId", "==", userId));
+            onSnapshot(q, (snapshot) => {
+                const gradesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderGradesTable(gradesData);
+            }, (error) => {
+                console.error("Error listening to student grades:", error);
+            });
+        }
+
+        let allStudents = [];
+        let allSubjects = [];
+
+        function listenToManagerData() {
+            // מאזין לכל המקצועות
+            onSnapshot(collection(db, SUBJECTS_COL), (snapshot) => {
+                allSubjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderSubjectSelect(allSubjects, document.getElementById('grade-subject-select'));
+            }, (error) => {
+                console.error("Error listening to subjects:", error);
+            });
+
+            // מאזין לכל המשתמשים (רק סטודנטים לצורך הניהול)
+            const q = query(collection(db, USERS_COL), where("role", "==", "student"));
+            onSnapshot(q, (snapshot) => {
+                // סינון ידני של סטודנטים ללא UID (פרופילים זמניים)
+                allStudents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(s => s.uid && s.uid.length > 5);
+                renderStudentSelect(allStudents, document.getElementById('grade-student-select'));
+            }, (error) => {
+                console.error("Error listening to students:", error);
+            });
+        }
+
+        // --- פונקציות רינדור ---
+
+        function renderGradesTable(grades) {
+            const tableBody = document.getElementById('grades-table-body');
+            tableBody.innerHTML = '';
+            let totalFinalGrade = 0;
+            
+            if (grades.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">אין ציונים קיימים.</td></tr>';
+                document.getElementById('overall-average').textContent = '--';
+                return;
+            }
+
+            grades.forEach(g => {
+                totalFinalGrade += g.finalGrade;
+                
+                const gradeClass = (grade) => {
+                    if (grade >= 95) return 'font-bold text-green-600';
+                    if (grade >= 85) return 'text-primary-blue';
+                    return 'text-gray-800';
+                };
+
+                const row = document.createElement('tr');
+                row.classList.add('hover:bg-gray-50');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-gray-900">${g.subjectName || 'מקצוע לא ידוע'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${gradeClass(g.submissionGrade)}">${g.submissionGrade}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${gradeClass(g.examGrade)}">${g.examGrade}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-lg text-center font-extrabold ${gradeClass(g.finalGrade)}">${g.finalGrade}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">${g.teacherName || 'לא הוגדר'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // חישוב והצגת הממוצע הכללי
+            const average = (totalFinalGrade / grades.length).toFixed(1);
+            document.getElementById('overall-average').textContent = average;
+        }
+
+        function renderSubjectSelect(subjects, selectElement) {
+            selectElement.innerHTML = '<option value="">בחר מקצוע...</option>';
+            subjects.forEach(subject => {
+                const option = document.createElement('option');
+                option.value = subject.id;
+                option.textContent = subject.name;
+                selectElement.appendChild(option);
+            });
+        }
+
+        function renderStudentSelect(students, selectElement) {
+            selectElement.innerHTML = '<option value="">בחר סטודנט...</option>';
+            students.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.uid;
+                option.textContent = `${student.name} (${student.email})`;
+                selectElement.appendChild(option);
+            });
+        }
+
+        // --- פונקציות ניהול (CRUD) ---
+        
+        // יצירת משתמש סטודנט
+        document.getElementById('add-student-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const name = form['student-name'].value.trim();
+            const email = form['student-email'].value.trim();
+            const studentClass = form['student-class'].value.trim();
+            const msgElement = document.getElementById('student-msg');
+            
+            msgElement.textContent = 'מבצע בדיקה...';
+            msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
+
+            // 1. בדיקה אם פרופיל Firestore קיים עם המייל הזה (לפני אימות)
+            const existingQuery = query(collection(db, USERS_COL), where("email", "==", email));
+            const existingSnapshot = await getDocs(existingQuery);
+
+            if (!existingSnapshot.empty) {
+                msgElement.textContent = 'שגיאה: פרופיל קיים כבר נוצר עם דוא"ל זה. עליך למחוק אותו לפני הוספה מחדש.';
+                msgElement.className = 'text-red-600 text-sm pt-2 text-right';
+                return;
+            }
+
+            try {
+                // 2. יצירת פרופיל סטודנט ב-Firestore (עדיין ללא UID אימות)
+                // ה-UID האמיתי ייקבע רק כשהסטודנט יירשם בפועל ל-Firebase Auth עם המייל הזה.
+                await addDoc(collection(db, USERS_COL), {
+                    name,
+                    email,
+                    class: studentClass,
+                    role: 'student',
+                    uid: `pending_${Date.now()}` // מזהה זמני
+                });
+
+                msgElement.textContent = `פרופיל סטודנט נוסף בהצלחה! הסטודנט צריך להירשם עם המייל הזה ב-Firebase.`;
+                msgElement.className = 'text-green-600 text-sm pt-2 text-right';
+                form.reset();
+            } catch (error) {
+                console.error("Error adding student profile:", error);
+                msgElement.textContent = `שגיאה בהוספת פרופיל: ${error.message}`;
+                msgElement.className = 'text-red-600 text-sm pt-2 text-right';
+            }
+        });
+
+        // יצירת מקצוע חדש
+        document.getElementById('add-subject-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const name = form['subject-name'].value.trim();
+            const msgElement = document.getElementById('subject-msg');
+
+            msgElement.textContent = 'מוסיף מקצוע...';
+            msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
+
+            try {
+                // המקצועות נשמרים ב-Firestore עם ID אוטומטי
+                await addDoc(collection(db, SUBJECTS_COL), {
+                    name,
+                    teacherId: userId, // המנהל הוא המורה המוגדר כברירת מחדל
+                    teacherName: 'המנהל/ת',
+                    createdAt: new Date().toISOString()
+                });
+                msgElement.textContent = 'מקצוע נוסף בהצלחה!';
+                msgElement.className = 'text-green-600 text-sm pt-2 text-right';
+                form.reset();
+            } catch (error) {
+                console.error("Error adding subject:", error);
+                msgElement.textContent = `שגיאה בהוספת מקצוע: ${error.message}`;
+                msgElement.className = 'text-red-600 text-sm pt-2 text-right';
+            }
+        });
+
+        // עדכון ציונים
+        document.getElementById('update-grade-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const studentId = form['grade-student-select'].value;
+            const subjectId = form['grade-subject-select'].value;
+            const submissionGrade = parseInt(form['grade-submission'].value);
+            const examGrade = parseInt(form['grade-exam'].value);
+            const finalGrade = parseInt(form['grade-final'].value);
+            const msgElement = document.getElementById('grade-msg');
+
+            if (!studentId || !subjectId) {
+                msgElement.textContent = 'יש לבחור סטודנט ומקצוע.';
+                msgElement.className = 'text-red-600 text-sm pt-2 text-right';
+                return;
+            }
+
+            msgElement.textContent = 'מעדכן ציון...';
+            msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
+
+            try {
+                // מציאת פרטי המקצוע והסטודנט לשמירה כטקסט קריא (de-normalization)
+                const student = allStudents.find(s => s.uid === studentId);
+                const subject = allSubjects.find(s => s.id === subjectId);
+                
+                // ה-ID הייחודי לציון הוא שילוב של studentId_subjectId_year
+                const gradeDocId = `${studentId}_${subjectId}_2025`; // שנה קבועה כרגע
+
+                await setDoc(doc(db, GRADES_COL, gradeDocId), {
+                    studentId,
+                    subjectId,
+                    studentName: student ? student.name : 'לא ידוע',
+                    subjectName: subject ? subject.name : 'לא ידוע',
+                    teacherName: subject ? subject.teacherName : 'לא הוגדר',
+                    submissionGrade,
+                    examGrade,
+                    finalGrade,
+                    year: 2025,
+                    updatedAt: new Date().toISOString()
+                });
+
+                msgElement.textContent = `הציון הסופי ${finalGrade} עודכן בהצלחה עבור ${student.name} במקצוע ${subject.name}.`;
+                msgElement.className = 'text-green-600 text-sm pt-2 text-right';
+            } catch (error) {
+                console.error("Error updating grade:", error);
+                msgElement.textContent = `שגיאה בעדכון ציון: ${error.message}`;
+                msgElement.className = 'text-red-600 text-sm pt-2 text-right';
+            }
+        });
+
+        // --- טיפול בכניסה ---
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const email = form['email'].value.trim();
+            const password = form['password'].value.trim();
+            const errorElement = document.getElementById('auth-error-message');
+            
+            errorElement.classList.add('hidden');
+            showLoading("מנסה להתחבר...");
+            
+            try {
+                // שימוש באימות רגיל של Firebase Email/Password
+                await signInWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged יטפל בשאר דרך handleAuthenticatedUser
+                hideLoading();
+            } catch (error) {
+                console.error("Login failed:", error);
+                
+                // המרת שגיאות נפוצות לשפה העברית
+                let friendlyMessage = 'שגיאה כללית בהתחברות.';
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    friendlyMessage = 'שם משתמש או סיסמה שגויים.';
+                } else if (error.code === 'auth/invalid-email') {
+                    friendlyMessage = 'פורמט דוא"ל לא תקין.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    friendlyMessage = 'הוגבלת זמנית בשל ניסיונות כניסה מרובים כושלים.';
+                } else {
+                    friendlyMessage = `שגיאה: ${error.message}`;
+                }
+
+                showLoginScreen(friendlyMessage);
+            }
+        });
+
+        // --- כפתור יציאה ---
+        document.getElementById('logout-button').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                // onAuthStateChanged יטפל בהצגת מסך הכניסה
+            } catch (error) {
+                console.error("Logout failed:", error);
+                // הצג הודעת שגיאה במקרה של כשל ביציאה
+                alert('שגיאה ביציאה: ' + error.message); 
+            }
+        });
+
+        // --- אתחול ---
+        initFirebase();
+    </script>
+</body>
+</html>
