@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>פורטל Escoob - ציונים ונתונים אישיים</title>
+    <title>פורטל Escoob - ציונים וחומר לימוד</title>
     <!-- טעינת Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -14,6 +14,7 @@
                         'primary-blue': '#1D4ED8',
                         'secondary-gray': '#F3F4F6',
                         'accent-green': '#10B981',
+                        'accent-orange': '#F59E0B',
                     },
                     fontFamily: {
                         sans: ['Inter', 'Arial', 'sans-serif'],
@@ -43,6 +44,13 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+        .material-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .material-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -135,8 +143,19 @@
                         </div>
                     </div>
                 </section>
+                
+                <!-- 2. חומר לימוד ותרגולים (Materials) -->
+                <section id="materials" class="tab-content hidden">
+                    <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">חומר לימוד ותרגולים</h2>
+                    <p class="text-gray-600 mb-4">כאן תמצאו סיכומים, הלכות וחומר הרחבה לבחינות ולתרגול.</p>
+                    <div id="materials-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Materials cards will be rendered here -->
+                        <p class="text-center py-4 col-span-full text-gray-500">טוען חומר לימוד...</p>
+                    </div>
+                </section>
 
-                <!-- 2. כרטיס ציונים (Student Only) -->
+
+                <!-- 3. כרטיס ציונים (Student Only) -->
                 <section id="grades" class="tab-content hidden">
                     <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">ציונים</h2>
                     <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
@@ -168,11 +187,46 @@
                     </div>
                 </section>
 
-                <!-- 3. פאנל ניהול (Manager Only) -->
+                <!-- 4. פאנל ניהול (Manager Only) -->
                 <section id="manager-panel" class="tab-content hidden">
                     <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">פאנל ניהול</h2>
                     <div class="space-y-8">
                         
+                        <!-- הוספת חומר לימוד חדש -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+                            <h3 class="text-xl font-semibold mb-4 text-accent-orange">4. הוספת חומר לימוד/תרגול</h3>
+                            <form id="add-material-form" class="space-y-3">
+                                <div>
+                                    <label for="material-title" class="block text-sm font-medium text-gray-700">כותרת</label>
+                                    <input type="text" id="material-title" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="material-type" class="block text-sm font-medium text-gray-700">סוג חומר</label>
+                                        <select id="material-type" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right bg-white">
+                                            <option value="Holiday">חג/מועד</option>
+                                            <option value="Shabbat">שבת</option>
+                                            <option value="General">כללי</option>
+                                            <option value="Practice">תרגול</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="material-subject" class="block text-sm font-medium text-gray-700">נושא/מקצוע קשור</label>
+                                        <input type="text" id="material-subject" class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right" placeholder="לדוגמא: תנ"ך / מתמטיקה">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="material-content" class="block text-sm font-medium text-gray-700">תוכן מפורט (כולל היסטוריה/הלכות)</label>
+                                    <textarea id="material-content" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2 text-right" rows="5" placeholder="כאן נכנס הסיכום המורחב, כולל היסטוריה והלכות רלוונטיות."></textarea>
+                                </div>
+                                <button type="submit" class="bg-accent-orange hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-150">
+                                    פרסם חומר לימוד
+                                </button>
+                                <div id="material-msg" class="text-sm pt-2 text-right"></div>
+                            </form>
+                        </div>
+
+
                         <!-- הוספת מקצוע חדש -->
                         <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
                             <h3 class="text-xl font-semibold mb-4 text-primary-blue">1. הוספת מקצוע</h3>
@@ -252,13 +306,13 @@
                     </div>
                 </section>
 
-                <!-- 4. כרטיס הודעות (Placeholder for both) -->
+                <!-- 5. כרטיס הודעות (Placeholder for both) -->
                 <section id="messages" class="tab-content hidden">
                     <h2 class="text-3xl font-extrabold text-gray-800 mb-6 border-b pb-2">הודעות ועדכונים</h2>
                     <div class="space-y-4">
                         <div class="bg-yellow-50 border-r-4 border-yellow-400 p-4 rounded-lg shadow-md">
                             <p class="font-semibold text-yellow-800">עדכון חשוב!</p>
-                            <p class="text-sm text-yellow-700">המערכת פועלת כעת עם אימות מלא (Email/Password) ונתונים בזמן אמת (Firebase Firestore).</p>
+                            <p class="text-sm text-yellow-700">המערכת פועלת כעת עם אימות מלא (Email/Password), ציונים וחומרי לימוד בזמן אמת (Firebase Firestore).</p>
                         </div>
                          <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
                             <p class="font-semibold text-gray-800">ברוכים הבאים!</p>
@@ -296,6 +350,7 @@
         const USERS_COL = `artifacts/${appId}/public/data/users`;
         const SUBJECTS_COL = `artifacts/${appId}/public/data/subjects`;
         const GRADES_COL = `artifacts/${appId}/public/data/grades`;
+        const MATERIALS_COL = `artifacts/${appId}/public/data/materials`; // **נתיב חדש**
 
         const MANAGER_EMAIL = 'manager@escoob.org'; // המייל הקבוע של המנהל
 
@@ -363,14 +418,15 @@
             const navList = document.getElementById('nav-list');
             navList.innerHTML = '';
             
-            // תמיד מציגים פרופיל והודעות
+            // תמיד מציגים פרופיל, חומר לימוד והודעות
             const commonTabs = [
                 { id: 'personal-data', title: 'נתונים אישיים' },
+                { id: 'materials', title: 'חומר לימוד ותרגולים' }, // **טאב חדש**
                 { id: 'messages', title: 'הודעות ועדכונים' }
             ];
 
             if (role === 'student') {
-                commonTabs.splice(1, 0, { id: 'grades', title: 'ציונים' }); // הוסף ציונים לסטודנט
+                commonTabs.splice(1, 0, { id: 'grades', title: 'ציונים' }); 
             } else if (role === 'manager') {
                 commonTabs.push({ id: 'manager-panel', title: 'פאנל ניהול' });
             }
@@ -453,19 +509,17 @@
                     // המשתמש כבר קיים ב-Firestore
                     let userData = docSnap.data();
                     
-                    // *** התיקון הקריטי: עדכון מסמך המשתמש אם חסרים בו נתונים קריטיים ***
-                    // זה מטפל במקרה שהמנהל יצר פרופיל, ואז הסטודנט נכנס וצריך לעדכן את ה-UID
-                    if (!userData.uid || userData.uid !== userId) {
+                    // עדכון מסמך המשתמש אם חסרים בו נתונים קריטיים (כגון UID לאחר יצירה ע"י מנהל)
+                    if (!userData.uid || userData.uid !== userId || !userData.email || userData.email !== email) {
                          console.log("Updating user profile with correct UID and email...");
                          await setDoc(userDocRef, { 
                             ...userData, 
                             uid: userId, 
-                            email: email || userData.email // ודא שהאימייל תקין
+                            email: email // ודא שהאימייל תקין
                          }, { merge: true });
                          userData.uid = userId;
                          userData.email = email;
                     }
-                    // *** סוף התיקון הקריטי ***
 
                     userRole = userData.role;
                     await setupAppUI(userData);
@@ -473,7 +527,7 @@
                     // 2. המשתמש מאומת ב-Auth אך אין לו פרופיל ב-Firestore. צריך ליצור אותו.
                     
                     let role = 'student';
-                    let name = `סטודנט ${userId.substring(0, 4)}`;
+                    let name = email.split('@')[0]; // שם ברירת מחדל מהאימייל
                     let studentClass = 'טרם הוגדר';
 
                     if (email === MANAGER_EMAIL) {
@@ -483,7 +537,7 @@
                     }
                     
                     const newUserData = {
-                        uid: userId, // חובה: ה-UID חייב להיות בשדה, אבל בעיקר חשוב שה-doc ID יהיה userId
+                        uid: userId,
                         name: name,
                         email: email,
                         role: role,
@@ -541,6 +595,9 @@
                 // הפעלת מאזיני הנתונים של המנהל
                 listenToManagerData();
             }
+            
+            // הפעלת מאזין חומר לימוד לכולם (כי הכללים מאפשרים זאת)
+            listenToMaterials(); 
         }
 
         // --- מאזיני נתונים (onSnapshot) ---
@@ -552,26 +609,56 @@
                 return; 
             }
             
-            // **השאילתה המדויקת שדורשת את הכלל LIST ב-firestore.rules**
+            console.log(`[DEBUG] Attempting to listen to grades for UID: ${userId}`);
+            
+            // השאילתה המדויקת שדורשת את הכלל LIST ב-firestore.rules
             const q = query(collection(db, GRADES_COL), where("studentId", "==", userId));
             
             onSnapshot(q, (snapshot) => {
                 const gradesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                if (gradesData.length > 0) {
+                     console.log(`[DEBUG] Successfully loaded ${gradesData.length} grades.`);
+                }
+                
                 renderGradesTable(gradesData);
             }, (error) => {
                 // שגיאה זו נגרמת אם ה-UID לא תואם לכלל האבטחה
                 console.error("Error listening to student grades:", error);
                 
-                // הוספת הודעה קריטית אם השגיאה היא PERMISSION_DENIED
                 let errorMessage = 'שגיאה כללית בטעינת הציונים.';
                 if (error.code === 'permission-denied') {
-                    errorMessage = "שגיאת הרשאה! הציונים לא נטענו. אנא ודא: 1. הכללים נפרסו (LIST תקין). 2. מסמכי הציונים מכילים שדה studentId התואם ל-UID שלך.";
+                    errorMessage = `שגיאת הרשאה! הציונים לא נטענו (UID: ${userId}). אנא ודא: 1. הכללים נפרסו. 2. מסמכי הציונים ב-Firestore מכילים שדה studentId התואם בדיוק ל-UID זה.`;
                 }
 
                 const tableBody = document.getElementById('grades-table-body');
                 tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">${errorMessage}</td></tr>`;
             });
         }
+        
+        // ** פונקציה חדשה: מאזין חומר לימוד **
+        function listenToMaterials() {
+            if (!db || !userId) {
+                console.warn("Firestore not initialized or userId is missing. Cannot listen to materials.");
+                return;
+            }
+            
+            // כל המשתמשים רשאים לקרוא את כל החומרים (בדיקה לפי כללי האבטחה)
+            const q = query(collection(db, MATERIALS_COL)); 
+            
+            onSnapshot(q, (snapshot) => {
+                const materialsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderMaterials(materialsData);
+            }, (error) => {
+                console.error("Error listening to materials:", error);
+                document.getElementById('materials-list').innerHTML = `
+                    <p class="text-center py-4 col-span-full text-red-500">
+                        שגיאה בטעינת חומר הלימוד: ${error.message}
+                    </p>
+                `;
+            });
+        }
+
 
         let allStudents = [];
         let allSubjects = [];
@@ -605,6 +692,51 @@
 
         // --- פונקציות רינדור ---
 
+        // ** פונקציה חדשה: רינדור חומר לימוד **
+        function renderMaterials(materials) {
+            const listContainer = document.getElementById('materials-list');
+            listContainer.innerHTML = '';
+            
+            if (materials.length === 0) {
+                listContainer.innerHTML = '<p class="text-center py-4 col-span-full text-gray-500">אין חומרי לימוד זמינים כעת.</p>';
+                return;
+            }
+
+            // מיון לפי תאריך יצירה (החדשים קודם)
+            materials.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            materials.forEach(m => {
+                const icon = m.type === 'Holiday' ? '🎉' : m.type === 'Shabbat' ? '🕍' : m.type === 'Practice' ? '✍️' : '📚';
+                const typeColor = m.type === 'Holiday' ? 'bg-red-100 text-red-800' : 
+                                  m.type === 'Shabbat' ? 'bg-blue-100 text-blue-800' : 
+                                  m.type === 'Practice' ? 'bg-green-100 text-green-800' : 
+                                  'bg-gray-100 text-gray-800';
+
+                const card = document.createElement('div');
+                card.className = `material-card bg-white p-6 rounded-xl shadow-lg border-t-4 border-primary-blue flex flex-col justify-between`;
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-3xl">${icon}</span>
+                            <span class="text-xs font-semibold px-3 py-1 rounded-full ${typeColor}">${m.type}</span>
+                        </div>
+                        <h3 class="text-xl font-extrabold text-gray-900 mb-2">${m.title}</h3>
+                        <p class="text-sm font-medium text-gray-600 mb-2">${m.subjectName ? `מקצוע: ${m.subjectName}` : ''}</p>
+                        ${m.details ? `<p class="text-xs text-primary-blue font-semibold mb-3">${m.details}</p>` : ''}
+                        
+                        <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed border-t pt-3 mt-3 border-gray-100">
+                            ${m.content.replace(/\n/g, '<br>')}
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-2 border-t border-gray-100 text-xs text-gray-400 text-right">
+                        פורסם: ${new Date(m.createdAt).toLocaleDateString('he-IL')}
+                    </div>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
         function renderGradesTable(grades) {
             const tableBody = document.getElementById('grades-table-body');
             tableBody.innerHTML = '';
@@ -630,7 +762,7 @@
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right text-gray-900">${g.subjectName || 'מקצוע לא ידוע'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${gradeClass(g.submissionGrade)}">${g.submissionGrade}</td>
-                    <td class-="px-6 py-4 whitespace-nowrap text-sm text-center ${gradeClass(g.examGrade)}">${g.examGrade}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-center ${gradeClass(g.examGrade)}">${g.examGrade}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-lg text-center font-extrabold ${gradeClass(g.finalGrade)}">${g.finalGrade}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">${g.teacherName || 'לא הוגדר'}</td>
                 `;
@@ -669,6 +801,49 @@
 
         // --- פונקציות ניהול (CRUD) ---
         
+        // ** פונקציה חדשה: הוספת חומר לימוד **
+        document.getElementById('add-material-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const title = form['material-title'].value.trim();
+            const type = form['material-type'].value;
+            const subjectName = form['material-subject'].value.trim();
+            const content = form['material-content'].value.trim();
+            const msgElement = document.getElementById('material-msg');
+            
+            msgElement.textContent = 'מפרסם חומר לימוד...';
+            msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
+
+            // הוספת פרטים ספציפיים לבקשת המשתמש
+            let details = '';
+            if (type === 'Holiday' || type === 'Shabbat') {
+                details = 'החומר כולל הרחבה היסטורית והלכות רלוונטיות.';
+            }
+
+            try {
+                // רק מנהל יכול לכתוב כאן.
+                await addDoc(collection(db, MATERIALS_COL), {
+                    title,
+                    type,
+                    subjectName,
+                    content,
+                    details,
+                    publisherId: userId,
+                    publisherName: 'מנהל ראשי',
+                    createdAt: new Date().toISOString()
+                });
+
+                msgElement.textContent = `חומר הלימוד "${title}" פורסם בהצלחה!`;
+                msgElement.className = 'text-green-600 text-sm pt-2 text-right';
+                form.reset();
+            } catch (error) {
+                console.error("Error adding material:", error);
+                msgElement.textContent = `שגיאה בפרסום חומר לימוד: ${error.message}`;
+                msgElement.className = 'text-red-600 text-sm pt-2 text-right';
+            }
+        });
+
+
         // יצירת פרופיל סטודנט 
         document.getElementById('add-student-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -682,15 +857,12 @@
             msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
 
             try {
-                // המנהל צריך להיות מאומת כדי לבצע את הפעולה הזו (write: if isManager() ).
-                // שימוש ב-addDoc ייצור docId אוטומטי. 
-                // חשוב: הפרופיל הזה יצטרך עדכון UID כאשר הסטודנט יתחבר לראשונה (מטופל ב-handleAuthenticatedUser).
                 await addDoc(collection(db, USERS_COL), {
                     name,
                     email,
                     class: studentClass,
                     role: 'student',
-                    uid: null, // UID יהיה null עד שהסטודנט יתחבר ו-handleAuthenticatedUser יעדכן אותו
+                    uid: null, // UID יהיה null עד שהסטודנט יתחבר
                     createdAt: new Date().toISOString()
                 });
 
@@ -715,7 +887,6 @@
             msgElement.className = 'text-blue-600 text-sm pt-2 text-right';
 
             try {
-                // רק מנהל יכול לכתוב כאן.
                 await addDoc(collection(db, SUBJECTS_COL), {
                     name,
                     teacherId: userId,
@@ -732,7 +903,7 @@
             }
         });
 
-        // עדכון ציונים - פונקציה מתוקנת שמוודאת שה-studentId הוא ה-UID הנכון
+        // עדכון ציונים
         document.getElementById('update-grade-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
@@ -760,7 +931,6 @@
                 // ה-ID הייחודי לציון הוא שילוב של studentId_subjectId_year
                 const gradeDocId = `${studentId}_${subjectId}_2025`; // שנה קבועה כרגע
 
-                // רק מנהל יכול לכתוב כאן.
                 await setDoc(doc(db, GRADES_COL, gradeDocId), {
                     studentId, // חובה: שדה זה חייב להתאים ל-UID המאומת של הסטודנט
                     subjectId,
@@ -803,12 +973,12 @@
                 
                 // המרת שגיאות נפוצות לשפה העברית
                 let friendlyMessage = 'שם משתמש או סיסמה שגויים.';
-                if (error.code === 'auth/invalid-email') {
-                    friendlyMessage = 'פורמט דוא"ל לא תקין.';
+                if (error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found') {
+                    friendlyMessage = 'פורמט דוא"ל לא תקין או משתמש לא קיים.';
+                } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    friendlyMessage = 'שם משתמש או סיסמה שגויים.';
                 } else if (error.code === 'auth/too-many-requests') {
                     friendlyMessage = 'הוגבלת זמנית בשל ניסיונות כניסה מרובים כושלים.';
-                } else if (error.code === 'auth/invalid-credential') {
-                    friendlyMessage = 'שם משתמש או סיסמה שגויים.';
                 } else if (error.code === 'auth/network-request-failed') {
                     friendlyMessage = 'שגיאת רשת. אנא בדוק את חיבור האינטרנט שלך.';
                 } else {
