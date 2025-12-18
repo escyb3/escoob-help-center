@@ -41,7 +41,7 @@
                     <p class="text-2xl text-blue-600 font-medium italic">חג אורים שמח ומלא אתגרים!</p>
                 </header>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="games-grid">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="games-grid">
                     <!-- Games will be injected here -->
                 </div>
             </section>
@@ -53,7 +53,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                         חזרה ללובי
                     </button>
-                    <h2 id="current-game-title" class="text-xl font-black text-slate-800 uppercase">שם המשחק</h2>
+                    <h2 id="current-game-title" class="text-xl font-black text-slate-800 uppercase text-center flex-1">שם המשחק</h2>
                 </div>
                 <div class="flex-1 p-4 flex items-center justify-center overflow-hidden bg-slate-100" id="game-container">
                     <!-- Game content injected here -->
@@ -64,7 +64,6 @@
             <section id="leaderboard" class="section hidden p-8 max-w-4xl mx-auto fade-in">
                 <div class="flex items-center justify-between mb-8">
                     <h1 class="text-4xl font-black text-slate-900 tracking-tight">היכל התהילה</h1>
-                    <svg class="text-yellow-500" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
                 </div>
                 <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100">
                     <div class="bg-slate-900 p-6 text-white flex justify-between items-center font-bold">
@@ -82,79 +81,32 @@
     </div>
 
     <script>
-        // State Management
+        // Game Data & Scores
         let scores = [];
         const games = [
-            {
-                id: 'hanukkah_race',
-                title: 'מרוץ הסופגניות',
-                description: 'משחק זריזות: אספו סופגניות והימנעו מסביבונים שמופיעים מלמעלה.',
-                grade: 'א-ג',
-                icon: '🍩',
-                color: 'bg-white',
-                textColor: 'text-slate-900'
-            },
-            {
-                id: 'trivia_extreme',
-                title: 'מומחה חנוכה',
-                description: 'חידון חנוכה למתקדמים. ענו מהר כדי לקבל בונוס ניקוד משמעותי.',
-                grade: 'ד-ז',
-                icon: '⭐',
-                color: 'bg-slate-900',
-                textColor: 'text-white'
-            },
-            {
-                id: 'dreidel_gold',
-                title: 'סביבון הזהב',
-                description: 'האותיות מתחלפות במהירות! זהו את האות המופיעה ולחצו עליה.',
-                grade: 'ב-ד',
-                icon: '🌀',
-                color: 'bg-white',
-                textColor: 'text-slate-900'
-            },
-            {
-                id: 'candle_light',
-                title: 'צייד השמשים',
-                description: 'השמשים מופיעים ונעלמים בפתאומיות. הקליקו עליהם הכי מהר שאפשר.',
-                grade: 'ג-ו',
-                icon: '🕯️',
-                color: 'bg-white',
-                textColor: 'text-slate-900'
-            }
+            { id: 'hanukkah_race', title: 'מרוץ הסופגניות', description: 'זריזות: אספו סופגניות והימנעו מסביבונים.', grade: 'א-ג', icon: '🍩', color: 'bg-white', textColor: 'text-slate-900' },
+            { id: 'trivia_kids', title: 'מומחה חנוכה (ד-ז)', description: 'חידון חנוכה מאתגר לילדים גדולים.', grade: 'ד-ז', icon: '⭐', color: 'bg-blue-600', textColor: 'text-white' },
+            { id: 'trivia_adults', title: 'חכמי חנוכה (מבוגרים)', description: '24 שאלות קשות על מקורות והיסטוריה.', grade: 'מבוגרים', icon: '📜', color: 'bg-slate-900', textColor: 'text-white' },
+            { id: 'dreidel_gold', title: 'סביבון הזהב', description: 'זהו את האות המופיעה במהירות.', grade: 'ב-ד', icon: '🌀', color: 'bg-white', textColor: 'text-slate-900' },
+            { id: 'candle_light', title: 'צייד השמשים', description: 'הקליקו על הנרות שמופיעים ונעלמים.', grade: 'ג-ו', icon: '🕯️', color: 'bg-white', textColor: 'text-slate-900' }
         ];
 
-        // UI Helpers
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
             document.getElementById(sectionId).classList.remove('hidden');
-            
-            // Update Nav UI
-            document.querySelectorAll('.nav-btn').forEach(b => {
-                b.classList.remove('text-blue-600', 'bg-blue-50');
-                b.classList.add('text-slate-300');
-            });
-            const activeBtn = document.getElementById('btn-' + (sectionId === 'game-view' ? 'lobby' : sectionId));
-            if(activeBtn) {
-                activeBtn.classList.add('text-blue-600', 'bg-blue-50');
-                activeBtn.classList.remove('text-slate-300');
-            }
-
             if(sectionId === 'leaderboard') renderLeaderboard();
         }
 
         function renderLobby() {
             const grid = document.getElementById('games-grid');
             grid.innerHTML = games.map((game, idx) => `
-                <div class="${game.color} ${game.textColor} p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all border border-slate-100 hover:border-blue-400 cursor-pointer flex flex-col group fade-in" 
-                     style="animation-delay: ${idx * 100}ms"
+                <div class="${game.color} ${game.textColor} p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all border border-slate-100 cursor-pointer flex flex-col group fade-in" 
                      onclick="launchGame('${game.id}')">
-                    <div class="mb-6 w-16 h-16 rounded-2xl flex items-center justify-center text-4xl bg-slate-50 group-hover:scale-110 transition-transform shadow-inner">
-                        ${game.icon}
-                    </div>
-                    <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold w-fit mb-3">כיתות ${game.grade}</span>
+                    <div class="mb-6 w-16 h-16 rounded-2xl flex items-center justify-center text-4xl bg-black/5 group-hover:scale-110 transition-transform">${game.icon}</div>
+                    <span class="bg-blue-50/20 px-3 py-1 rounded-full text-xs font-bold w-fit mb-3">${game.grade}</span>
                     <h3 class="text-3xl font-black mb-2">${game.title}</h3>
-                    <p class="opacity-60 text-lg mb-8 flex-1">${game.description}</p>
-                    <button class="w-full bg-slate-900 group-hover:bg-blue-600 text-white py-4 rounded-2xl font-bold text-xl transition-all active:scale-95">שחק עכשיו</button>
+                    <p class="opacity-70 text-lg mb-8 flex-1">${game.description}</p>
+                    <button class="w-full bg-yellow-400 text-slate-900 py-4 rounded-2xl font-bold text-xl transition-all active:scale-95">שחק עכשיו</button>
                 </div>
             `).join('');
         }
@@ -163,278 +115,176 @@
             const game = games.find(g => g.id === gameId);
             document.getElementById('current-game-title').innerText = game.title;
             showSection('game-view');
-            
             const container = document.getElementById('game-container');
-            container.innerHTML = ''; // Clear previous
+            container.innerHTML = '';
 
-            switch(gameId) {
-                case 'hanukkah_race': startRace(container); break;
-                case 'trivia_extreme': startTrivia(container); break;
-                case 'dreidel_gold': startDreidel(container); break;
-                case 'candle_light': startCandleHunt(container); break;
-            }
+            if (gameId === 'hanukkah_race') startRace(container);
+            else if (gameId === 'trivia_kids') startTrivia(container, 'kids');
+            else if (gameId === 'trivia_adults') startTrivia(container, 'adults');
+            else if (gameId === 'dreidel_gold') startDreidel(container);
+            else if (gameId === 'candle_light') startCandleHunt(container);
         }
 
-        // --- GAME 1: RACE ---
+        // --- משחק 1: מרוץ הסופגניות ---
         function startRace(container) {
             container.innerHTML = `
                 <div class="w-full max-w-xl bg-blue-50 rounded-3xl p-4 game-canvas relative overflow-hidden border-4 border-blue-200" id="race-bg">
                     <div id="race-intro" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20">
-                        <div class="text-6xl mb-4 animate-bounce-subtle">🍩</div>
                         <h2 class="text-4xl font-black text-blue-900 mb-4">מרוץ הסופגניות</h2>
-                        <p class="bg-white/60 p-4 rounded-2xl mb-8 text-blue-800">הזיזו את החנוכייה עם העכבר ואספו סופגניות. היזהרו מהסביבונים!</p>
-                        <button onclick="beginRace()" class="bg-yellow-400 px-12 py-4 rounded-full font-bold text-2xl shadow-xl active:scale-95">קדימה!</button>
+                        <button onclick="beginRace()" class="bg-yellow-400 px-12 py-4 rounded-full font-bold text-2xl shadow-xl">קדימה!</button>
                     </div>
-                    <div id="race-stats" class="hidden absolute top-4 right-4 bg-white/90 px-4 py-1 rounded-full font-bold z-20">ניקוד: <span id="race-score">0</span></div>
-                    <div id="player" class="hidden absolute bottom-8 text-6xl pointer-events-none transition-all duration-75" style="left: 50%;">🕎</div>
-                </div>
-            `;
+                    <div id="player" class="hidden absolute bottom-8 text-6xl" style="left: 50%;">🕎</div>
+                </div>`;
             window.beginRace = () => {
-                const intro = document.getElementById('race-intro');
+                document.getElementById('race-intro').classList.add('hidden');
                 const player = document.getElementById('player');
-                const stats = document.getElementById('race-stats');
-                const bg = document.getElementById('race-bg');
-                intro.classList.add('hidden');
                 player.classList.remove('hidden');
-                stats.classList.remove('hidden');
-
                 let score = 0;
-                let items = [];
-                const gameLoop = setInterval(() => {
+                const bg = document.getElementById('race-bg');
+                bg.onmousemove = (e) => {
+                    let rect = bg.getBoundingClientRect();
+                    let x = ((e.clientX - rect.left) / rect.width) * 100;
+                    player.style.left = Math.max(0, Math.min(90, x)) + '%';
+                };
+                const interval = setInterval(() => {
                     const item = document.createElement('div');
-                    const isDoughnut = Math.random() > 0.3;
-                    item.innerHTML = isDoughnut ? '🍩' : '🌀';
-                    item.className = 'absolute text-4xl pointer-events-none transition-all';
+                    const isGood = Math.random() > 0.3;
+                    item.innerHTML = isGood ? '🍩' : '🌀';
+                    item.className = 'absolute text-4xl';
                     item.style.left = Math.random() * 90 + '%';
                     item.style.top = '-50px';
                     bg.appendChild(item);
-                    
                     let pos = -50;
                     const fall = setInterval(() => {
                         pos += 5;
                         item.style.top = pos + 'px';
-                        
-                        // Collision
-                        const playerLeft = parseFloat(player.style.left);
-                        const itemLeft = parseFloat(item.style.left);
-                        if (pos > 380 && pos < 430 && Math.abs(playerLeft - itemLeft) < 10) {
-                            if (isDoughnut) {
-                                score += 10;
-                                document.getElementById('race-score').innerText = score;
-                                item.remove();
-                                clearInterval(fall);
-                            } else {
-                                endRace(score, gameLoop);
-                                clearInterval(fall);
-                            }
+                        let pL = parseFloat(player.style.left);
+                        let iL = parseFloat(item.style.left);
+                        if (pos > 380 && pos < 430 && Math.abs(pL - iL) < 10) {
+                            if (isGood) { score += 10; item.remove(); clearInterval(fall); }
+                            else { clearInterval(interval); clearInterval(fall); saveScoreModal(score, 'מרוץ הסופגניות'); }
                         }
                         if (pos > 500) { item.remove(); clearInterval(fall); }
                     }, 30);
-                }, 1000);
-
-                bg.onmousemove = (e) => {
-                    const rect = bg.getBoundingClientRect();
-                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                    player.style.left = Math.max(0, Math.min(90, x)) + '%';
-                };
+                }, 800);
             };
-
-            function endRace(finalScore, loop) {
-                clearInterval(loop);
-                saveScoreModal(finalScore, 'מרוץ הסופגניות');
-            }
         }
 
-        // --- GAME 2: TRIVIA ---
-        function startTrivia(container) {
-            const qs = [
-                { q: 'כיצד מדליקים נרות לפי בית שמאי?', a: ['שמונה ופוחתים', 'אחד ומוסיפים', 'הכל בבת אחת'], c: 0 },
-                { q: 'איזה חשמונאי נהרג ע"י פיל?', a: ['יהודה', 'אלעזר', 'יוחנן'], c: 1 },
-                { q: 'שם המפקד הסלווקי שהובס באמאוס?', a: ['אנטיוכוס', 'ליסיאס', 'ניקנור'], c: 1 },
-                { q: 'ברכה שנאמרת רק בלילה הראשון?', a: ['שהחיינו', 'הגומל', 'בורא פרי הגפן'], c: 0 },
-                { q: 'מה פירוש המילה "מכבי" לפי ראשי התיבות המקובלים?', a: ['מי כמוך באלים ה\'', 'מלחמת כבוד בני ישראל', 'מלך כהן ברוך יהוה'], c: 0 },
-                { q: 'איזה ספר חיצוני מספר את סיפור הגבורה של יהודית?', a: ['ספר יהודית', 'ספר המכבים ג\'', 'מגילת רות'], c: 0 },
-                { q: 'כמה ברכות מברכים בלילה השני של חנוכה?', a: ['1', '2', '3'], c: 1 },
-                { q: 'מדוע אוכלים מאכלי גבינה בחנוכה?', a: ['זכר לנס יהודית', 'כדי להיות חזקים כמו המכבים', 'כי לא היה בשר בבית המקדש'], c: 0 },
-                { q: 'איזה מהאותיות הבאות אינה מופיעה על סביבון בחוץ לארץ?', a: ['נ', 'פ', 'ש'], c: 1 },
-                { q: 'מי היה אביו של יהודה המכבי?', a: ['מתתיהו בן יוחנן', 'שמעון התרסי', 'יוחנן כהן גדול'], c: 0 },
-                { q: 'באיזו שנה (לפי הלוח העברי) התרחש נס חנוכה?', a: ['ג\' תתכ"ב', 'ג\' תקצ"ה', 'ג\' תרכ"ב'], c: 1 },
-                { q: 'מה היה שם השושלת שהקימו המכבים לאחר הניצחון?', a: ['שושלת דוד', 'השושלת החשמונאית', 'שושלת הורדוס'], c: 1 },
-                { q: 'היכן יש להניח את החנוכייה לכתחילה (מעיקר הדין)?', a: ['על השולחן באמצע החדר', 'בפתח הבית מבחוץ', 'ליד המזוזה בפנים'], c: 1 },
-                { q: 'מהו הגובה המקסימלי שמעליו החנוכייה פסולה?', a: ['10 טפחים', '20 אמה', '100 סנטימטר'], c: 1 },
-                { q: 'איזה מהשמות הבאים אינו אחד מחמשת בני מתתיהו?', a: ['אלעזר', 'יונתן', 'דניאל'], c: 2 },
-                { q: 'באיזה תאריך עברי מתחיל חג החנוכה?', a: ['כ"ה בכסלו', 'א\' בטבת', 'כ"ד בכסלו'], c: 0 },
-                { q: 'מהו הנס העיקרי המוזכר בתפילת "על הניסים"?', a: ['נס פך השמן', 'ניצחון המעטים מול הרבים', 'גילוי המנורה'], c: 1 },
-                { q: 'מדוע קוראים לחודש כסלו חודש הגאולה?', a: ['בגלל חנוכה', 'בגלל חג המולד', 'בגלל סיום המסיק'], c: 0 },
-                { q: 'כמה נרות מדליקים סך הכל בכל שמונת הימים (בלי השמשים)?', a: ['36', '44', '8'], c: 0 },
-                { q: 'איזו עיר מזוהה עם תחילת מרד החשמונאים?', a: ['ירושלים', 'מודיעין', 'יריחו'], c: 1 },
-                { q: 'מי היה המלך היווני שגזר את הגזירות על היהודים?', a: ['אנטיוכוס הרביעי', 'אלכסנדר מוקדון', 'תלמי'], c: 0 },
-                { q: 'מהו המזמור שאומרים מיד לאחר הדלקת הנרות?', a: ['הנרות הללו', 'מעוז צור', 'מזמור שיר חנוכת הבית'], c: 0 }
+        // --- משחק 2: חידונים (ילדים ד-ז ומבוגרים משודרג) ---
+        function startTrivia(container, mode) {
+            const kidsQs = [
+                { q: "כיצד נקרא הספר שמספר על גבורת המכבים?", a: ["ספר מכבים", "מגילת אסתר", "ספר בראשית"], c: 0 },
+                { q: "מי היה אביהם של חמשת החשמונאים?", a: ["יהודה", "מתתיהו", "אלעזר"], c: 1 },
+                { q: "איזו אות מופיעה בסביבון בחו'ל במקום האות פ'?", a: ["ש", "ר", "כ"], c: 0 },
+                { q: "מהו פירוש המילה 'מכבי' על פי ראשי התיבות?", a: ["מי כמוך באלים ה'", "מלך כבוד בני ישראל", "מלחמת כבוד בני יהודה"], c: 0 },
+                { q: "כמה קנים יש במנורת המקדש (לא בחנוכייה)?", a: ["8", "7", "9"], c: 1 }
             ];
-            let current = 0;
-            let score = 0;
-            let startTime = Date.now();
-
-            function renderQ() {
-                if(current >= qs.length) {
-                    const timeBonus = Math.max(0, 500 - Math.floor((Date.now() - startTime)/500));
-                    const final = (score * 150) + timeBonus;
-                    saveScoreModal(final, 'מומחה חנוכה');
-                    return;
-                }
-                const item = qs[current];
-                container.innerHTML = `
-                    <div class="w-full max-w-xl bg-slate-900 text-white rounded-3xl p-8 shadow-2xl fade-in text-right">
-                        <div class="flex justify-between mb-6 text-blue-400 font-bold">
-                            <span>שאלה ${current + 1} / ${qs.length}</span>
-                            <span>נקודות: ${score * 150}</span>
-                        </div>
-                        <h3 class="text-2xl font-bold mb-8">${item.q}</h3>
-                        <div class="grid gap-4">
-                            ${item.a.map((ans, i) => `<button onclick="checkTrivia(${i})" class="w-full p-4 bg-slate-800 border-2 border-slate-700 rounded-xl hover:border-blue-500 text-right transition-all">${ans}</button>`).join('')}
-                        </div>
-                    </div>
-                `;
+            const adultQs = [
+                { q: "מי היה הפקיד היווני שנהרג ע'י מתתיהו במודיעין?", a: ["אפלס", "ליסיאס", "ניקנור"], c: 0 },
+                { q: "מהו הגובה המקסימלי הכשר להנחת חנוכייה (למעלה ממנו אינה כשרה)?", a: ["10 טפחים", "20 אמה", "50 אמה"], c: 1 },
+                { q: "באיזה קרב נפל יהודה המכבי?", a: ["אמאוס", "בית חורון", "אלעשה"], c: 2 },
+                { q: "מדוע אוכלים מאכלי גבינה בחנוכה?", a: ["זכר למזון המכבים", "זכר לסיפור יהודית", "סימן לשפע"], c: 1 },
+                { q: "מהו סדר ההדלקה לפי בית הלל?", a: ["מוסיף והולך", "פוחת והולך", "קבוע"], c: 0 },
+                { q: "באיזו מסכת בגמרא מופיעים הלכות חנוכה?", a: ["מסכת ברכות", "מסכת שבת", "מסכת פסחים"], c: 1 },
+                { q: "מי היה המלך הסלווקי שגזר את הגזירות על היהודים?", a: ["אנטיוכוס הרביעי", "תלמי השמיני", "אלכסנדר מוקדון"], c: 0 },
+                { q: "כיצד נהרג אלעזר המכבי?", a: ["נפילה מחומות ירושלים", "תחת פיל מלחמה", "בקרב מול ניקנור"], c: 1 },
+                { q: "מה משמעות השם 'חנוכה' על פי המדרש?", a: ["חנכו את המזבח", "חנה בכ'ה", "שניהם נכונים"], c: 2 },
+                { q: "כמה ברכות מברכים בערב הראשון של חנוכה?", a: ["2", "3", "4"], c: 1 },
+                { q: "איזה 'פרסום הנס' הוא העדיף בנר חנוכה?", a: ["בבית הכנסת", "בחצר כלפי חוץ", "על שולחן האוכל"], c: 1 },
+                { q: "מי היה הכהן הגדול שפתח את המרד?", a: ["מתתיהו בן יוחנן", "שמעון התרסי", "יוחנן הורקנוס"], c: 0 },
+                { q: "באיזה תאריך עברי חל חג החנוכה?", a: ["כ'ה בכסלו", "ט'ו בשבט", "י'ד באדר"], c: 0 },
+                { q: "איזה פסוק נהוג לומר בזמן הדלקת הנרות?", a: ["הנרות הללו", "מזמור שיר חנוכת הבית", "שניהם נכונים"], c: 2 },
+                { q: "מהו הזמן המינימלי שבו הנרות חייבים לדלוק?", a: ["שעה", "חצי שעה", "רבע שעה"], c: 1 },
+                { q: "האם מותר להשתמש באור נרות החנוכה לצרכים אישיים?", a: ["כן", "לא", "רק בשעת הדחק"], c: 1 },
+                { q: "מה הייתה הסיבה העיקרית למרד המכבים במקור?", a: ["מיסים כבדים", "גזירות דת והתייוונות", "רצון למלוכה"], c: 1 },
+                { q: "איזה שמן הוא המובחר ביותר להדלקת נרות חנוכה?", a: ["שמן קנולה", "שמן זית", "שמן סויה"], c: 1 },
+                { q: "מי מבין האחים המכבים היה האחרון שנותר בחיים והנהיג?", a: ["יהודה", "שמעון", "יוחנן"], c: 1 },
+                { q: "מהו 'שמש' בחנוכייה?", a: ["הנר הגבוה שבו מדליקים", "הנר הראשון שמדליקים", "נר הזיכרון"], c: 0 },
+                { q: "באיזו עיר החל המרד?", a: ["ירושלים", "מודיעין", "יריחו"], c: 1 },
+                { q: "איזה 'קרב' נחשב לאחד הניצחונות הטקטיים הגדולים של יהודה?", a: ["קרב אמאוס", "קרב בית צור", "קרב כפר שלמא"], c: 0 },
+                { q: "מהיכן הגיע השם 'מכבי' על פי פירוש נוסף?", a: ["שם של פטיש", "שם משפחה עתיק", "האותיות הראשונות של אמא"], c: 0 },
+                { q: "מה קראו המכבים כאשר נכנסו לבית המקדש?", a: ["תהילים", "הלל", "שיר השירים"], c: 1 }
+            ];
+            const qs = mode === 'kids' ? kidsQs : adultQs;
+            let current = 0, score = 0;
+            function render() {
+                if (current >= qs.length) return saveScoreModal(score * 25, mode === 'kids' ? 'מומחה חנוכה' : 'חכמי חנוכה');
+                container.innerHTML = `<div class="bg-white p-10 rounded-3xl shadow-xl max-w-lg w-full text-right fade-in">
+                    <div class="mb-4 text-sm text-slate-400">שאלה ${current+1} מתוך ${qs.length}</div>
+                    <h3 class="text-2xl font-bold mb-6">${qs[current].q}</h3>
+                    <div class="space-y-4">${qs[current].a.map((ans, i) => `<button onclick="window.ansT(${i})" class="w-full p-4 border-2 rounded-xl hover:bg-blue-50 hover:border-blue-300 text-right transition-all font-medium">${ans}</button>`).join('')}</div>
+                </div>`;
             }
-
-            window.checkTrivia = (idx) => {
-                if (idx === qs[current].c) score++;
-                current++;
-                renderQ();
-            };
-
-            // Intro
-            container.innerHTML = `
-                <div class="text-center bg-slate-900 p-12 rounded-3xl text-white max-w-xl w-full">
-                    <h2 class="text-4xl font-bold mb-6">טריוויה אקסטרים</h2>
-                    <p class="mb-8 opacity-70 leading-relaxed text-lg">22 שאלות מאתגרות על ההיסטוריה והמנהגים.<br>בונוס מהירות מופעל - ככל שתענו מהר יותר, תקבלו יותר נקודות!</p>
-                    <button onclick="startT()" class="bg-blue-600 px-12 py-4 rounded-xl font-bold text-xl">אני מוכן</button>
-                </div>
-            `;
-            window.startT = renderQ;
+            window.ansT = (i) => { if(i === qs[current].c) score++; current++; render(); };
+            render();
         }
 
-        // --- GAME 3: DREIDEL ---
+        // --- משחק 3: סביבון הזהב ---
         function startDreidel(container) {
+            let score = 0, timeLeft = 20, currentL = '';
             const letters = ['נ', 'ג', 'ה', 'פ'];
-            let score = 0;
-            let timeLeft = 30;
-            let current = '';
-
-            window.playDreidel = () => {
-                container.innerHTML = `
-                    <div class="w-full max-w-xl bg-indigo-700 text-white rounded-3xl p-8 text-center shadow-2xl relative">
-                        <div class="flex justify-between mb-8 font-mono text-xl">
-                            <span id="d-time">זמן: 30</span>
-                            <span id="d-score">נקודות: 0</span>
-                        </div>
-                        <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-10 text-6xl font-black text-indigo-900 shadow-inner" id="d-letter">?</div>
-                        <div class="grid grid-cols-2 gap-4">
-                            ${letters.map(l => `<button onclick="pressDreidel('${l}')" class="bg-white/10 p-6 rounded-2xl text-4xl font-bold hover:bg-white/20 transition-all">${l}</button>`).join('')}
-                        </div>
-                    </div>
-                `;
-                
-                const timer = setInterval(() => {
-                    timeLeft--;
-                    if(document.getElementById('d-time')) document.getElementById('d-time').innerText = 'זמן: ' + timeLeft;
-                    if(timeLeft <= 0) {
-                        clearInterval(timer);
-                        saveScoreModal(score, 'סביבון הזהב');
-                    }
-                }, 1000);
-
-                window.nextD = () => {
-                    current = letters[Math.floor(Math.random() * 4)];
-                    if(document.getElementById('d-letter')) document.getElementById('d-letter').innerText = current;
-                };
-                
-                window.pressDreidel = (l) => {
-                    if(l === current) {
-                        score += 20;
-                        if(document.getElementById('d-score')) document.getElementById('d-score').innerText = 'נקודות: ' + score;
-                        nextD();
-                    }
-                };
-                nextD();
+            function next() { currentL = letters[Math.floor(Math.random()*4)]; document.getElementById('d-l').innerText = currentL; }
+            container.innerHTML = `<div class="bg-indigo-600 text-white p-10 rounded-3xl text-center w-80 shadow-2xl border-4 border-indigo-400">
+                <div class="flex justify-between mb-4 font-bold"><span id="d-time">זמן: 20</span><span>ניקוד: <span id="d-score">0</span></span></div>
+                <div id="d-l" class="text-8xl font-black mb-8 bg-white/10 py-8 rounded-2xl shadow-inner">?</div>
+                <div class="grid grid-cols-2 gap-3">${letters.map(l => `<button onclick="window.hitD('${l}')" class="bg-white text-indigo-900 p-5 rounded-xl text-3xl font-black hover:bg-yellow-400 transition-all active:scale-90">${l}</button>`).join('')}</div>
+            </div>`;
+            const timer = setInterval(() => { 
+                timeLeft--; 
+                if(timeLeft <= 0) { clearInterval(timer); saveScoreModal(score, 'סביבון הזהב'); }
+                else document.getElementById('d-time').innerText = 'זמן: ' + timeLeft;
+            }, 1000);
+            window.hitD = (l) => { 
+                if(l === currentL) { 
+                    score += 20; 
+                    document.getElementById('d-score').innerText = score;
+                    next(); 
+                } 
             };
-
-            container.innerHTML = `
-                <div class="text-center bg-indigo-700 p-12 rounded-3xl text-white max-w-xl w-full">
-                    <h2 class="text-4xl font-bold mb-6">סביבון הזהב</h2>
-                    <p class="mb-8 opacity-80">זהו את האות שמופיעה בעיגול הלבן ולחצו עליה הכי מהר שאפשר!</p>
-                    <button onclick="playDreidel()" class="bg-yellow-400 text-indigo-900 px-12 py-4 rounded-xl font-bold text-xl">מתחילים</button>
-                </div>
-            `;
+            next();
         }
 
-        // --- GAME 4: CANDLE HUNT ---
+        // --- משחק 4: צייד השמשים ---
         function startCandleHunt(container) {
-            let score = 0;
-            let timeLeft = 25;
-
-            window.playHunt = () => {
-                container.innerHTML = `
-                    <div class="w-full max-w-xl h-[500px] bg-slate-900 rounded-3xl relative overflow-hidden" id="hunt-bg">
-                        <div class="absolute top-4 left-4 right-4 flex justify-between text-white font-bold z-20">
-                            <span id="h-score">ניקוד: 0</span>
-                            <span id="h-time">זמן: 25</span>
-                        </div>
-                    </div>
-                `;
-                const bg = document.getElementById('hunt-bg');
-                const timer = setInterval(() => {
-                    timeLeft--;
-                    if(document.getElementById('h-time')) document.getElementById('h-time').innerText = 'זמן: ' + timeLeft;
-                    if(timeLeft <= 0) {
-                        clearInterval(timer);
-                        clearInterval(spawner);
-                        saveScoreModal(score, 'צייד השמשים');
-                    }
-                }, 1000);
-
-                const spawner = setInterval(() => {
-                    const c = document.createElement('button');
-                    c.innerHTML = '🕯️';
-                    c.className = 'absolute text-5xl transition-all animate-pulse active:scale-150';
-                    c.style.left = Math.random() * 80 + 10 + '%';
-                    c.style.top = Math.random() * 80 + 10 + '%';
-                    c.onclick = () => {
-                        score += 15;
-                        if(document.getElementById('h-score')) document.getElementById('h-score').innerText = 'ניקוד: ' + score;
-                        c.remove();
-                    };
-                    bg.appendChild(c);
-                    setTimeout(() => { if(c.parentNode) c.remove(); }, 1200);
-                }, 700);
-            };
-
-            container.innerHTML = `
-                <div class="text-center bg-slate-900 p-12 rounded-3xl text-white max-w-xl w-full">
-                    <h2 class="text-4xl font-bold mb-6">צייד השמשים</h2>
-                    <p class="mb-8 opacity-70">הקליקו על הנרות שמופיעים ונעלמים במהירות על המסך.</p>
-                    <button onclick="playHunt()" class="bg-red-500 px-12 py-4 rounded-xl font-bold text-xl">קדימה</button>
+            let score = 0, timeLeft = 25;
+            container.innerHTML = `<div class="relative w-full max-w-xl">
+                <div class="absolute top-4 left-4 right-4 flex justify-between text-white font-bold z-20 pointer-events-none">
+                    <span id="h-time">זמן: 25</span><span id="h-score">ניקוד: 0</span>
                 </div>
-            `;
+                <div id="h-bg" class="bg-slate-900 w-full h-96 rounded-3xl relative overflow-hidden shadow-2xl border-4 border-slate-700"></div>
+            </div>`;
+            const bg = document.getElementById('h-bg');
+            const timer = setInterval(() => {
+                timeLeft--;
+                if(timeLeft <= 0) { clearInterval(timer); clearInterval(spawn); saveScoreModal(score, 'צייד השמשים'); }
+                else document.getElementById('h-time').innerText = 'זמן: ' + timeLeft;
+            }, 1000);
+            const spawn = setInterval(() => {
+                const c = document.createElement('div');
+                c.innerHTML = '🕯️'; c.className = 'absolute text-5xl cursor-pointer select-none transition-transform active:scale-150';
+                c.style.left = Math.random()*85+5+'%'; c.style.top = Math.random()*75+10+'%';
+                c.onclick = () => { score += 25; document.getElementById('h-score').innerText = score; c.remove(); };
+                bg.appendChild(c);
+                setTimeout(() => { if(c.parentNode) c.remove(); }, 850);
+            }, 700);
         }
 
-        // Global Modals & Logic
+        // --- פונקציות עזר: שמירת ניקוד ולוח שיאים ---
         function saveScoreModal(score, gameName) {
             const container = document.getElementById('game-container');
-            container.innerHTML = `
-                <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-sm w-full fade-in">
-                    <h2 class="text-3xl font-black mb-2 text-slate-900">משחק נהדר!</h2>
-                    <p class="text-xl text-blue-600 font-bold mb-6">צברת ${score} נקודות</p>
-                    <input type="text" id="player-name" placeholder="השם שלך..." class="w-full p-4 bg-slate-100 rounded-xl mb-4 text-center font-bold outline-none border-2 focus:border-blue-500">
-                    <button onclick="submitResult(${score}, '${gameName}')" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg">שמור בלוח השיאים</button>
-                </div>
-            `;
+            container.innerHTML = `<div class="bg-white p-10 rounded-[2.5rem] shadow-2xl text-center max-w-sm w-full fade-in border-4 border-yellow-100">
+                <div class="text-5xl mb-4">🏆</div>
+                <h2 class="text-3xl font-black mb-2">כל הכבוד!</h2>
+                <p class="text-xl mb-6 text-blue-600 font-bold italic">צברת ${score} נקודות ב${gameName}</p>
+                <input id="p-name" type="text" placeholder="מה השם שלך?" class="p-4 border-2 rounded-2xl mb-4 w-full text-center font-bold outline-none focus:border-blue-400">
+                <button onclick="window.fin('${gameName}', ${score})" class="bg-slate-900 text-white p-4 rounded-2xl w-full font-black text-xl hover:bg-blue-600 transition-colors">שמור תוצאה</button>
+            </div>`;
         }
 
-        window.submitResult = (score, game) => {
-            const name = document.getElementById('player-name').value || 'שחקן אנונימי';
-            scores.push({ name, score, game, date: new Date().toLocaleTimeString() });
-            showSection('leaderboard');
+        window.fin = (g, s) => { 
+            const name = document.getElementById('p-name').value || 'שחקן אנונימי';
+            scores.push({name: name, score: s, game: g}); 
+            showSection('leaderboard'); 
         };
 
         function renderLeaderboard() {
@@ -444,7 +294,7 @@
                 return;
             }
             list.innerHTML = scores.sort((a,b) => b.score - a.score).map((s, i) => `
-                <div class="flex justify-between items-center p-6 hover:bg-slate-50 transition-colors ${i === 0 ? 'bg-yellow-50/30' : ''}">
+                <div class="flex justify-between items-center p-6 hover:bg-slate-50 transition-colors">
                     <span class="w-1/6 text-center text-xl font-black ${i < 3 ? 'text-blue-600' : 'text-slate-300'}">${i+1}</span>
                     <span class="w-2/6 text-right font-bold text-slate-800">${s.name}</span>
                     <span class="w-2/6 text-right text-slate-500 text-sm italic">${s.game}</span>
@@ -453,7 +303,6 @@
             `).join('');
         }
 
-        // Init
         renderLobby();
     </script>
 </body>
