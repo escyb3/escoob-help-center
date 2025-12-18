@@ -49,7 +49,7 @@
             <!-- Game Player Section -->
             <section id="game-view" class="section hidden h-full flex flex-col fade-in">
                 <div class="bg-white p-5 flex justify-between items-center shadow-sm border-b">
-                    <button onclick="showSection('lobby')" class="flex items-center gap-2 text-slate-600 font-bold hover:text-blue-600 px-4 py-2 rounded-xl transition-colors">
+                    <button onclick="stopAllTimers(); showSection('lobby')" class="flex items-center gap-2 text-slate-600 font-bold hover:text-blue-600 px-4 py-2 rounded-xl transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                         חזרה ללובי
                     </button>
@@ -83,13 +83,20 @@
     <script>
         // Game Data & Scores
         let scores = [];
+        let activeIntervals = [];
+
         const games = [
             { id: 'hanukkah_race', title: 'מרוץ הסופגניות', description: 'זריזות: אספו סופגניות והימנעו מסביבונים.', grade: 'א-ג', icon: '🍩', color: 'bg-white', textColor: 'text-slate-900' },
-            { id: 'trivia_kids', title: 'מומחה חנוכה (ד-ז)', description: 'חידון חנוכה מאתגר לילדים גדולים.', grade: 'ד-ז', icon: '⭐', color: 'bg-blue-600', textColor: 'text-white' },
-            { id: 'trivia_adults', title: 'חכמי חנוכה (מבוגרים)', description: '24 שאלות קשות על מקורות והיסטוריה.', grade: 'מבוגרים', icon: '📜', color: 'bg-slate-900', textColor: 'text-white' },
+            { id: 'trivia_kids', title: 'מומחה חנוכה (ד-ז)', description: 'חידון חנוכה מקיף לילדים (31 שאלות!). מהירות משפרת את הציון.', grade: 'ד-ז', icon: '⭐', color: 'bg-blue-600', textColor: 'text-white' },
+            { id: 'trivia_adults', title: 'חכמי חנוכה (מבוגרים)', description: '24 שאלות קשות. ככל שתענו מהר יותר, תעלו בדירוג.', grade: 'מבוגרים', icon: '📜', color: 'bg-slate-900', textColor: 'text-white' },
             { id: 'dreidel_gold', title: 'סביבון הזהב', description: 'זהו את האות המופיעה במהירות.', grade: 'ב-ד', icon: '🌀', color: 'bg-white', textColor: 'text-slate-900' },
             { id: 'candle_light', title: 'צייד השמשים', description: 'הקליקו על הנרות שמופיעים ונעלמים.', grade: 'ג-ו', icon: '🕯️', color: 'bg-white', textColor: 'text-slate-900' }
         ];
+
+        function stopAllTimers() {
+            activeIntervals.forEach(clearInterval);
+            activeIntervals = [];
+        }
 
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
@@ -112,6 +119,7 @@
         }
 
         function launchGame(gameId) {
+            stopAllTimers();
             const game = games.find(g => g.id === gameId);
             document.getElementById('current-game-title').innerText = game.title;
             showSection('game-view');
@@ -162,26 +170,53 @@
                         let iL = parseFloat(item.style.left);
                         if (pos > 380 && pos < 430 && Math.abs(pL - iL) < 10) {
                             if (isGood) { score += 10; item.remove(); clearInterval(fall); }
-                            else { clearInterval(interval); clearInterval(fall); saveScoreModal(score, 'מרוץ הסופגניות'); }
+                            else { stopAllTimers(); clearInterval(fall); saveScoreModal(score, 'מרוץ הסופגניות'); }
                         }
                         if (pos > 500) { item.remove(); clearInterval(fall); }
                     }, 30);
                 }, 800);
+                activeIntervals.push(interval);
             };
         }
 
-        // --- משחק 2: חידונים (ילדים ד-ז ומבוגרים משודרג) ---
+        // --- משחק 2: חידונים עם שעון עצר משקלל ---
         function startTrivia(container, mode) {
             const kidsQs = [
                 { q: "כיצד נקרא הספר שמספר על גבורת המכבים?", a: ["ספר מכבים", "מגילת אסתר", "ספר בראשית"], c: 0 },
                 { q: "מי היה אביהם של חמשת החשמונאים?", a: ["יהודה", "מתתיהו", "אלעזר"], c: 1 },
                 { q: "איזו אות מופיעה בסביבון בחו'ל במקום האות פ'?", a: ["ש", "ר", "כ"], c: 0 },
                 { q: "מהו פירוש המילה 'מכבי' על פי ראשי התיבות?", a: ["מי כמוך באלים ה'", "מלך כבוד בני ישראל", "מלחמת כבוד בני יהודה"], c: 0 },
-                { q: "כמה קנים יש במנורת המקדש (לא בחנוכייה)?", a: ["8", "7", "9"], c: 1 }
+                { q: "כמה קנים יש במנורת המקדש (לא בחנוכייה)?", a: ["8", "7", "9"], c: 1 },
+                { q: "באיזו עיר החל מרד המכבים?", a: ["ירושלים", "מודיעין", "צפת"], c: 1 },
+                { q: "מי הנהיג את המרד אחרי מותו של מתתיהו?", a: ["שמעון", "יונתן", "יהודה המכבי"], c: 2 },
+                { q: "מה פירוש השם 'חשמונאים'?", a: ["שם משפחה", "לוחמי אש", "אנשי החושן"], c: 0 },
+                { q: "כמה ימים נמשך נס פך השמן?", a: ["7 ימים", "8 ימים", "9 ימים"], c: 1 },
+                { q: "איזו תפילה מיוחדת מוסיפים ב'ברכת המזון' ובתפילת 'עמידה' בחנוכה?", a: ["יעלה ויבוא", "על הניסים", "הלל"], c: 1 },
+                { q: "באיזה צד של הפתח נהוג להניח את החנוכייה (מול המזוזה)?", a: ["צד ימין", "צד שמאל", "במרכז"], c: 1 },
+                { q: "מדוע קוראים לחג בשם 'חנוכה'?", a: ["חנייה בכ'ה בכסלו", "שם של מאכל", "על שם יהודה"], c: 0 },
+                { q: "איזה שמן הוא הכי מהודר להדלקת הנרות?", a: ["שמן זית", "שמן תירס", "שמן סויה"], c: 0 },
+                { q: "מי הייתה האישה האמיצה שקשורה למאכלי גבינה בחנוכה?", a: ["אסתר", "רות", "יהודית"], c: 2 },
+                { q: "מה היה הנס הצבאי של המכבים?", a: ["מעטים ניצחו רבים", "היה להם פילים", "הם היו ענקים"], c: 0 },
+                { q: "איך קראו ליוונים שהשתלטו על ארץ ישראל?", a: ["רומאים", "סלווקים", "בבלים"], c: 1 },
+                { q: "איזה מזמור נהוג לשיר מיד לאחר הדלקת הנרות?", a: ["מעוז צור", "לכה דודי", "אני מאמין"], c: 0 },
+                { q: "באיזה חודש עברי חל תמיד חג החנוכה?", a: ["תשרי", "כסלו", "שבט"], c: 1 },
+                { q: "מה מדליקים קודם בערב שבת של חנוכה?", a: ["נרות שבת", "נרות חנוכה", "זה לא משנה"], c: 1 },
+                { q: "באיזה יום של חנוכה חל תמיד ראש חודש טבת?", a: ["ביום השלישי", "ביום השישי", "ביום האחרון"], c: 1 },
+                { q: "לפי השיר, מה 'באנו לגרש'?", a: ["את היוונים", "את החושך", "את הקור"], c: 1 },
+                { q: "איזה כהן גדול היה מתתיהו?", a: ["חשמונאי", "צדוקי", "לוי"], c: 0 },
+                { q: "מה עושים עם ה'שמש' לאחר הדלקת כל הנרות?", a: ["מכבים אותו", "מניחים אותו בצד הנרות", "אוכלים אותו"], c: 1 },
+                { q: "כמה ברכות מברכים בהדלקת הנרות ביום השני?", a: ["1", "2", "3"], c: 1 },
+                { q: "איזה מהמשפטים הבאים מופיע בשיר 'ימי החנוכה'?", a: ["נאכל בה סופגניות", "סביבון סוב סוב סוב", "נס גדול היה שם"], c: 0 },
+                { q: "מה הפירוש של 'פך שמן'?", a: ["כד קטן", "בקבוק זכוכית", "חבית גדולה"], c: 0 },
+                { q: "מי היה המצביא היווני הגדול שנלחם ביהודה המכבי בקרב אמאוס?", a: ["ליסיאס", "גורגיאס", "אנטיוכוס"], c: 1 },
+                { q: "מדוע נהוג לתת 'דמי חנוכה' לילדים?", a: ["כדי לקנות סביבונים", "כדי לעודד לימוד תורה", "כדי לשלם מיסים"], c: 1 },
+                { q: "איזה נר מדליקים ראשון בחנוכייה ביום השלישי?", a: ["הנר הימני ביותר", "הנר החדש (השמאלי)", "הנר האמצעי"], c: 1 },
+                { q: "מה השם השני של חג החנוכה?", a: ["חג האביב", "חג האורים", "חג האסיף"], c: 1 },
+                { q: "כמה אחים היו ליהודה המכבי (לא כולל הוא עצמו)?", a: ["3", "4", "5"], c: 1 }
             ];
             const adultQs = [
                 { q: "מי היה הפקיד היווני שנהרג ע'י מתתיהו במודיעין?", a: ["אפלס", "ליסיאס", "ניקנור"], c: 0 },
-                { q: "מהו הגובה המקסימלי הכשר להנחת חנוכייה (למעלה ממנו אינה כשרה)?", a: ["10 טפחים", "20 אמה", "50 אמה"], c: 1 },
+                { q: "מהו הגובה המקסימלי הכשר להנחת חנוכייה?", a: ["10 טפחים", "20 אמה", "50 אמה"], c: 1 },
                 { q: "באיזה קרב נפל יהודה המכבי?", a: ["אמאוס", "בית חורון", "אלעשה"], c: 2 },
                 { q: "מדוע אוכלים מאכלי גבינה בחנוכה?", a: ["זכר למזון המכבים", "זכר לסיפור יהודית", "סימן לשפע"], c: 1 },
                 { q: "מהו סדר ההדלקה לפי בית הלל?", a: ["מוסיף והולך", "פוחת והולך", "קבוע"], c: 0 },
@@ -198,19 +233,39 @@
                 { q: "האם מותר להשתמש באור נרות החנוכה לצרכים אישיים?", a: ["כן", "לא", "רק בשעת הדחק"], c: 1 },
                 { q: "מה הייתה הסיבה העיקרית למרד המכבים במקור?", a: ["מיסים כבדים", "גזירות דת והתייוונות", "רצון למלוכה"], c: 1 },
                 { q: "איזה שמן הוא המובחר ביותר להדלקת נרות חנוכה?", a: ["שמן קנולה", "שמן זית", "שמן סויה"], c: 1 },
-                { q: "מי מבין האחים המכבים היה האחרון שנותר בחיים והנהיג?", a: ["יהודה", "שמעון", "יוחנן"], c: 1 },
+                { q: "מי מבין האחים המכבים היה האחרון שנותר בחיים?", a: ["יהודה", "שמעון", "יוחנן"], c: 1 },
                 { q: "מהו 'שמש' בחנוכייה?", a: ["הנר הגבוה שבו מדליקים", "הנר הראשון שמדליקים", "נר הזיכרון"], c: 0 },
                 { q: "באיזו עיר החל המרד?", a: ["ירושלים", "מודיעין", "יריחו"], c: 1 },
-                { q: "איזה 'קרב' נחשב לאחד הניצחונות הטקטיים הגדולים של יהודה?", a: ["קרב אמאוס", "קרב בית צור", "קרב כפר שלמא"], c: 0 },
-                { q: "מהיכן הגיע השם 'מכבי' על פי פירוש נוסף?", a: ["שם של פטיש", "שם משפחה עתיק", "האותיות הראשונות של אמא"], c: 0 },
+                { q: "איזה 'קרב' נחשב לאחד הניצחונות הטקטיים הגדולים?", a: ["קרב אמאוס", "קרב בית צור", "קרב כפר שלמא"], c: 0 },
+                { q: "מהיכן הגיע השם 'מכבי'?", a: ["שם של פטיש", "שם משפחה עתיק", "האותיות הראשונות של אמא"], c: 0 },
                 { q: "מה קראו המכבים כאשר נכנסו לבית המקדש?", a: ["תהילים", "הלל", "שיר השירים"], c: 1 }
             ];
+            
             const qs = mode === 'kids' ? kidsQs : adultQs;
-            let current = 0, score = 0;
+            let current = 0, score = 0, elapsedSeconds = 0;
+            
+            const timer = setInterval(() => {
+                elapsedSeconds++;
+                const timerEl = document.getElementById('trivia-timer');
+                if(timerEl) timerEl.innerText = `זמן: ${elapsedSeconds} שנ'`;
+            }, 1000);
+            activeIntervals.push(timer);
+
             function render() {
-                if (current >= qs.length) return saveScoreModal(score * 25, mode === 'kids' ? 'מומחה חנוכה' : 'חכמי חנוכה');
-                container.innerHTML = `<div class="bg-white p-10 rounded-3xl shadow-xl max-w-lg w-full text-right fade-in">
-                    <div class="mb-4 text-sm text-slate-400">שאלה ${current+1} מתוך ${qs.length}</div>
+                if (current >= qs.length) {
+                    stopAllTimers();
+                    // ציון בסיסי (דיוק) + בונוס זמן (ככל שהזמן קטן יותר הבונוס גדל)
+                    // נוסחה: (נכונות/סה"כ * 1000) + מקסימום(0, (300 - זמן עבר))
+                    const baseScore = Math.round((score / qs.length) * 1000);
+                    const timeBonus = Math.max(0, 300 - elapsedSeconds);
+                    const finalScore = baseScore + timeBonus;
+                    return saveScoreModal(finalScore, mode === 'kids' ? 'מומחה חנוכה' : 'חכמי חנוכה', elapsedSeconds);
+                }
+                container.innerHTML = `<div class="bg-white p-10 rounded-3xl shadow-xl max-w-lg w-full text-right fade-in relative">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="text-sm text-slate-400">שאלה ${current+1} מתוך ${qs.length}</div>
+                        <div id="trivia-timer" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold text-sm italic">זמן: ${elapsedSeconds} שנ'</div>
+                    </div>
                     <h3 class="text-2xl font-bold mb-6">${qs[current].q}</h3>
                     <div class="space-y-4">${qs[current].a.map((ans, i) => `<button onclick="window.ansT(${i})" class="w-full p-4 border-2 rounded-xl hover:bg-blue-50 hover:border-blue-300 text-right transition-all font-medium">${ans}</button>`).join('')}</div>
                 </div>`;
@@ -231,9 +286,10 @@
             </div>`;
             const timer = setInterval(() => { 
                 timeLeft--; 
-                if(timeLeft <= 0) { clearInterval(timer); saveScoreModal(score, 'סביבון הזהב'); }
+                if(timeLeft <= 0) { stopAllTimers(); saveScoreModal(score, 'סביבון הזהב'); }
                 else document.getElementById('d-time').innerText = 'זמן: ' + timeLeft;
             }, 1000);
+            activeIntervals.push(timer);
             window.hitD = (l) => { 
                 if(l === currentL) { 
                     score += 20; 
@@ -256,9 +312,10 @@
             const bg = document.getElementById('h-bg');
             const timer = setInterval(() => {
                 timeLeft--;
-                if(timeLeft <= 0) { clearInterval(timer); clearInterval(spawn); saveScoreModal(score, 'צייד השמשים'); }
+                if(timeLeft <= 0) { stopAllTimers(); saveScoreModal(score, 'צייד השמשים'); }
                 else document.getElementById('h-time').innerText = 'זמן: ' + timeLeft;
             }, 1000);
+            activeIntervals.push(timer);
             const spawn = setInterval(() => {
                 const c = document.createElement('div');
                 c.innerHTML = '🕯️'; c.className = 'absolute text-5xl cursor-pointer select-none transition-transform active:scale-150';
@@ -267,15 +324,19 @@
                 bg.appendChild(c);
                 setTimeout(() => { if(c.parentNode) c.remove(); }, 850);
             }, 700);
+            activeIntervals.push(spawn);
         }
 
         // --- פונקציות עזר: שמירת ניקוד ולוח שיאים ---
-        function saveScoreModal(score, gameName) {
+        function saveScoreModal(score, gameName, timeTaken = null) {
             const container = document.getElementById('game-container');
+            let timeMsg = timeTaken ? `<p class="text-sm text-slate-400 mb-2">סיימת ב-${timeTaken} שניות</p>` : '';
             container.innerHTML = `<div class="bg-white p-10 rounded-[2.5rem] shadow-2xl text-center max-w-sm w-full fade-in border-4 border-yellow-100">
                 <div class="text-5xl mb-4">🏆</div>
                 <h2 class="text-3xl font-black mb-2">כל הכבוד!</h2>
-                <p class="text-xl mb-6 text-blue-600 font-bold italic">צברת ${score} נקודות ב${gameName}</p>
+                <p class="text-xl mb-1 text-blue-600 font-bold italic">צברת ${score} נקודות</p>
+                ${timeMsg}
+                <p class="text-sm mb-6 text-slate-500">במשחק: ${gameName}</p>
                 <input id="p-name" type="text" placeholder="מה השם שלך?" class="p-4 border-2 rounded-2xl mb-4 w-full text-center font-bold outline-none focus:border-blue-400">
                 <button onclick="window.fin('${gameName}', ${score})" class="bg-slate-900 text-white p-4 rounded-2xl w-full font-black text-xl hover:bg-blue-600 transition-colors">שמור תוצאה</button>
             </div>`;
