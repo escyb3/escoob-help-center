@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מרכז משחקי חנוכה</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Assistant', sans-serif; }
+        .game-canvas { height: 500px; }
+        @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .animate-bounce-subtle { animation: bounce-subtle 2s infinite; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen overflow-hidden">
+
+    <div id="app" class="flex flex-col md:flex-row h-screen">
+        <!-- Sidebar Navigation -->
+        <nav class="fixed bottom-0 w-full md:relative md:w-24 bg-white border-t md:border-t-0 md:border-l flex md:flex-col justify-around md:justify-center items-center p-4 gap-8 z-50 shadow-lg">
+            <button onclick="showSection('lobby')" class="nav-btn p-4 rounded-2xl transition-all text-blue-600 bg-blue-50" id="btn-lobby">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </button>
+            <button onclick="showSection('leaderboard')" class="nav-btn p-4 rounded-2xl transition-all text-slate-300 hover:text-slate-600" id="btn-leaderboard">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto pb-24 md:pb-0">
+            <!-- Lobby Section -->
+            <section id="lobby" class="section p-8 max-w-6xl mx-auto fade-in">
+                <header class="mb-12">
+                    <div class="flex items-center gap-4 mb-2">
+                        <div class="w-12 h-1 bg-yellow-400 rounded-full"></div>
+                        <span class="text-yellow-600 font-bold tracking-widest uppercase text-sm italic">Hanukkah Special 2024</span>
+                    </div>
+                    <h1 class="text-6xl font-black text-slate-900 mb-2">עולם המשחקים</h1>
+                    <p class="text-2xl text-blue-600 font-medium italic">חג אורים שמח ומלא אתגרים!</p>
+                </header>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="games-grid">
+                    <!-- Games will be injected here -->
+                </div>
+            </section>
+
+            <!-- Game Player Section -->
+            <section id="game-view" class="section hidden h-full flex flex-col fade-in">
+                <div class="bg-white p-5 flex justify-between items-center shadow-sm border-b">
+                    <button onclick="showSection('lobby')" class="flex items-center gap-2 text-slate-600 font-bold hover:text-blue-600 px-4 py-2 rounded-xl transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        חזרה ללובי
+                    </button>
+                    <h2 id="current-game-title" class="text-xl font-black text-slate-800 uppercase">שם המשחק</h2>
+                </div>
+                <div class="flex-1 p-4 flex items-center justify-center overflow-hidden bg-slate-100" id="game-container">
+                    <!-- Game content injected here -->
+                </div>
+            </section>
+
+            <!-- Leaderboard Section -->
+            <section id="leaderboard" class="section hidden p-8 max-w-4xl mx-auto fade-in">
+                <div class="flex items-center justify-between mb-8">
+                    <h1 class="text-4xl font-black text-slate-900 tracking-tight">היכל התהילה</h1>
+                    <svg class="text-yellow-500" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                </div>
+                <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-100">
+                    <div class="bg-slate-900 p-6 text-white flex justify-between items-center font-bold">
+                        <span class="w-1/6 text-center">מיקום</span>
+                        <span class="w-2/6 text-right">שחקן</span>
+                        <span class="w-2/6 text-right">משחק</span>
+                        <span class="w-1/6 text-left">ציון</span>
+                    </div>
+                    <div id="leaderboard-list" class="divide-y divide-gray-50 min-h-[400px]">
+                        <!-- Results injected here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // State Management
+        let scores = [];
+        const games = [
+            {
+                id: 'hanukkah_race',
+                title: 'מרוץ הסופגניות',
+                description: 'משחק זריזות: אספו סופגניות והימנעו מסביבונים שמופיעים מלמעלה.',
+                grade: 'א-ג',
+                icon: '🍩',
+                color: 'bg-white',
+                textColor: 'text-slate-900'
+            },
+            {
+                id: 'trivia_extreme',
+                title: 'מומחה חנוכה',
+                description: 'חידון חנוכה למתקדמים. ענו מהר כדי לקבל בונוס ניקוד משמעותי.',
+                grade: 'ד-ז',
+                icon: '⭐',
+                color: 'bg-slate-900',
+                textColor: 'text-white'
+            },
+            {
+                id: 'dreidel_gold',
+                title: 'סביבון הזהב',
+                description: 'האותיות מתחלפות במהירות! זהו את האות המופיעה ולחצו עליה.',
+                grade: 'ב-ד',
+                icon: '🌀',
+                color: 'bg-white',
+                textColor: 'text-slate-900'
+            },
+            {
+                id: 'candle_light',
+                title: 'צייד השמשים',
+                description: 'השמשים מופיעים ונעלמים בפתאומיות. הקליקו עליהם הכי מהר שאפשר.',
+                grade: 'ג-ו',
+                icon: '🕯️',
+                color: 'bg-white',
+                textColor: 'text-slate-900'
+            }
+        ];
+
+        // UI Helpers
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            // Update Nav UI
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('text-blue-600', 'bg-blue-50');
+                b.classList.add('text-slate-300');
+            });
+            const activeBtn = document.getElementById('btn-' + (sectionId === 'game-view' ? 'lobby' : sectionId));
+            if(activeBtn) {
+                activeBtn.classList.add('text-blue-600', 'bg-blue-50');
+                activeBtn.classList.remove('text-slate-300');
+            }
+
+            if(sectionId === 'leaderboard') renderLeaderboard();
+        }
+
+        function renderLobby() {
+            const grid = document.getElementById('games-grid');
+            grid.innerHTML = games.map((game, idx) => `
+                <div class="${game.color} ${game.textColor} p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all border border-slate-100 hover:border-blue-400 cursor-pointer flex flex-col group fade-in" 
+                     style="animation-delay: ${idx * 100}ms"
+                     onclick="launchGame('${game.id}')">
+                    <div class="mb-6 w-16 h-16 rounded-2xl flex items-center justify-center text-4xl bg-slate-50 group-hover:scale-110 transition-transform shadow-inner">
+                        ${game.icon}
+                    </div>
+                    <span class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold w-fit mb-3">כיתות ${game.grade}</span>
+                    <h3 class="text-3xl font-black mb-2">${game.title}</h3>
+                    <p class="opacity-60 text-lg mb-8 flex-1">${game.description}</p>
+                    <button class="w-full bg-slate-900 group-hover:bg-blue-600 text-white py-4 rounded-2xl font-bold text-xl transition-all active:scale-95">שחק עכשיו</button>
+                </div>
+            `).join('');
+        }
+
+        function launchGame(gameId) {
+            const game = games.find(g => g.id === gameId);
+            document.getElementById('current-game-title').innerText = game.title;
+            showSection('game-view');
+            
+            const container = document.getElementById('game-container');
+            container.innerHTML = ''; // Clear previous
+
+            switch(gameId) {
+                case 'hanukkah_race': startRace(container); break;
+                case 'trivia_extreme': startTrivia(container); break;
+                case 'dreidel_gold': startDreidel(container); break;
+                case 'candle_light': startCandleHunt(container); break;
+            }
+        }
+
+        // --- GAME 1: RACE ---
+        function startRace(container) {
+            container.innerHTML = `
+                <div class="w-full max-w-xl bg-blue-50 rounded-3xl p-4 game-canvas relative overflow-hidden border-4 border-blue-200" id="race-bg">
+                    <div id="race-intro" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20">
+                        <div class="text-6xl mb-4 animate-bounce-subtle">🍩</div>
+                        <h2 class="text-4xl font-black text-blue-900 mb-4">מרוץ הסופגניות</h2>
+                        <p class="bg-white/60 p-4 rounded-2xl mb-8 text-blue-800">הזיזו את החנוכייה עם העכבר ואספו סופגניות. היזהרו מהסביבונים!</p>
+                        <button onclick="beginRace()" class="bg-yellow-400 px-12 py-4 rounded-full font-bold text-2xl shadow-xl active:scale-95">קדימה!</button>
+                    </div>
+                    <div id="race-stats" class="hidden absolute top-4 right-4 bg-white/90 px-4 py-1 rounded-full font-bold z-20">ניקוד: <span id="race-score">0</span></div>
+                    <div id="player" class="hidden absolute bottom-8 text-6xl pointer-events-none transition-all duration-75" style="left: 50%;">🕎</div>
+                </div>
+            `;
+            window.beginRace = () => {
+                const intro = document.getElementById('race-intro');
+                const player = document.getElementById('player');
+                const stats = document.getElementById('race-stats');
+                const bg = document.getElementById('race-bg');
+                intro.classList.add('hidden');
+                player.classList.remove('hidden');
+                stats.classList.remove('hidden');
+
+                let score = 0;
+                let items = [];
+                const gameLoop = setInterval(() => {
+                    const item = document.createElement('div');
+                    const isDoughnut = Math.random() > 0.3;
+                    item.innerHTML = isDoughnut ? '🍩' : '🌀';
+                    item.className = 'absolute text-4xl pointer-events-none transition-all';
+                    item.style.left = Math.random() * 90 + '%';
+                    item.style.top = '-50px';
+                    bg.appendChild(item);
+                    
+                    let pos = -50;
+                    const fall = setInterval(() => {
+                        pos += 5;
+                        item.style.top = pos + 'px';
+                        
+                        // Collision
+                        const playerLeft = parseFloat(player.style.left);
+                        const itemLeft = parseFloat(item.style.left);
+                        if (pos > 380 && pos < 430 && Math.abs(playerLeft - itemLeft) < 10) {
+                            if (isDoughnut) {
+                                score += 10;
+                                document.getElementById('race-score').innerText = score;
+                                item.remove();
+                                clearInterval(fall);
+                            } else {
+                                endRace(score, gameLoop);
+                                clearInterval(fall);
+                            }
+                        }
+                        if (pos > 500) { item.remove(); clearInterval(fall); }
+                    }, 30);
+                }, 1000);
+
+                bg.onmousemove = (e) => {
+                    const rect = bg.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    player.style.left = Math.max(0, Math.min(90, x)) + '%';
+                };
+            };
+
+            function endRace(finalScore, loop) {
+                clearInterval(loop);
+                saveScoreModal(finalScore, 'מרוץ הסופגניות');
+            }
+        }
+
+        // --- GAME 2: TRIVIA ---
+        function startTrivia(container) {
+            const qs = [
+                { q: 'כיצד מדליקים נרות לפי בית שמאי?', a: ['שמונה ופוחתים', 'אחד ומוסיפים', 'הכל בבת אחת'], c: 0 },
+                { q: 'איזה חשמונאי נהרג ע"י פיל?', a: ['יהודה', 'אלעזר', 'יוחנן'], c: 1 },
+                { q: 'שם המפקד הסלווקי שהובס באמאוס?', a: ['אנטיוכוס', 'ליסיאס', 'ניקנור'], c: 1 },
+                { q: 'ברכה שנאמרת רק בלילה הראשון?', a: ['שהחיינו', 'הגומל', 'בורא פרי הגפן'], c: 0 }
+            ];
+            let current = 0;
+            let score = 0;
+            let startTime = Date.now();
+
+            function renderQ() {
+                if(current >= qs.length) {
+                    const final = Math.max(0, score * 100 + (200 - Math.floor((Date.now() - startTime)/1000)));
+                    saveScoreModal(final, 'מומחה חנוכה');
+                    return;
+                }
+                const item = qs[current];
+                container.innerHTML = `
+                    <div class="w-full max-w-xl bg-slate-900 text-white rounded-3xl p-8 shadow-2xl fade-in text-right">
+                        <div class="flex justify-between mb-6 text-blue-400 font-bold">
+                            <span>שאלה ${current + 1} / ${qs.length}</span>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-8">${item.q}</h3>
+                        <div class="grid gap-4">
+                            ${item.a.map((ans, i) => `<button onclick="checkTrivia(${i})" class="w-full p-4 bg-slate-800 border-2 border-slate-700 rounded-xl hover:border-blue-500 text-right transition-all">${ans}</button>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            window.checkTrivia = (idx) => {
+                if (idx === qs[current].c) score++;
+                current++;
+                renderQ();
+            };
+
+            // Intro
+            container.innerHTML = `
+                <div class="text-center bg-slate-900 p-12 rounded-3xl text-white max-w-xl w-full">
+                    <h2 class="text-4xl font-bold mb-6">טריוויה אקסטרים</h2>
+                    <p class="mb-8 opacity-70 leading-relaxed text-lg">חידון מאתגר על ההיסטוריה והמנהגים.<br>בונוס מהירות מופעל!</p>
+                    <button onclick="startT()" class="bg-blue-600 px-12 py-4 rounded-xl font-bold text-xl">אני מוכן</button>
+                </div>
+            `;
+            window.startT = renderQ;
+        }
+
+        // --- GAME 3: DREIDEL ---
+        function startDreidel(container) {
+            const letters = ['נ', 'ג', 'ה', 'פ'];
+            let score = 0;
+            let timeLeft = 30;
+            let current = '';
+
+            window.playDreidel = () => {
+                container.innerHTML = `
+                    <div class="w-full max-w-xl bg-indigo-700 text-white rounded-3xl p-8 text-center shadow-2xl relative">
+                        <div class="flex justify-between mb-8 font-mono text-xl">
+                            <span id="d-time">זמן: 30</span>
+                            <span id="d-score">נקודות: 0</span>
+                        </div>
+                        <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-10 text-6xl font-black text-indigo-900 shadow-inner" id="d-letter">?</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            ${letters.map(l => `<button onclick="pressDreidel('${l}')" class="bg-white/10 p-6 rounded-2xl text-4xl font-bold hover:bg-white/20 transition-all">${l}</button>`).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                const timer = setInterval(() => {
+                    timeLeft--;
+                    document.getElementById('d-time').innerText = 'זמן: ' + timeLeft;
+                    if(timeLeft <= 0) {
+                        clearInterval(timer);
+                        saveScoreModal(score, 'סביבון הזהב');
+                    }
+                }, 1000);
+
+                window.nextD = () => {
+                    current = letters[Math.floor(Math.random() * 4)];
+                    document.getElementById('d-letter').innerText = current;
+                };
+                
+                window.pressDreidel = (l) => {
+                    if(l === current) {
+                        score += 20;
+                        document.getElementById('d-score').innerText = 'נקודות: ' + score;
+                        nextD();
+                    }
+                };
+                nextD();
+            };
+
+            container.innerHTML = `
+                <div class="text-center bg-indigo-700 p-12 rounded-3xl text-white max-w-xl w-full">
+                    <h2 class="text-4xl font-bold mb-6">סביבון הזהב</h2>
+                    <p class="mb-8 opacity-80">זהו את האות שמופיעה בעיגול הלבן ולחצו עליה הכי מהר שאפשר!</p>
+                    <button onclick="playDreidel()" class="bg-yellow-400 text-indigo-900 px-12 py-4 rounded-xl font-bold text-xl">מתחילים</button>
+                </div>
+            `;
+        }
+
+        // --- GAME 4: CANDLE HUNT ---
+        function startCandleHunt(container) {
+            let score = 0;
+            let timeLeft = 25;
+
+            window.playHunt = () => {
+                container.innerHTML = `
+                    <div class="w-full max-w-xl h-[500px] bg-slate-900 rounded-3xl relative overflow-hidden" id="hunt-bg">
+                        <div class="absolute top-4 left-4 right-4 flex justify-between text-white font-bold z-20">
+                            <span id="h-score">ניקוד: 0</span>
+                            <span id="h-time">זמן: 25</span>
+                        </div>
+                    </div>
+                `;
+                const bg = document.getElementById('hunt-bg');
+                const timer = setInterval(() => {
+                    timeLeft--;
+                    document.getElementById('h-time').innerText = 'זמן: ' + timeLeft;
+                    if(timeLeft <= 0) {
+                        clearInterval(timer);
+                        clearInterval(spawner);
+                        saveScoreModal(score, 'צייד השמשים');
+                    }
+                }, 1000);
+
+                const spawner = setInterval(() => {
+                    const c = document.createElement('button');
+                    c.innerHTML = '🕯️';
+                    c.className = 'absolute text-5xl transition-all animate-pulse active:scale-150';
+                    c.style.left = Math.random() * 80 + 10 + '%';
+                    c.style.top = Math.random() * 80 + 10 + '%';
+                    c.onclick = () => {
+                        score += 15;
+                        document.getElementById('h-score').innerText = 'ניקוד: ' + score;
+                        c.remove();
+                    };
+                    bg.appendChild(c);
+                    setTimeout(() => c.remove(), 1200);
+                }, 700);
+            };
+
+            container.innerHTML = `
+                <div class="text-center bg-slate-900 p-12 rounded-3xl text-white max-w-xl w-full">
+                    <h2 class="text-4xl font-bold mb-6">צייד השמשים</h2>
+                    <p class="mb-8 opacity-70">הקליקו על הנרות שמופיעים ונעלמים במהירות על המסך.</p>
+                    <button onclick="playHunt()" class="bg-red-500 px-12 py-4 rounded-xl font-bold text-xl">קדימה</button>
+                </div>
+            `;
+        }
+
+        // Global Modals & Logic
+        function saveScoreModal(score, gameName) {
+            const container = document.getElementById('game-container');
+            container.innerHTML = `
+                <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-sm w-full fade-in">
+                    <h2 class="text-3xl font-black mb-2 text-slate-900">משחק נהדר!</h2>
+                    <p class="text-xl text-blue-600 font-bold mb-6">צברת ${score} נקודות</p>
+                    <input type="text" id="player-name" placeholder="השם שלך..." class="w-full p-4 bg-slate-100 rounded-xl mb-4 text-center font-bold outline-none border-2 focus:border-blue-500">
+                    <button onclick="submitResult(${score}, '${gameName}')" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg">שמור בלוח השיאים</button>
+                </div>
+            `;
+        }
+
+        window.submitResult = (score, game) => {
+            const name = document.getElementById('player-name').value || 'שחקן אנונימי';
+            scores.push({ name, score, game, date: new Date().toLocaleTimeString() });
+            showSection('leaderboard');
+        };
+
+        function renderLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            if (scores.length === 0) {
+                list.innerHTML = `<div class="p-20 text-center text-slate-400 italic">עדיין אין שיאים... תהיו הראשונים!</div>`;
+                return;
+            }
+            list.innerHTML = scores.sort((a,b) => b.score - a.score).map((s, i) => `
+                <div class="flex justify-between items-center p-6 hover:bg-slate-50 transition-colors ${i === 0 ? 'bg-yellow-50/30' : ''}">
+                    <span class="w-1/6 text-center text-xl font-black ${i < 3 ? 'text-blue-600' : 'text-slate-300'}">${i+1}</span>
+                    <span class="w-2/6 text-right font-bold text-slate-800">${s.name}</span>
+                    <span class="w-2/6 text-right text-slate-500 text-sm italic">${s.game}</span>
+                    <span class="w-1/6 text-left font-black text-2xl text-blue-600">${s.score}</span>
+                </div>
+            `).join('');
+        }
+
+        // Init
+        renderLobby();
+    </script>
+</body>
+</html>
