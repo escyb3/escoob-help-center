@@ -251,7 +251,25 @@
                 { q: 'כיצד מדליקים נרות לפי בית שמאי?', a: ['שמונה ופוחתים', 'אחד ומוסיפים', 'הכל בבת אחת'], c: 0 },
                 { q: 'איזה חשמונאי נהרג ע"י פיל?', a: ['יהודה', 'אלעזר', 'יוחנן'], c: 1 },
                 { q: 'שם המפקד הסלווקי שהובס באמאוס?', a: ['אנטיוכוס', 'ליסיאס', 'ניקנור'], c: 1 },
-                { q: 'ברכה שנאמרת רק בלילה הראשון?', a: ['שהחיינו', 'הגומל', 'בורא פרי הגפן'], c: 0 }
+                { q: 'ברכה שנאמרת רק בלילה הראשון?', a: ['שהחיינו', 'הגומל', 'בורא פרי הגפן'], c: 0 },
+                { q: 'מה פירוש המילה "מכבי" לפי ראשי התיבות המקובלים?', a: ['מי כמוך באלים ה\'', 'מלחמת כבוד בני ישראל', 'מלך כהן ברוך יהוה'], c: 0 },
+                { q: 'איזה ספר חיצוני מספר את סיפור הגבורה של יהודית?', a: ['ספר יהודית', 'ספר המכבים ג\'', 'מגילת רות'], c: 0 },
+                { q: 'כמה ברכות מברכים בלילה השני של חנוכה?', a: ['1', '2', '3'], c: 1 },
+                { q: 'מדוע אוכלים מאכלי גבינה בחנוכה?', a: ['זכר לנס יהודית', 'כדי להיות חזקים כמו המכבים', 'כי לא היה בשר בבית המקדש'], c: 0 },
+                { q: 'איזה מהאותיות הבאות אינה מופיעה על סביבון בחוץ לארץ?', a: ['נ', 'פ', 'ש'], c: 1 },
+                { q: 'מי היה אביו של יהודה המכבי?', a: ['מתתיהו בן יוחנן', 'שמעון התרסי', 'יוחנן כהן גדול'], c: 0 },
+                { q: 'באיזו שנה (לפי הלוח העברי) התרחש נס חנוכה?', a: ['ג\' תתכ"ב', 'ג\' תקצ"ה', 'ג\' תרכ"ב'], c: 1 },
+                { q: 'מה היה שם השושלת שהקימו המכבים לאחר הניצחון?', a: ['שושלת דוד', 'השושלת החשמונאית', 'שושלת הורדוס'], c: 1 },
+                { q: 'היכן יש להניח את החנוכייה לכתחילה (מעיקר הדין)?', a: ['על השולחן באמצע החדר', 'בפתח הבית מבחוץ', 'ליד המזוזה בפנים'], c: 1 },
+                { q: 'מהו הגובה המקסימלי שמעליו החנוכייה פסולה?', a: ['10 טפחים', '20 אמה', '100 סנטימטר'], c: 1 },
+                { q: 'איזה מהשמות הבאים אינו אחד מחמשת בני מתתיהו?', a: ['אלעזר', 'יונתן', 'דניאל'], c: 2 },
+                { q: 'באיזה תאריך עברי מתחיל חג החנוכה?', a: ['כ"ה בכסלו', 'א\' בטבת', 'כ"ד בכסלו'], c: 0 },
+                { q: 'מהו הנס העיקרי המוזכר בתפילת "על הניסים"?', a: ['נס פך השמן', 'ניצחון המעטים מול הרבים', 'גילוי המנורה'], c: 1 },
+                { q: 'מדוע קוראים לחודש כסלו חודש הגאולה?', a: ['בגלל חנוכה', 'בגלל חג המולד', 'בגלל סיום המסיק'], c: 0 },
+                { q: 'כמה נרות מדליקים סך הכל בכל שמונת הימים (בלי השמשים)?', a: ['36', '44', '8'], c: 0 },
+                { q: 'איזו עיר מזוהה עם תחילת מרד החשמונאים?', a: ['ירושלים', 'מודיעין', 'יריחו'], c: 1 },
+                { q: 'מי היה המלך היווני שגזר את הגזירות על היהודים?', a: ['אנטיוכוס הרביעי', 'אלכסנדר מוקדון', 'תלמי'], c: 0 },
+                { q: 'מהו המזמור שאומרים מיד לאחר הדלקת הנרות?', a: ['הנרות הללו', 'מעוז צור', 'מזמור שיר חנוכת הבית'], c: 0 }
             ];
             let current = 0;
             let score = 0;
@@ -259,7 +277,8 @@
 
             function renderQ() {
                 if(current >= qs.length) {
-                    const final = Math.max(0, score * 100 + (200 - Math.floor((Date.now() - startTime)/1000)));
+                    const timeBonus = Math.max(0, 500 - Math.floor((Date.now() - startTime)/500));
+                    const final = (score * 150) + timeBonus;
                     saveScoreModal(final, 'מומחה חנוכה');
                     return;
                 }
@@ -268,6 +287,7 @@
                     <div class="w-full max-w-xl bg-slate-900 text-white rounded-3xl p-8 shadow-2xl fade-in text-right">
                         <div class="flex justify-between mb-6 text-blue-400 font-bold">
                             <span>שאלה ${current + 1} / ${qs.length}</span>
+                            <span>נקודות: ${score * 150}</span>
                         </div>
                         <h3 class="text-2xl font-bold mb-8">${item.q}</h3>
                         <div class="grid gap-4">
@@ -287,7 +307,7 @@
             container.innerHTML = `
                 <div class="text-center bg-slate-900 p-12 rounded-3xl text-white max-w-xl w-full">
                     <h2 class="text-4xl font-bold mb-6">טריוויה אקסטרים</h2>
-                    <p class="mb-8 opacity-70 leading-relaxed text-lg">חידון מאתגר על ההיסטוריה והמנהגים.<br>בונוס מהירות מופעל!</p>
+                    <p class="mb-8 opacity-70 leading-relaxed text-lg">22 שאלות מאתגרות על ההיסטוריה והמנהגים.<br>בונוס מהירות מופעל - ככל שתענו מהר יותר, תקבלו יותר נקודות!</p>
                     <button onclick="startT()" class="bg-blue-600 px-12 py-4 rounded-xl font-bold text-xl">אני מוכן</button>
                 </div>
             `;
@@ -317,7 +337,7 @@
                 
                 const timer = setInterval(() => {
                     timeLeft--;
-                    document.getElementById('d-time').innerText = 'זמן: ' + timeLeft;
+                    if(document.getElementById('d-time')) document.getElementById('d-time').innerText = 'זמן: ' + timeLeft;
                     if(timeLeft <= 0) {
                         clearInterval(timer);
                         saveScoreModal(score, 'סביבון הזהב');
@@ -326,13 +346,13 @@
 
                 window.nextD = () => {
                     current = letters[Math.floor(Math.random() * 4)];
-                    document.getElementById('d-letter').innerText = current;
+                    if(document.getElementById('d-letter')) document.getElementById('d-letter').innerText = current;
                 };
                 
                 window.pressDreidel = (l) => {
                     if(l === current) {
                         score += 20;
-                        document.getElementById('d-score').innerText = 'נקודות: ' + score;
+                        if(document.getElementById('d-score')) document.getElementById('d-score').innerText = 'נקודות: ' + score;
                         nextD();
                     }
                 };
@@ -365,7 +385,7 @@
                 const bg = document.getElementById('hunt-bg');
                 const timer = setInterval(() => {
                     timeLeft--;
-                    document.getElementById('h-time').innerText = 'זמן: ' + timeLeft;
+                    if(document.getElementById('h-time')) document.getElementById('h-time').innerText = 'זמן: ' + timeLeft;
                     if(timeLeft <= 0) {
                         clearInterval(timer);
                         clearInterval(spawner);
@@ -381,11 +401,11 @@
                     c.style.top = Math.random() * 80 + 10 + '%';
                     c.onclick = () => {
                         score += 15;
-                        document.getElementById('h-score').innerText = 'ניקוד: ' + score;
+                        if(document.getElementById('h-score')) document.getElementById('h-score').innerText = 'ניקוד: ' + score;
                         c.remove();
                     };
                     bg.appendChild(c);
-                    setTimeout(() => c.remove(), 1200);
+                    setTimeout(() => { if(c.parentNode) c.remove(); }, 1200);
                 }, 700);
             };
 
