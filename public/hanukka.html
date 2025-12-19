@@ -13,6 +13,14 @@
         .animate-bounce-subtle { animation: bounce-subtle 2s infinite; }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .draw-progress {
+            animation: progress 10s linear forwards;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen overflow-hidden">
@@ -28,7 +36,6 @@
             </button>
         </nav>
 
-        <!-- Main Content Area -->
         <main class="flex-1 overflow-y-auto pb-24 md:pb-0">
             <!-- Lobby Section -->
             <section id="lobby" class="section p-8 max-w-6xl mx-auto fade-in">
@@ -81,16 +88,20 @@
     </div>
 
     <script>
-        // Game Data & Scores
         let scores = [];
         let activeIntervals = [];
+        const apiKey = "";
 
         const games = [
-            { id: 'hanukkah_race', title: 'מרוץ הסופגניות', description: 'זריזות: אספו סופגניות והימנעו מסביבונים.', grade: 'א-ג', icon: '🍩', color: 'bg-white', textColor: 'text-slate-900' },
-            { id: 'trivia_kids', title: 'מומחה חנוכה (ד-ז)', description: 'חידון חנוכה מקיף לילדים (31 שאלות!). מהירות משפרת את הציון.', grade: 'ד-ז', icon: '⭐', color: 'bg-blue-600', textColor: 'text-white' },
+            { id: 'shamash_hunter', title: 'צייד השמשים', description: 'תפסו כמה שיותר שמשים ב-30 שניות! הימנעו מהסביבונים האדומים.', grade: 'א-ו', icon: '🔥', color: 'bg-orange-500', textColor: 'text-white' },
+            { id: 'maccabee_shield', title: 'מגן המכבים', description: 'משחק הגנה: אל תתנו לסביבונים לפגוע במנורה! מהירות היא המפתח.', grade: 'ג-ו', icon: '🛡️', color: 'bg-red-600', textColor: 'text-white' },
+            { id: 'light_memory', title: 'זיכרון האור', description: 'משחק הזיכרון של חנוכה. מצאו את הזוגות כמה שיותר מהר.', grade: 'כל הגילאים', icon: '🧩', color: 'bg-emerald-600', textColor: 'text-white' },
+            { id: 'donut_plane', title: 'מטוס הסופגניות', description: 'הטיסו את הסופגניה בין החנוכיות! משחק זריזות מהנה.', grade: 'א-ב', icon: '✈️', color: 'bg-pink-500', textColor: 'text-white' },
+            { id: 'visual_mystery', title: 'חידון התמונות (17 שלבים)', description: 'המערכת מציירת דברים מורכבים ומוסתרים. האם תצליחו לזהות?', grade: 'ב-ט', icon: '🎨', color: 'bg-purple-600', textColor: 'text-white' },
+            { id: 'trivia_kids', title: 'מומחה חנוכה (ד-ז)', description: 'חידון חנוכה מקיף לילדים. מהירות משפרת את הציון.', grade: 'ד-ז', icon: '⭐', color: 'bg-blue-600', textColor: 'text-white' },
             { id: 'trivia_adults', title: 'חכמי חנוכה (מבוגרים)', description: '24 שאלות קשות. ככל שתענו מהר יותר, תעלו בדירוג.', grade: 'מבוגרים', icon: '📜', color: 'bg-slate-900', textColor: 'text-white' },
-            { id: 'dreidel_gold', title: 'סביבון הזהב', description: 'זהו את האות המופיעה במהירות.', grade: 'ב-ד', icon: '🌀', color: 'bg-white', textColor: 'text-slate-900' },
-            { id: 'candle_light', title: 'צייד השמשים', description: 'הקליקו על הנרות שמופיעים ונעלמים.', grade: 'ג-ו', icon: '🕯️', color: 'bg-white', textColor: 'text-slate-900' }
+            { id: 'hanukkah_race', title: 'מרוץ הסופגניות', description: 'זריזות: אספו סופגניות והימנעו מסביבונים.', grade: 'א-ג', icon: '🍩', color: 'bg-white', textColor: 'text-slate-900' },
+            { id: 'dreidel_gold', title: 'סביבון הזהב', description: 'זהו את האות המופיעה במהירות.', grade: 'ב-ד', icon: '🌀', color: 'bg-white', textColor: 'text-slate-900' }
         ];
 
         function stopAllTimers() {
@@ -110,7 +121,7 @@
                 <div class="${game.color} ${game.textColor} p-8 rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all border border-slate-100 cursor-pointer flex flex-col group fade-in" 
                      onclick="launchGame('${game.id}')">
                     <div class="mb-6 w-16 h-16 rounded-2xl flex items-center justify-center text-4xl bg-black/5 group-hover:scale-110 transition-transform">${game.icon}</div>
-                    <span class="bg-blue-50/20 px-3 py-1 rounded-full text-xs font-bold w-fit mb-3">${game.grade}</span>
+                    <span class="${game.textColor === 'text-white' ? 'bg-white/20' : 'bg-blue-50'} px-3 py-1 rounded-full text-xs font-bold w-fit mb-3">${game.grade}</span>
                     <h3 class="text-3xl font-black mb-2">${game.title}</h3>
                     <p class="opacity-70 text-lg mb-8 flex-1">${game.description}</p>
                     <button class="w-full bg-yellow-400 text-slate-900 py-4 rounded-2xl font-bold text-xl transition-all active:scale-95">שחק עכשיו</button>
@@ -126,33 +137,248 @@
             const container = document.getElementById('game-container');
             container.innerHTML = '';
 
-            if (gameId === 'hanukkah_race') startRace(container);
+            if (gameId === 'shamash_hunter') startShamashHunter(container);
+            else if (gameId === 'maccabee_shield') startMaccabeeShield(container);
+            else if (gameId === 'light_memory') startLightMemory(container);
+            else if (gameId === 'donut_plane') startDonutPlane(container);
+            else if (gameId === 'visual_mystery') startVisualMystery(container);
+            else if (gameId === 'hanukkah_race') startRace(container);
             else if (gameId === 'trivia_kids') startTrivia(container, 'kids');
             else if (gameId === 'trivia_adults') startTrivia(container, 'adults');
             else if (gameId === 'dreidel_gold') startDreidel(container);
-            else if (gameId === 'candle_light') startCandleHunt(container);
         }
 
-        // --- משחק 1: מרוץ הסופגניות ---
+        // --- משחק: חידון התמונות (גרסה משופרת - 17 שלבים קשים) ---
+        async function startVisualMystery(container) {
+            const levels = [
+                { prompt: "A complex crowd of people in a busy futuristic market, a small traditional dreidel is hidden on a shelf behind many mechanical toys", answer: "סביבון", options: ["סביבון", "סופגניה", "חנוכייה"] },
+                { prompt: "A vast landscape of clouds, a golden menorah disguised as a bridge connecting two floating islands", answer: "חנוכייה", options: ["נר", "חנוכייה", "כד שמן"] },
+                { prompt: "Macro shot of a busy honeycomb, one of the cells is actually shaped like a jelly donut", answer: "סופגניה", options: ["מטבע", "סופגניה", "סביבון"] },
+                { prompt: "Inside a clock mechanism, gears shaped like Jewish dreidels, sepia tone, very detailed and crowded", answer: "סביבון", options: ["סביבון", "מכבים", "נר"] },
+                { prompt: "A dark laboratory with thousands of glass jars, one jar in the far background contains glowing olive oil", answer: "כד שמן", options: ["מים", "כד שמן", "יין"] },
+                { prompt: "A forest where the trees have branches that look like a Hanukkah menorah, winter night, snowy", answer: "חנוכייה", options: ["עץ", "חנוכייה", "שיח"] },
+                { prompt: "Steampunk city aerial view, a giant fountain in the center is shaped like a spinning dreidel", answer: "סביבון", options: ["מזרקה", "סביבון", "פסל"] },
+                { prompt: "Microscopic view of sugar crystals, some crystals form the shape of a donut", answer: "סופגניה", options: ["מלח", "סופגניה", "יהלום"] },
+                { prompt: "An ancient library where a candle's flame is actually a tiny soldier (Maccabee) holding a shield", answer: "מכבים", options: ["נר", "מכבים", "ספר"] },
+                { prompt: "A mosaic made of thousands of small coins, the overall image forms a Hanukkah menorah", answer: "חנוכייה", options: ["חנוכייה", "מטבע", "קיר"] },
+                { prompt: "A kitchen full of utensils, a wooden dreidel is hidden inside a bowl of walnuts", answer: "סביבון", options: ["אגוז", "סביבון", "כף"] },
+                { prompt: "Starry night sky where the constellations form the shape of a clay oil jar", answer: "כד שמן", options: ["דובה גדולה", "כד שמן", "ירח"] },
+                { prompt: "A toy store window with hundreds of items, a Hanukkah donut is camouflaged next to a pile of red balls", answer: "סופגניה", options: ["כדור", "סופגניה", "בובה"] },
+                { prompt: "Abstract art with geometric shapes, hidden within the lines is the Hebrew letter 'Gimel' on a dreidel", answer: "סביבון", options: ["סביבון", "אות", "ציור"] },
+                { prompt: "A Roman battlefield, a soldier's shield has a menorah engraved very faintly", answer: "חנוכייה", options: ["מגן", "חנוכייה", "חרב"] },
+                { prompt: "A box of chocolate pralines, one is shaped like a small Hanukkah jug", answer: "כד שמן", options: ["שוקולד", "כד שמן", "סוכרייה"] },
+                { prompt: "Underwater coral reef where the corals form the structure of a 9-branched menorah", answer: "חנוכייה", options: ["דג", "חנוכייה", "אלמוג"] }
+            ];
+            
+            let currentLevel = 0, score = 0;
+            
+            function showLoading() {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center bg-white p-12 rounded-3xl shadow-xl max-w-md w-full">
+                        <div class="text-6xl mb-6 animate-bounce">🎨</div>
+                        <p class="text-xl font-bold text-purple-600 mb-4">המערכת מייצרת אתגר קשה...</p>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                            <div class="bg-purple-500 h-full draw-progress"></div>
+                        </div>
+                        <p class="text-slate-400 mt-4 text-sm italic">מציירת סביבה עמוסה ופרטים נסתרים...</p>
+                    </div>`;
+            }
+
+            async function generateImage(prompt) {
+                try {
+                    const apiPromise = fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                        method: 'POST',
+                        body: JSON.stringify({ instances: [{ prompt: "High complexity, hidden object style: " + prompt }], parameters: { sampleCount: 1 } })
+                    });
+                    
+                    const timeoutPromise = new Promise(resolve => setTimeout(resolve, 10000));
+                    const [response] = await Promise.all([apiPromise, timeoutPromise]);
+                    const result = await response.json();
+                    return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                } catch (e) {
+                    return "https://via.placeholder.com/400x400?text=Generation+Limit+Reached";
+                }
+            }
+
+            async function loadLevel() {
+                if (currentLevel >= levels.length) {
+                    saveScoreModal(score, 'חידון התמונות');
+                    return;
+                }
+                showLoading();
+                const imgUrl = await generateImage(levels[currentLevel].prompt);
+                
+                container.innerHTML = `
+                    <div class="bg-white p-8 rounded-3xl shadow-xl max-w-2xl w-full text-center fade-in">
+                        <div class="flex justify-between items-center mb-4">
+                             <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-bold">שלב ${currentLevel + 1} מתוך 17</span>
+                             <h3 class="text-2xl font-black text-purple-800">זהו את האובייקט המסתתר!</h3>
+                        </div>
+                        <div class="mb-6 rounded-2xl overflow-hidden border-4 border-purple-100 h-80 flex items-center justify-center bg-slate-50 shadow-inner">
+                            <img src="${imgUrl}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            ${levels[currentLevel].options.map(opt => `
+                                <button onclick="window.checkVisual('${opt}')" class="p-4 border-2 border-purple-100 rounded-2xl hover:bg-purple-600 hover:text-white hover:border-purple-600 font-bold transition-all transform hover:scale-[1.02]">${opt}</button>
+                            `).join('')}
+                        </div>
+                    </div>`;
+            }
+
+            window.checkVisual = (ans) => {
+                if(ans === levels[currentLevel].answer) score += 300;
+                currentLevel++;
+                loadLevel();
+            };
+
+            loadLevel();
+        }
+
+        // --- שאר המשחקים (ללא שינוי) ---
+
+        function startShamashHunter(container) {
+            let score = 0, timeLeft = 30;
+            container.innerHTML = `<div class="w-full max-w-xl bg-orange-50 rounded-3xl p-6 game-canvas relative overflow-hidden border-4 border-orange-200" id="hunter-bg">
+                <div class="absolute top-4 left-4 right-4 flex justify-between font-black text-orange-900 z-10"><span id="h-time">זמן: 30</span><span id="h-score">ניקוד: 0</span></div>
+                <div id="hunter-area" class="w-full h-full relative"></div>
+            </div>`;
+            const area = document.getElementById('hunter-area');
+            const timer = setInterval(() => {
+                timeLeft--;
+                if(timeLeft <= 0) { stopAllTimers(); saveScoreModal(score, 'צייד השמשים'); }
+                else { document.getElementById('h-time').innerText = 'זמן: ' + timeLeft; spawnItem(); }
+            }, 1000);
+            activeIntervals.push(timer);
+            function spawnItem() {
+                const item = document.createElement('div');
+                const isBad = Math.random() > 0.7;
+                item.innerHTML = isBad ? '🌀' : '🔥';
+                item.className = `absolute text-5xl cursor-pointer select-none`;
+                item.style.left = Math.random() * 85 + 5 + '%';
+                item.style.top = Math.random() * 80 + 10 + '%';
+                area.appendChild(item);
+                item.onclick = (e) => { e.stopPropagation(); if(isBad) score = Math.max(0, score - 20); else score += 10; document.getElementById('h-score').innerText = 'ניקוד: ' + score; item.remove(); };
+                setTimeout(() => item.remove(), 1500);
+            }
+        }
+
+        function startMaccabeeShield(container) {
+            container.innerHTML = `<div class="w-full max-w-xl bg-slate-900 rounded-3xl p-4 game-canvas relative overflow-hidden border-4 border-red-500" id="shield-bg">
+                <div id="shield-intro" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20 bg-slate-900/80">
+                    <h2 class="text-4xl font-black text-white mb-4">מגן המכבים</h2>
+                    <button onclick="beginShield()" class="bg-red-500 text-white px-12 py-4 rounded-full font-bold text-2xl">התחל</button>
+                </div>
+                <div id="menorah-base" class="absolute bottom-0 left-1/2 -translate-x-1/2 text-7xl select-none">🕎</div>
+                <div class="absolute top-4 left-4 right-4 flex justify-between text-white font-bold"><span id="shield-score">ניקוד: 0</span><span id="shield-lives">חיים: ❤️❤️❤️</span></div>
+            </div>`;
+            window.beginShield = () => {
+                document.getElementById('shield-intro').classList.add('hidden');
+                let score = 0, lives = 3, speed = 3;
+                const spawn = setInterval(() => {
+                    const enemy = document.createElement('div');
+                    enemy.innerHTML = '🌀';
+                    enemy.className = 'absolute text-4xl cursor-pointer select-none';
+                    enemy.style.left = Math.random() * 85 + 5 + '%';
+                    enemy.style.top = '-50px';
+                    document.getElementById('shield-bg').appendChild(enemy);
+                    let pos = -50;
+                    const fall = setInterval(() => {
+                        pos += speed;
+                        enemy.style.top = pos + 'px';
+                        if (pos > 420) {
+                            lives--;
+                            document.getElementById('shield-lives').innerText = 'חיים: ' + '❤️'.repeat(lives);
+                            enemy.remove(); clearInterval(fall);
+                            if (lives <= 0) { stopAllTimers(); saveScoreModal(score, 'מגן המכבים'); }
+                        }
+                    }, 30);
+                    enemy.onclick = () => { score += 15; speed += 0.1; document.getElementById('shield-score').innerText = 'ניקוד: ' + score; enemy.remove(); clearInterval(fall); };
+                }, 1000);
+                activeIntervals.push(spawn);
+            };
+        }
+
+        function startLightMemory(container) {
+            const icons = ['🕎', '🍩', '🌀', '🕯️', '🔥', '🏺', '🪙', '📜'];
+            let deck = [...icons, ...icons].sort(() => Math.random() - 0.5);
+            let flipped = [], matched = 0, seconds = 0;
+            container.innerHTML = `<div class="bg-white p-6 rounded-3xl shadow-xl max-w-lg w-full">
+                <div class="flex justify-between items-center mb-6"><div id="mem-timer" class="text-emerald-600 font-bold">זמן: 0 שנ'</div></div>
+                <div class="grid grid-cols-4 gap-3" id="memory-grid"></div>
+            </div>`;
+            const grid = document.getElementById('memory-grid');
+            deck.forEach((icon, idx) => {
+                const card = document.createElement('div');
+                card.className = 'h-20 bg-slate-100 rounded-xl flex items-center justify-center text-3xl cursor-pointer hover:bg-emerald-50 transition-colors border-2 border-transparent';
+                card.onclick = () => {
+                    if (flipped.length < 2 && !card.classList.contains('matched') && !flipped.includes(card)) {
+                        card.innerText = icon; card.classList.add('bg-white', 'border-emerald-500');
+                        flipped.push(card);
+                        if (flipped.length === 2) {
+                            if (flipped[0].dataset.icon === flipped[1].dataset.icon) {
+                                flipped.forEach(c => c.classList.add('matched', 'opacity-50'));
+                                matched += 2; flipped = [];
+                                if (matched === deck.length) { stopAllTimers(); saveScoreModal(1000 - (seconds * 10), 'זיכרון האור', seconds); }
+                            } else {
+                                setTimeout(() => { flipped.forEach(c => { c.innerText = ''; c.classList.remove('bg-white', 'border-emerald-500'); }); flipped = []; }, 800);
+                            }
+                        }
+                    }
+                };
+                card.dataset.icon = icon;
+                grid.appendChild(card);
+            });
+            const timer = setInterval(() => { seconds++; document.getElementById('mem-timer').innerText = `זמן: ${seconds} שנ'`; }, 1000);
+            activeIntervals.push(timer);
+        }
+
+        function startDonutPlane(container) {
+            container.innerHTML = `<div class="w-full max-w-xl bg-sky-300 rounded-3xl p-4 game-canvas relative overflow-hidden border-4 border-sky-400" id="plane-bg">
+                <div class="absolute top-4 left-4 right-4 flex justify-between font-black text-sky-900 z-10"><span id="p-score">ניקוד: 0</span></div>
+                <div id="plane-donut" class="absolute text-5xl" style="left: 20%; top: 50%;">🍩</div>
+                <div id="plane-intro" class="absolute inset-0 bg-sky-500/50 flex flex-col items-center justify-center z-20">
+                    <button onclick="beginPlane()" class="bg-yellow-400 px-10 py-3 rounded-full font-bold">התחל</button>
+                </div>
+            </div>`;
+            window.beginPlane = () => {
+                document.getElementById('plane-intro').remove();
+                const donut = document.getElementById('plane-donut');
+                let score = 0, y = 250, velocity = 0;
+                document.getElementById('plane-bg').onclick = () => velocity = -7;
+                const gameLoop = setInterval(() => {
+                    velocity += 0.4; y += velocity; donut.style.top = y + 'px';
+                    if (y < 0 || y > 450) { stopAllTimers(); saveScoreModal(score, 'מטוס הסופגניות'); }
+                }, 30);
+                activeIntervals.push(gameLoop);
+            };
+        }
+
+        function startTrivia(container, mode) {
+            const kidsQs = [{ q: "מי היה אבי המכבים?", a: ["יהודה", "מתתיהו", "שמעון"], c: 1 }, { q: "כמה ימים נמשך נס פך השמן?", a: ["7", "8", "9"], c: 1 }];
+            const adultQs = [{ q: "מהו הגובה המקסימלי של חנוכייה?", a: ["10 טפחים", "20 אמה", "30 אמה"], c: 1 }];
+            const qs = mode === 'kids' ? kidsQs : adultQs;
+            let current = 0, score = 0;
+            function render() {
+                if (current >= qs.length) return saveScoreModal(score * 500, mode);
+                container.innerHTML = `<div class="bg-white p-10 rounded-3xl shadow-xl max-w-lg w-full text-right"><h3 class="text-2xl font-bold mb-6">${qs[current].q}</h3>
+                <div class="space-y-4">${qs[current].a.map((ans, i) => `<button onclick="window.ansT(${i})" class="w-full p-4 border-2 rounded-xl text-right">${ans}</button>`).join('')}</div></div>`;
+            }
+            window.ansT = (i) => { if(i === qs[current].c) score++; current++; render(); };
+            render();
+        }
+
         function startRace(container) {
-            container.innerHTML = `
-                <div class="w-full max-w-xl bg-blue-50 rounded-3xl p-4 game-canvas relative overflow-hidden border-4 border-blue-200" id="race-bg">
-                    <div id="race-intro" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 z-20">
-                        <h2 class="text-4xl font-black text-blue-900 mb-4">מרוץ הסופגניות</h2>
-                        <button onclick="beginRace()" class="bg-yellow-400 px-12 py-4 rounded-full font-bold text-2xl shadow-xl">קדימה!</button>
-                    </div>
-                    <div id="player" class="hidden absolute bottom-8 text-6xl" style="left: 50%;">🕎</div>
-                </div>`;
+            container.innerHTML = `<div class="w-full max-w-xl bg-blue-50 rounded-3xl p-4 game-canvas relative overflow-hidden border-4 border-blue-200" id="race-bg">
+                <button onclick="beginRace()" class="bg-yellow-400 px-12 py-4 rounded-full font-bold absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">התחל</button>
+                <div id="player" class="hidden absolute bottom-8 text-6xl" style="left: 50%;">🕎</div>
+            </div>`;
             window.beginRace = () => {
-                document.getElementById('race-intro').classList.add('hidden');
-                const player = document.getElementById('player');
-                player.classList.remove('hidden');
+                const player = document.getElementById('player'); player.classList.remove('hidden');
+                document.querySelector('#race-bg button').remove();
                 let score = 0;
-                const bg = document.getElementById('race-bg');
-                bg.onmousemove = (e) => {
-                    let rect = bg.getBoundingClientRect();
-                    let x = ((e.clientX - rect.left) / rect.width) * 100;
-                    player.style.left = Math.max(0, Math.min(90, x)) + '%';
+                document.getElementById('race-bg').onmousemove = (e) => {
+                    let rect = e.currentTarget.getBoundingClientRect();
+                    player.style.left = ((e.clientX - rect.left) / rect.width) * 100 + '%';
                 };
                 const interval = setInterval(() => {
                     const item = document.createElement('div');
@@ -161,16 +387,13 @@
                     item.className = 'absolute text-4xl';
                     item.style.left = Math.random() * 90 + '%';
                     item.style.top = '-50px';
-                    bg.appendChild(item);
+                    document.getElementById('race-bg').appendChild(item);
                     let pos = -50;
                     const fall = setInterval(() => {
-                        pos += 5;
-                        item.style.top = pos + 'px';
-                        let pL = parseFloat(player.style.left);
-                        let iL = parseFloat(item.style.left);
-                        if (pos > 380 && pos < 430 && Math.abs(pL - iL) < 10) {
+                        pos += 5; item.style.top = pos + 'px';
+                        if (pos > 380 && pos < 430 && Math.abs(parseFloat(player.style.left) - parseFloat(item.style.left)) < 10) {
                             if (isGood) { score += 10; item.remove(); clearInterval(fall); }
-                            else { stopAllTimers(); clearInterval(fall); saveScoreModal(score, 'מרוץ הסופגניות'); }
+                            else { stopAllTimers(); saveScoreModal(score, 'מרוץ הסופגניות'); }
                         }
                         if (pos > 500) { item.remove(); clearInterval(fall); }
                     }, 30);
@@ -179,165 +402,27 @@
             };
         }
 
-        // --- משחק 2: חידונים עם שעון עצר משקלל ---
-        function startTrivia(container, mode) {
-            const kidsQs = [
-                { q: "כיצד נקרא הספר שמספר על גבורת המכבים?", a: ["ספר מכבים", "מגילת אסתר", "ספר בראשית"], c: 0 },
-                { q: "מי היה אביהם של חמשת החשמונאים?", a: ["יהודה", "מתתיהו", "אלעזר"], c: 1 },
-                { q: "איזו אות מופיעה בסביבון בחו'ל במקום האות פ'?", a: ["ש", "ר", "כ"], c: 0 },
-                { q: "מהו פירוש המילה 'מכבי' על פי ראשי התיבות?", a: ["מי כמוך באלים ה'", "מלך כבוד בני ישראל", "מלחמת כבוד בני יהודה"], c: 0 },
-                { q: "כמה קנים יש במנורת המקדש (לא בחנוכייה)?", a: ["8", "7", "9"], c: 1 },
-                { q: "באיזו עיר החל מרד המכבים?", a: ["ירושלים", "מודיעין", "צפת"], c: 1 },
-                { q: "מי הנהיג את המרד אחרי מותו של מתתיהו?", a: ["שמעון", "יונתן", "יהודה המכבי"], c: 2 },
-                { q: "מה פירוש השם 'חשמונאים'?", a: ["שם משפחה", "לוחמי אש", "אנשי החושן"], c: 0 },
-                { q: "כמה ימים נמשך נס פך השמן?", a: ["7 ימים", "8 ימים", "9 ימים"], c: 1 },
-                { q: "איזו תפילה מיוחדת מוסיפים ב'ברכת המזון' ובתפילת 'עמידה' בחנוכה?", a: ["יעלה ויבוא", "על הניסים", "הלל"], c: 1 },
-                { q: "באיזה צד של הפתח נהוג להניח את החנוכייה (מול המזוזה)?", a: ["צד ימין", "צד שמאל", "במרכז"], c: 1 },
-                { q: "מדוע קוראים לחג בשם 'חנוכה'?", a: ["חנייה בכ'ה בכסלו", "שם של מאכל", "על שם יהודה"], c: 0 },
-                { q: "איזה שמן הוא הכי מהודר להדלקת הנרות?", a: ["שמן זית", "שמן תירס", "שמן סויה"], c: 0 },
-                { q: "מי הייתה האישה האמיצה שקשורה למאכלי גבינה בחנוכה?", a: ["אסתר", "רות", "יהודית"], c: 2 },
-                { q: "מה היה הנס הצבאי של המכבים?", a: ["מעטים ניצחו רבים", "היה להם פילים", "הם היו ענקים"], c: 0 },
-                { q: "איך קראו ליוונים שהשתלטו על ארץ ישראל?", a: ["רומאים", "סלווקים", "בבלים"], c: 1 },
-                { q: "איזה מזמור נהוג לשיר מיד לאחר הדלקת הנרות?", a: ["מעוז צור", "לכה דודי", "אני מאמין"], c: 0 },
-                { q: "באיזה חודש עברי חל תמיד חג החנוכה?", a: ["תשרי", "כסלו", "שבט"], c: 1 },
-                { q: "מה מדליקים קודם בערב שבת של חנוכה?", a: ["נרות שבת", "נרות חנוכה", "זה לא משנה"], c: 1 },
-                { q: "באיזה יום של חנוכה חל תמיד ראש חודש טבת?", a: ["ביום השלישי", "ביום השישי", "ביום האחרון"], c: 1 },
-                { q: "לפי השיר, מה 'באנו לגרש'?", a: ["את היוונים", "את החושך", "את הקור"], c: 1 },
-                { q: "איזה כהן גדול היה מתתיהו?", a: ["חשמונאי", "צדוקי", "לוי"], c: 0 },
-                { q: "מה עושים עם ה'שמש' לאחר הדלקת כל הנרות?", a: ["מכבים אותו", "מניחים אותו בצד הנרות", "אוכלים אותו"], c: 1 },
-                { q: "כמה ברכות מברכים בהדלקת הנרות ביום השני?", a: ["1", "2", "3"], c: 1 },
-                { q: "איזה מהמשפטים הבאים מופיע בשיר 'ימי החנוכה'?", a: ["נאכל בה סופגניות", "סביבון סוב סוב סוב", "נס גדול היה שם"], c: 0 },
-                { q: "מה הפירוש של 'פך שמן'?", a: ["כד קטן", "בקבוק זכוכית", "חבית גדולה"], c: 0 },
-                { q: "מי היה המצביא היווני הגדול שנלחם ביהודה המכבי בקרב אמאוס?", a: ["ליסיאס", "גורגיאס", "אנטיוכוס"], c: 1 },
-                { q: "מדוע נהוג לתת 'דמי חנוכה' לילדים?", a: ["כדי לקנות סביבונים", "כדי לעודד לימוד תורה", "כדי לשלם מיסים"], c: 1 },
-                { q: "איזה נר מדליקים ראשון בחנוכייה ביום השלישי?", a: ["הנר הימני ביותר", "הנר החדש (השמאלי)", "הנר האמצעי"], c: 1 },
-                { q: "מה השם השני של חג החנוכה?", a: ["חג האביב", "חג האורים", "חג האסיף"], c: 1 },
-                { q: "כמה אחים היו ליהודה המכבי (לא כולל הוא עצמו)?", a: ["3", "4", "5"], c: 1 }
-            ];
-            const adultQs = [
-                { q: "מי היה הפקיד היווני שנהרג ע'י מתתיהו במודיעין?", a: ["אפלס", "ליסיאס", "ניקנור"], c: 0 },
-                { q: "מהו הגובה המקסימלי הכשר להנחת חנוכייה?", a: ["10 טפחים", "20 אמה", "50 אמה"], c: 1 },
-                { q: "באיזה קרב נפל יהודה המכבי?", a: ["אמאוס", "בית חורון", "אלעשה"], c: 2 },
-                { q: "מדוע אוכלים מאכלי גבינה בחנוכה?", a: ["זכר למזון המכבים", "זכר לסיפור יהודית", "סימן לשפע"], c: 1 },
-                { q: "מהו סדר ההדלקה לפי בית הלל?", a: ["מוסיף והולך", "פוחת והולך", "קבוע"], c: 0 },
-                { q: "באיזו מסכת בגמרא מופיעים הלכות חנוכה?", a: ["מסכת ברכות", "מסכת שבת", "מסכת פסחים"], c: 1 },
-                { q: "מי היה המלך הסלווקי שגזר את הגזירות על היהודים?", a: ["אנטיוכוס הרביעי", "תלמי השמיני", "אלכסנדר מוקדון"], c: 0 },
-                { q: "כיצד נהרג אלעזר המכבי?", a: ["נפילה מחומות ירושלים", "תחת פיל מלחמה", "בקרב מול ניקנור"], c: 1 },
-                { q: "מה משמעות השם 'חנוכה' על פי המדרש?", a: ["חנכו את המזבח", "חנה בכ'ה", "שניהם נכונים"], c: 2 },
-                { q: "כמה ברכות מברכים בערב הראשון של חנוכה?", a: ["2", "3", "4"], c: 1 },
-                { q: "איזה 'פרסום הנס' הוא העדיף בנר חנוכה?", a: ["בבית הכנסת", "בחצר כלפי חוץ", "על שולחן האוכל"], c: 1 },
-                { q: "מי היה הכהן הגדול שפתח את המרד?", a: ["מתתיהו בן יוחנן", "שמעון התרסי", "יוחנן הורקנוס"], c: 0 },
-                { q: "באיזה תאריך עברי חל חג החנוכה?", a: ["כ'ה בכסלו", "ט'ו בשבט", "י'ד באדר"], c: 0 },
-                { q: "איזה פסוק נהוג לומר בזמן הדלקת הנרות?", a: ["הנרות הללו", "מזמור שיר חנוכת הבית", "שניהם נכונים"], c: 2 },
-                { q: "מהו הזמן המינימלי שבו הנרות חייבים לדלוק?", a: ["שעה", "חצי שעה", "רבע שעה"], c: 1 },
-                { q: "האם מותר להשתמש באור נרות החנוכה לצרכים אישיים?", a: ["כן", "לא", "רק בשעת הדחק"], c: 1 },
-                { q: "מה הייתה הסיבה העיקרית למרד המכבים במקור?", a: ["מיסים כבדים", "גזירות דת והתייוונות", "רצון למלוכה"], c: 1 },
-                { q: "איזה שמן הוא המובחר ביותר להדלקת נרות חנוכה?", a: ["שמן קנולה", "שמן זית", "שמן סויה"], c: 1 },
-                { q: "מי מבין האחים המכבים היה האחרון שנותר בחיים?", a: ["יהודה", "שמעון", "יוחנן"], c: 1 },
-                { q: "מהו 'שמש' בחנוכייה?", a: ["הנר הגבוה שבו מדליקים", "הנר הראשון שמדליקים", "נר הזיכרון"], c: 0 },
-                { q: "באיזו עיר החל המרד?", a: ["ירושלים", "מודיעין", "יריחו"], c: 1 },
-                { q: "איזה 'קרב' נחשב לאחד הניצחונות הטקטיים הגדולים?", a: ["קרב אמאוס", "קרב בית צור", "קרב כפר שלמא"], c: 0 },
-                { q: "מהיכן הגיע השם 'מכבי'?", a: ["שם של פטיש", "שם משפחה עתיק", "האותיות הראשונות של אמא"], c: 0 },
-                { q: "מה קראו המכבים כאשר נכנסו לבית המקדש?", a: ["תהילים", "הלל", "שיר השירים"], c: 1 }
-            ];
-            
-            const qs = mode === 'kids' ? kidsQs : adultQs;
-            let current = 0, score = 0, elapsedSeconds = 0;
-            
-            const timer = setInterval(() => {
-                elapsedSeconds++;
-                const timerEl = document.getElementById('trivia-timer');
-                if(timerEl) timerEl.innerText = `זמן: ${elapsedSeconds} שנ'`;
-            }, 1000);
-            activeIntervals.push(timer);
-
-            function render() {
-                if (current >= qs.length) {
-                    stopAllTimers();
-                    // ציון בסיסי (דיוק) + בונוס זמן (ככל שהזמן קטן יותר הבונוס גדל)
-                    // נוסחה: (נכונות/סה"כ * 1000) + מקסימום(0, (300 - זמן עבר))
-                    const baseScore = Math.round((score / qs.length) * 1000);
-                    const timeBonus = Math.max(0, 300 - elapsedSeconds);
-                    const finalScore = baseScore + timeBonus;
-                    return saveScoreModal(finalScore, mode === 'kids' ? 'מומחה חנוכה' : 'חכמי חנוכה', elapsedSeconds);
-                }
-                container.innerHTML = `<div class="bg-white p-10 rounded-3xl shadow-xl max-w-lg w-full text-right fade-in relative">
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="text-sm text-slate-400">שאלה ${current+1} מתוך ${qs.length}</div>
-                        <div id="trivia-timer" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-bold text-sm italic">זמן: ${elapsedSeconds} שנ'</div>
-                    </div>
-                    <h3 class="text-2xl font-bold mb-6">${qs[current].q}</h3>
-                    <div class="space-y-4">${qs[current].a.map((ans, i) => `<button onclick="window.ansT(${i})" class="w-full p-4 border-2 rounded-xl hover:bg-blue-50 hover:border-blue-300 text-right transition-all font-medium">${ans}</button>`).join('')}</div>
-                </div>`;
-            }
-            window.ansT = (i) => { if(i === qs[current].c) score++; current++; render(); };
-            render();
-        }
-
-        // --- משחק 3: סביבון הזהב ---
         function startDreidel(container) {
             let score = 0, timeLeft = 20, currentL = '';
             const letters = ['נ', 'ג', 'ה', 'פ'];
             function next() { currentL = letters[Math.floor(Math.random()*4)]; document.getElementById('d-l').innerText = currentL; }
-            container.innerHTML = `<div class="bg-indigo-600 text-white p-10 rounded-3xl text-center w-80 shadow-2xl border-4 border-indigo-400">
-                <div class="flex justify-between mb-4 font-bold"><span id="d-time">זמן: 20</span><span>ניקוד: <span id="d-score">0</span></span></div>
-                <div id="d-l" class="text-8xl font-black mb-8 bg-white/10 py-8 rounded-2xl shadow-inner">?</div>
-                <div class="grid grid-cols-2 gap-3">${letters.map(l => `<button onclick="window.hitD('${l}')" class="bg-white text-indigo-900 p-5 rounded-xl text-3xl font-black hover:bg-yellow-400 transition-all active:scale-90">${l}</button>`).join('')}</div>
+            container.innerHTML = `<div class="bg-indigo-600 text-white p-10 rounded-3xl text-center w-80 shadow-2xl">
+                <div class="flex justify-between mb-4 font-bold"><span>זמן: <span id="d-time">20</span></span><span>ניקוד: <span id="d-score">0</span></span></div>
+                <div id="d-l" class="text-8xl font-black mb-8 bg-white/10 py-8 rounded-2xl">?</div>
+                <div class="grid grid-cols-2 gap-3">${letters.map(l => `<button onclick="window.hitD('${l}')" class="bg-white text-indigo-900 p-5 rounded-xl text-3xl font-black">${l}</button>`).join('')}</div>
             </div>`;
-            const timer = setInterval(() => { 
-                timeLeft--; 
-                if(timeLeft <= 0) { stopAllTimers(); saveScoreModal(score, 'סביבון הזהב'); }
-                else document.getElementById('d-time').innerText = 'זמן: ' + timeLeft;
-            }, 1000);
+            const timer = setInterval(() => { timeLeft--; if(timeLeft <= 0) { stopAllTimers(); saveScoreModal(score, 'סביבון הזהב'); } else document.getElementById('d-time').innerText = timeLeft; }, 1000);
             activeIntervals.push(timer);
-            window.hitD = (l) => { 
-                if(l === currentL) { 
-                    score += 20; 
-                    document.getElementById('d-score').innerText = score;
-                    next(); 
-                } 
-            };
+            window.hitD = (l) => { if(l === currentL) { score += 20; document.getElementById('d-score').innerText = score; next(); } };
             next();
         }
 
-        // --- משחק 4: צייד השמשים ---
-        function startCandleHunt(container) {
-            let score = 0, timeLeft = 25;
-            container.innerHTML = `<div class="relative w-full max-w-xl">
-                <div class="absolute top-4 left-4 right-4 flex justify-between text-white font-bold z-20 pointer-events-none">
-                    <span id="h-time">זמן: 25</span><span id="h-score">ניקוד: 0</span>
-                </div>
-                <div id="h-bg" class="bg-slate-900 w-full h-96 rounded-3xl relative overflow-hidden shadow-2xl border-4 border-slate-700"></div>
-            </div>`;
-            const bg = document.getElementById('h-bg');
-            const timer = setInterval(() => {
-                timeLeft--;
-                if(timeLeft <= 0) { stopAllTimers(); saveScoreModal(score, 'צייד השמשים'); }
-                else document.getElementById('h-time').innerText = 'זמן: ' + timeLeft;
-            }, 1000);
-            activeIntervals.push(timer);
-            const spawn = setInterval(() => {
-                const c = document.createElement('div');
-                c.innerHTML = '🕯️'; c.className = 'absolute text-5xl cursor-pointer select-none transition-transform active:scale-150';
-                c.style.left = Math.random()*85+5+'%'; c.style.top = Math.random()*75+10+'%';
-                c.onclick = () => { score += 25; document.getElementById('h-score').innerText = score; c.remove(); };
-                bg.appendChild(c);
-                setTimeout(() => { if(c.parentNode) c.remove(); }, 850);
-            }, 700);
-            activeIntervals.push(spawn);
-        }
-
-        // --- פונקציות עזר: שמירת ניקוד ולוח שיאים ---
         function saveScoreModal(score, gameName, timeTaken = null) {
             const container = document.getElementById('game-container');
-            let timeMsg = timeTaken ? `<p class="text-sm text-slate-400 mb-2">סיימת ב-${timeTaken} שניות</p>` : '';
-            container.innerHTML = `<div class="bg-white p-10 rounded-[2.5rem] shadow-2xl text-center max-w-sm w-full fade-in border-4 border-yellow-100">
-                <div class="text-5xl mb-4">🏆</div>
+            container.innerHTML = `<div class="bg-white p-10 rounded-[2.5rem] shadow-2xl text-center max-w-sm w-full border-4 border-yellow-100">
                 <h2 class="text-3xl font-black mb-2">כל הכבוד!</h2>
-                <p class="text-xl mb-1 text-blue-600 font-bold italic">צברת ${score} נקודות</p>
-                ${timeMsg}
-                <p class="text-sm mb-6 text-slate-500">במשחק: ${gameName}</p>
-                <input id="p-name" type="text" placeholder="מה השם שלך?" class="p-4 border-2 rounded-2xl mb-4 w-full text-center font-bold outline-none focus:border-blue-400">
+                <p class="text-xl mb-4 text-blue-600 font-bold italic">צברת ${score} נקודות</p>
+                <input id="p-name" type="text" placeholder="מה השם שלך?" class="p-4 border-2 rounded-2xl mb-4 w-full text-center font-bold">
                 <button onclick="window.fin('${gameName}', ${score})" class="bg-slate-900 text-white p-4 rounded-2xl w-full font-black text-xl hover:bg-blue-600 transition-colors">שמור תוצאה</button>
             </div>`;
         }
@@ -350,10 +435,7 @@
 
         function renderLeaderboard() {
             const list = document.getElementById('leaderboard-list');
-            if (scores.length === 0) {
-                list.innerHTML = `<div class="p-20 text-center text-slate-400 italic">עדיין אין שיאים... תהיו הראשונים!</div>`;
-                return;
-            }
+            if (scores.length === 0) { list.innerHTML = `<div class="p-20 text-center text-slate-400 italic">עדיין אין שיאים...</div>`; return; }
             list.innerHTML = scores.sort((a,b) => b.score - a.score).map((s, i) => `
                 <div class="flex justify-between items-center p-6 hover:bg-slate-50 transition-colors">
                     <span class="w-1/6 text-center text-xl font-black ${i < 3 ? 'text-blue-600' : 'text-slate-300'}">${i+1}</span>
