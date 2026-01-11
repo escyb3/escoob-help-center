@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>רשת למידה: הטובים והפיסטים - מהדורת AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; }
+        .station-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .station-card:hover { transform: translateY(-5px); }
+        .slide-content { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .step-locked { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
+        .quiz-option { transition: all 0.2s ease; border: 2px solid transparent; }
+        .quiz-option:hover:not(:disabled) { border-color: #4f46e5; background-color: #f5f3ff; }
+        .ai-loading { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        .chat-bubble { max-width: 90%; border-radius: 1rem; padding: 0.75rem; margin-bottom: 0.5rem; line-height: 1.4; }
+        .user-msg { background-color: #4f46e5; color: white; align-self: flex-start; }
+        .bot-msg { background-color: #e2e8f0; color: #1e293b; align-self: flex-end; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="bg-white border-b shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-indigo-600 p-2 rounded-xl text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">הטובים והפיסטים: ההיסטוריה המלאה</h1>
+                    <p class="text-xs text-indigo-500 font-bold uppercase tracking-wider">מערכת למידה מבוססת AI</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4 bg-indigo-50 px-6 py-2 rounded-2xl border border-indigo-100">
+                <div class="w-32 h-2 bg-indigo-200 rounded-full overflow-hidden">
+                    <div id="prog-bar" class="h-full bg-indigo-600 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <p id="prog-percent" class="text-sm font-black text-indigo-700">0%</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <!-- Dashboard -->
+        <div id="dashboard" class="space-y-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <h2 class="text-3xl font-black text-slate-900 mb-2">מפת הלמידה</h2>
+                <p class="text-slate-500">עברו בין התקופות השונות, מנעים שמכם ועד דורות הפיסטים.</p>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4" id="stations-grid"></div>
+        </div>
+
+        <!-- Station Player -->
+        <div id="station-view" class="hidden animate-fadeIn grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="lg:col-span-3 space-y-4">
+                <button onclick="goBack()" class="text-sm font-bold text-indigo-600 flex items-center gap-1 hover:underline">
+                    <span>→</span> חזרה למפה
+                </button>
+                
+                <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 flex flex-col min-h-[550px]">
+                    <div id="st-header" class="bg-indigo-600 p-6 text-white">
+                        <h2 id="st-title" class="text-2xl font-black">טוען...</h2>
+                        <div class="flex gap-2 mt-4">
+                            <button onclick="aiAction('summary')" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-xs font-bold transition-all">✨ סיכום</button>
+                            <button onclick="aiAction('vision')" class="bg-emerald-400/20 hover:bg-emerald-400/40 px-3 py-1 rounded-lg text-xs font-bold transition-all">✨ דמיין</button>
+                        </div>
+                    </div>
+
+                    <div id="slide-container" class="p-8 flex-grow overflow-y-auto slide-content"></div>
+
+                    <div class="p-4 bg-slate-50 border-t flex justify-between items-center">
+                        <button id="prev-slide" class="text-slate-400 font-bold disabled:opacity-0" onclick="changeSlide(-1)">חזור</button>
+                        <div id="slide-counter" class="text-xs font-bold text-slate-400">דף 1/1</div>
+                        <button id="next-slide" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700" onclick="changeSlide(1)">המשך</button>
+                        <button id="finish-btn" class="hidden bg-emerald-500 text-white px-6 py-2 rounded-xl font-bold" onclick="completeStation()">סיים יחידה</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Sidebar -->
+            <div class="flex flex-col h-[550px] mt-10 lg:mt-0">
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-lg flex flex-col h-full overflow-hidden">
+                    <div class="p-4 bg-indigo-50 border-b flex items-center justify-between">
+                        <span class="font-bold text-indigo-900">✨ עוזר Gemini</span>
+                    </div>
+                    <div id="chat-messages" class="flex-grow p-4 overflow-y-auto space-y-2 bg-slate-50">
+                        <div class="bot-msg chat-bubble text-xs">שאל אותי כל דבר על שושלת הטובים או על דורות הפיסטים!</div>
+                    </div>
+                    <div class="p-3 border-t">
+                        <div class="relative">
+                            <input id="chat-input" type="text" placeholder="שאל שאלה..." class="w-full pl-8 pr-3 py-2 bg-slate-100 rounded-xl text-sm outline-none focus:ring-1 focus:ring-indigo-400">
+                            <button onclick="askAssistant()" class="absolute left-2 top-1/2 -translate-y-1/2 text-indigo-600">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="ai-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-8 relative">
+            <button onclick="closeModal()" class="absolute top-4 left-4 text-slate-400 text-xl">✕</button>
+            <div id="ai-modal-content" class="text-slate-700 leading-relaxed"></div>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = ""; // API Key injection handled by system
+
+        const stationsData = [
+            {
+                id: 1,
+                title: "נעים שמכם ואידיאולוגיית הטוב",
+                slides: [
+                    { type: "info", concept: "החזון של נעים שמכם", content: "נעים שמכם עמד בראש קבוצה ששנאה מלחמות ואהבה רוגע, שלום ועשייה של טוב. הקבוצה שינתה את שמה ל'טובים' כי הם אהבו לעשות טוב תמיד." },
+                    { type: "info", concept: "המשפחה הראשונה", content: "נעים התחתן עם נני ונולד להם בן בשם פוני, שהפך למנהיגם. לימים נני חלתה ונעים שילם הון לרופא נונן כדי להצילה." },
+                    { type: "quiz", q: "מה הייתה הדרישה של נונן הרופא לאחר שהציל את נני?", opts: ["כסף נוסף", "להתחתן עם נני", "לשלוט בממלכה", "לקחת את פוני"], correct: 1 }
+                ]
+            },
+            {
+                id: 2,
+                title: "בארי, אסתר וצאצאיהם",
+                slides: [
+                    { type: "info", concept: "שושלת תפוח", content: "בארי ואסתר תפוח היו דמויות מפתח. ילדיהם היו משה, רחל-מרים וזייני. זייני נישאה לדוד בוגי והקימה ענף חשוב בשושלת." },
+                    { type: "quiz", q: "מי מילדיהם של בארי ואסתר נישאה לדוד בוגי?", opts: ["רחל", "מרים", "זייני", "מלכה לאה"], correct: 2 }
+                ]
+            },
+            {
+                id: 3,
+                title: "פסטון והנבואה המסתורית",
+                slides: [
+                    { type: "info", concept: "המפגש עם פסטון", content: "פסטון היה אדם נדיב שאהב את נעים. יום אחד ניבא שצאצאיו (הפסטים) יהיו רעים לטובים ואמר: 'ביום מן המועדים אשוב אל המוקש ואקץ הכל'. יום לאחר מכן נעלם." },
+                    { type: "quiz", q: "מה קרה לפסטון יום לאחר נבואתו?", opts: ["הוא הפך למלך", "הוא נעלם במפתיע", "הוא תקף את נעים", "הוא חזר בתשובה"], correct: 1 }
+                ]
+            },
+            {
+                id: 4,
+                title: "הופעת הפסטים והמלחמה הראשונה",
+                slides: [
+                    { type: "info", concept: "הסימן בים", content: "בזמן הנהגתו של אבי תפוח (נכד מלכה לאה), הטובים יצאו לצלילה משותפת. כשיצאו מהים, הופיעו הפסטים והתחילו להילחם ולהרוג בטובים." },
+                    { type: "quiz", q: "מי ארגן את הצלילה המשותפת בים?", opts: ["נעים שמכם", "אבי תפוח", "מתוק בוג'י", "ז'אזן"], correct: 1 }
+                ]
+            },
+            {
+                id: 5,
+                title: "המלך מתוק בוג'י והחלוקה ל-5",
+                slides: [
+                    { type: "info", concept: "מבנה הממלכה", content: "המלך מתוק בוג'י חילק את הממלכה ל-5 חלקים תחת ילדיו: מרדכי, רחל, גי'גי, ז'אזן וז'ונית. כל בני זוגם היו ילדיהם של דוד וזייני בוג'י." },
+                    { type: "info", concept: "החשיבות הצבאית", content: "החלוקה הקלה על ההגנה מפני הפסטים (שהפכו לפיסטים). לכל חלק היה צבא משלו, ובזמן מלחמה כולם התאחדו." },
+                    { type: "quiz", q: "לכמה חלקים חילק מתוק בוג'י את הממלכה?", opts: ["3", "5", "7", "10"], correct: 1 }
+                ]
+            },
+            {
+                id: 6,
+                title: "סיפורם של ז'אזן ומיכל",
+                slides: [
+                    { type: "info", concept: "המשפחה המתרחבת", content: "לז'אזן ומיכל היו 3 ילדים: נעה, בארי ואילנה. נעה נישאה למלך הכחול-ים מגנום גלר. בארי עבר מסכת נישואין מורכבת עם רדובילה ומרים." },
+                    { type: "quiz", q: "מי היה בעלה של נעה, בתם של ז'אזן ומיכל?", opts: ["סיק קרמר", "מגנום גלר", "אדוארד תנון", "דוד בוגי"], correct: 1 }
+                ]
+            },
+            {
+                id: 7,
+                title: "הטרגדיה של אילנה וסיק קרמר",
+                slides: [
+                    { type: "info", concept: "הבריחה וההצלה", content: "אילנה נפגעה קשות מבעלה סיק קרמר וברחה. היא חייתה ברחוב עד שנסיך הדרבניקלים, אדוארד-דוד תנון, הציל אותה והתחתן איתה." },
+                    { type: "quiz", q: "מי הציל את אילנה כשהייתה בודדה ברחוב?", opts: ["ז'אזן", "בארי", "אדוארד-דוד תנון", "פסטון"], correct: 2 }
+                ]
+            },
+            {
+                id: 8,
+                title: "גי'גי, שירה וחשמל מהקיר",
+                slides: [
+                    { type: "info", concept: "האמונה המוזרה", content: "שירה, אשתו של גי'גי, האמינה שחשמל עשוי מקיר. היא ייצרה חשמל מקיר וערכה מסיבות בנושא. היא גרה עם חברתה סנדי ליד הארמון." },
+                    { type: "quiz", q: "ממה שירה האמינה שחשמל מיוצר?", opts: ["מים", "אש", "קיר", "רוח"], correct: 2 }
+                ]
+            },
+            {
+                id: 9,
+                title: "קרולין וקרפדה - סיפור אהבה חולני",
+                slides: [
+                    { type: "info", concept: "הגירושין והשינוי", content: "קרולין התגרשה משמעון סרגלי הטוב והתחתנה עם קרפדה העצלן והמוזנח, שהכין לה 'מרק נזלת' ופגע בבריאותה. למרות זאת, היא אהבה אותו מאוד." },
+                    { type: "quiz", q: "איזה מאכל מוזר הכין קרפדה לקרולין?", opts: ["מרק אבנים", "מרק נזלת", "עוגת חול", "דייסת קוצים"], correct: 1 }
+                ]
+            }
+        ];
+
+        // Fill remaining stations with placeholders (10-28)
+        for(let i = 10; i <= 28; i++) {
+            stationsData.push({
+                id: i,
+                title: `יחידה ${i}: המשך קורות השושלת`,
+                slides: [
+                    { type: "info", concept: "פרקים נוספים", content: "ביחידות הבאות נחקור עוד על הקרבות מול ממלכת דוושה והקשרים המפותלים בין משפחת בוג'י למשפחת תפוח." },
+                    { type: "quiz", q: "מי נלחם בטובים לאורך הדורות?", opts: ["הכחולים", "הפיסטים", "הדרבניקלים", "הנסיכים"], correct: 1 }
+                ]
+            });
+        }
+
+        let completed = JSON.parse(localStorage.getItem('amit_learning_v4') || '[]');
+        let currentStation = null, currentSlideIdx = 0;
+
+        async function callGemini(prompt, system) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: system }] }
+                    })
+                });
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "מצטער, הייתה שגיאה.";
+            } catch (err) { return "שגיאה בחיבור."; }
+        }
+
+        async function askAssistant() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg || !currentStation) return;
+            addMsg(msg, 'user'); input.value = '';
+            
+            const context = JSON.stringify(currentStation.slides);
+            const prompt = `התלמיד שואל: "${msg}". התבסס על המידע של היחידה: ${context}. ענה בעברית בצורה ברורה.`;
+            const resp = await callGemini(prompt, "אתה עוזר הוראה להיסטוריה של הטובים והפיסטים. תפקידך להסביר את השושלת.");
+            addMsg(resp, 'bot');
+        }
+
+        function addMsg(text, role) {
+            const chat = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = `${role === 'user' ? 'user-msg' : 'bot-msg'} chat-bubble text-xs`;
+            div.innerText = text;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        async function aiAction(type) {
+            showModal("✨ Gemini מעבד נתונים...");
+            const content = currentStation.slides.map(s => s.content || s.q).join("\n");
+            let prompt = type === 'summary' ? `סכם את היחידה ב-3 משפטים: ${content}` : `תאר ציורית איך נראה הרגע הזה: ${content}`;
+            const resp = await callGemini(prompt, "אתה עוזר חכם בעברית.");
+            showModal(resp);
+        }
+
+        function initGrid() {
+            const grid = document.getElementById('stations-grid');
+            grid.innerHTML = '';
+            stationsData.forEach(s => {
+                const done = completed.includes(s.id);
+                const next = s.id === 1 || completed.includes(s.id-1);
+                const card = document.createElement('div');
+                card.className = `station-card p-4 bg-white rounded-2xl border-2 text-center flex flex-col items-center gap-2 ${done ? 'border-emerald-500 bg-emerald-50' : (next ? 'border-indigo-100' : 'step-locked')}`;
+                card.innerHTML = `<div class="w-8 h-8 rounded-full flex items-center justify-center font-bold ${done ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}">${done ? '✓' : s.id}</div><span class="text-[11px] font-bold text-slate-700">${s.title}</span>`;
+                card.onclick = () => next && startStation(s.id);
+                grid.appendChild(card);
+            });
+            updateStats();
+        }
+
+        function startStation(id) {
+            currentStation = stationsData.find(s => s.id === id);
+            currentSlideIdx = 0;
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('station-view').classList.remove('hidden');
+            renderSlide();
+        }
+
+        function renderSlide() {
+            const slide = currentStation.slides[currentSlideIdx];
+            const container = document.getElementById('slide-container');
+            document.getElementById('st-title').innerText = currentStation.title;
+            
+            if (slide.type === 'info') {
+                container.innerHTML = `<div class="space-y-4"><span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">${slide.concept}</span><p class="text-xl text-slate-800 leading-relaxed font-medium">${slide.content}</p></div>`;
+            } else {
+                container.innerHTML = `<div class="space-y-4"><h3 class="text-lg font-bold text-indigo-900">${slide.q}</h3><div class="grid gap-2">${slide.opts.map((o, i) => `<button onclick="checkAns(${i}, ${slide.correct})" class="quiz-option w-full text-right p-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-600">${o}</button>`).join('')}</div><div id="feedback" class="mt-4 hidden p-3 rounded-lg text-xs font-bold"></div></div>`;
+            }
+
+            document.getElementById('slide-counter').innerText = `דף ${currentSlideIdx + 1}/${currentStation.slides.length}`;
+            document.getElementById('prev-slide').disabled = currentSlideIdx === 0;
+            document.getElementById('next-slide').classList.toggle('hidden', currentSlideIdx === currentStation.slides.length - 1 || slide.type === 'quiz');
+            document.getElementById('finish-btn').classList.toggle('hidden', currentSlideIdx !== currentStation.slides.length - 1);
+        }
+
+        async function checkAns(idx, correct) {
+            const fb = document.getElementById('feedback');
+            fb.classList.remove('hidden');
+            if (idx === correct) {
+                fb.className = "mt-4 p-3 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800";
+                fb.innerText = "✨ נכון מאוד! Gemini מסביר למה...";
+                const explanation = await callGemini(`השאלה: "${currentStation.slides[currentSlideIdx].q}". התשובה הנכונה: "${currentStation.slides[currentSlideIdx].opts[correct]}". הסבר במשפט אחד למה זה נכון לפי הסיפור.`, "עוזר הוראה.");
+                fb.innerText = "✨ נכון! " + explanation;
+                setTimeout(() => { if(currentSlideIdx < currentStation.slides.length - 1) changeSlide(1); else document.getElementById('finish-btn').classList.remove('hidden'); }, 3000);
+            } else {
+                fb.className = "mt-4 p-3 rounded-lg text-xs font-bold bg-red-100 text-red-800";
+                fb.innerText = "לא מדויק. נסה שוב!";
+            }
+        }
+
+        function changeSlide(n) { currentSlideIdx += n; renderSlide(); }
+        function goBack() { document.getElementById('dashboard').classList.remove('hidden'); document.getElementById('station-view').classList.add('hidden'); initGrid(); }
+        function completeStation() { if(!completed.includes(currentStation.id)) completed.push(currentStation.id); localStorage.setItem('amit_learning_v4', JSON.stringify(completed)); goBack(); }
+        function showModal(html) { document.getElementById('ai-modal-content').innerText = html; document.getElementById('ai-modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('ai-modal').classList.add('hidden'); }
+        function updateStats() {
+            const p = Math.round((completed.length / 28) * 100);
+            document.getElementById('prog-bar').style.width = p + '%';
+            document.getElementById('prog-percent').innerText = p + '%';
+        }
+
+        document.getElementById('chat-input')?.addEventListener('keypress', e => e.key === 'Enter' && askAssistant());
+        initGrid();
+    </script>
+</body>
+</html>
