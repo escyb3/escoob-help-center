@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>רשת למידה: הטובים והפיסטים - ניהול מתקדם</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Assistant', sans-serif; background-color: #f8fafc; }
+        .station-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .station-card:hover { transform: translateY(-5px); }
+        .step-locked { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
+        .quiz-option { transition: all 0.2s ease; border: 2px solid transparent; cursor: pointer; }
+        .quiz-option:hover:not(:disabled) { border-color: #4f46e5; background-color: #f5f3ff; }
+        .chat-bubble { max-width: 90%; border-radius: 1rem; padding: 0.75rem; margin-bottom: 0.5rem; line-height: 1.4; }
+        .user-msg { background-color: #4f46e5; color: white; align-self: flex-start; }
+        .bot-msg { background-color: #e2e8f0; color: #1e293b; align-self: flex-end; }
+        .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #4f46e5; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="fixed inset-0 bg-indigo-600 z-[200] flex items-center justify-center p-6 text-white text-center">
+        <div class="max-w-md w-full space-y-6">
+            <h1 class="text-4xl font-black italic">ברוכים הבאים ללומדה</h1>
+            <p class="text-indigo-100">הזן את שמך כדי להמשיך מהמקום שבו עצרת</p>
+            <div class="relative">
+                <input id="user-name-input" type="text" placeholder="שם מלא..." class="w-full p-4 rounded-2xl text-slate-900 font-bold outline-none text-center text-xl shadow-2xl">
+            </div>
+            <button id="start-btn" class="w-full bg-white text-indigo-600 p-4 rounded-2xl font-black text-xl hover:bg-indigo-50 transition-all shadow-xl flex items-center justify-center gap-2">
+                <span id="btn-text">התחל ללמוד!</span>
+                <span id="btn-loader" class="loading-spinner hidden"></span>
+            </button>
+        </div>
+    </div>
+
+    <header class="bg-white border-b shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-indigo-600 p-2 rounded-xl text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">הטובים והפיסטים-הצגות 1-28</h1>
+                    <p id="current-user-display" class="text-xs text-indigo-500 font-bold uppercase"></p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 bg-indigo-50 px-6 py-2 rounded-2xl border border-indigo-100">
+                    <div class="w-32 h-2 bg-indigo-200 rounded-full overflow-hidden">
+                        <div id="prog-bar" class="h-full bg-indigo-600 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p id="prog-percent" class="text-sm font-black text-indigo-700">0%</p>
+                </div>
+                <button id="open-admin-btn" class="p-2 bg-slate-200 hover:bg-slate-300 rounded-full transition-all" title="ניהול מנהל">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <div id="dashboard" class="space-y-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <h2 class="text-3xl font-black text-slate-900 mb-2">מפת הלמידה</h2>
+                <p class="text-slate-500">שלום <span id="welcome-name" class="text-indigo-600"></span>, נעים לראות אותך שוב!</p>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4" id="stations-grid"></div>
+        </div>
+
+        <div id="station-view" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="lg:col-span-3 space-y-4">
+                <button id="back-to-map-btn" class="text-sm font-bold text-indigo-600 flex items-center gap-1 hover:underline">
+                    <span>→</span> חזרה למפה
+                </button>
+                <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 flex flex-col min-h-[550px]">
+                    <div id="st-header" class="bg-indigo-600 p-6 text-white">
+                        <h2 id="st-title" class="text-2xl font-black">טוען...</h2>
+                    </div>
+                    <div id="slide-container" class="p-8 flex-grow overflow-y-auto"></div>
+                    <div class="p-4 bg-slate-50 border-t flex justify-between items-center">
+                        <button id="prev-slide" class="text-slate-400 font-bold disabled:opacity-0">חזור</button>
+                        <div id="slide-counter" class="text-xs font-bold text-slate-400">דף 1/1</div>
+                        <button id="next-slide" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700">המשך</button>
+                        <button id="finish-btn" class="hidden bg-emerald-500 text-white px-6 py-2 rounded-xl font-bold">סיים יחידה</button>
+                    </div>
+                </div>
+            </div>
+            <!-- AI Sidebar -->
+            <div class="flex flex-col h-[550px]">
+                <div class="bg-white rounded-3xl border border-slate-200 shadow-lg flex flex-col h-full overflow-hidden">
+                    <div class="p-4 bg-indigo-50 border-b">
+                        <span class="font-bold text-indigo-900">✨ עוזר Gemini</span>
+                    </div>
+                    <div id="chat-messages" class="flex-grow p-4 overflow-y-auto space-y-2 bg-slate-50"></div>
+                    <div class="p-3 border-t">
+                        <input id="chat-input" type="text" placeholder="שאל שאלה..." class="w-full px-3 py-2 bg-slate-100 rounded-xl text-sm outline-none">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Admin Panel -->
+    <div id="admin-modal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-[300]">
+        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[80vh] flex flex-col overflow-hidden">
+            <div class="p-6 bg-slate-100 border-b flex justify-between items-center">
+                <h2 class="text-2xl font-black">לוח בקרה מנהל</h2>
+                <button id="close-admin-btn" class="text-slate-500 hover:text-slate-800">✕</button>
+            </div>
+            <div id="admin-auth" class="p-12 text-center space-y-4">
+                <input id="admin-pass" type="password" placeholder="סיסמת מנהל" class="p-3 border rounded-xl outline-none focus:ring-2 ring-indigo-500">
+                <br>
+                <button id="verify-admin-btn" class="bg-indigo-600 text-white px-8 py-2 rounded-xl font-bold">כניסה</button>
+            </div>
+            <div id="admin-content" class="hidden p-6 overflow-y-auto flex-grow">
+                <table class="w-full text-right border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b">
+                            <th class="p-3">שם</th>
+                            <th class="p-3">התקדמות</th>
+                            <th class="p-3">נקודות</th>
+                            <th class="p-3">פעילות אחרונה</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scores-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Firebase configuration
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let userData = { name: "", completed: [], points: 0 };
+        let currentUser = null;
+        let currentStation = null;
+        let currentSlideIdx = 0;
+        const apiKey = ""; 
+
+        const stationsData = [
+            { id: 1, title: "נעים שמכם ואידיאולוגיית הטוב", slides: [{ type: "info", concept: "החזון", content: "נעים שמכם אהב רוגע ושלום. הקבוצה שלו נקראה 'הטובים'." }, { type: "quiz", q: "מה הייתה דרישת נונן?", opts: ["כסף", "להתחתן עם נני", "בית"], correct: 1 }] },
+            { id: 2, title: "שושלת תפוח", slides: [{ type: "info", concept: "בארי ואסתר", content: "בארי ואסתר הולידו את משה, רחל-מרים וזייני." }] },
+            { id: 3, title: "נבואת פסטון", slides: [{ type: "info", concept: "הנבואה", content: "פסטון ניבא שצאצאיו יהיו רעים לטובים." }] }
+        ];
+        for(let i=4; i<=28; i++) stationsData.push({ id: i, title: `יחידה ${i}`, slides: [{ type: "info", concept: "מידע", content: "תוכן יחידה זו בבנייה." }] });
+
+        async function callGemini(prompt, system) {
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: system }] }
+                    })
+                });
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "שגיאה בבינה המלאכותית.";
+            } catch (e) { return "שגיאה בתקשורת."; }
+        }
+
+        const saveProgress = async () => {
+            if(!currentUser || !userData.name) return;
+            try {
+                userData.lastUpdated = new Date().toISOString();
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid);
+                await setDoc(userDocRef, userData);
+            } catch (e) { console.error("Save error:", e); }
+        };
+
+        const updateUI = () => {
+            const p = Math.round((userData.completed.length / 28) * 100);
+            document.getElementById('prog-bar').style.width = p + '%';
+            document.getElementById('prog-percent').innerText = p + '%';
+            document.getElementById('current-user-display').innerText = `שלום, ${userData.name}`;
+            document.getElementById('welcome-name').innerText = userData.name;
+            initGrid();
+        };
+
+        const initGrid = () => {
+            const grid = document.getElementById('stations-grid');
+            grid.innerHTML = '';
+            stationsData.forEach(s => {
+                const done = userData.completed.includes(s.id);
+                const next = s.id === 1 || userData.completed.includes(s.id - 1);
+                const card = document.createElement('div');
+                card.className = `station-card p-4 bg-white rounded-2xl border-2 text-center flex flex-col items-center gap-2 ${done ? 'border-emerald-500 bg-emerald-50' : (next ? 'border-indigo-100' : 'step-locked')}`;
+                card.innerHTML = `<div class="w-8 h-8 rounded-full flex items-center justify-center font-bold ${done ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}">${done ? '✓' : s.id}</div><span class="text-[11px] font-bold text-slate-700">${s.title}</span>`;
+                if(next) card.onclick = () => startStation(s.id);
+                grid.appendChild(card);
+            });
+        };
+
+        const startStation = (id) => {
+            currentStation = stationsData.find(s => s.id === id);
+            currentSlideIdx = 0;
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('station-view').classList.remove('hidden');
+            renderSlide();
+        };
+
+        const renderSlide = () => {
+            const slide = currentStation.slides[currentSlideIdx];
+            const container = document.getElementById('slide-container');
+            document.getElementById('st-title').innerText = currentStation.title;
+            
+            if (slide.type === 'info') {
+                container.innerHTML = `<div class="space-y-4 animate-fadeIn"><span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">${slide.concept}</span><p class="text-xl text-slate-800 leading-relaxed font-medium">${slide.content}</p></div>`;
+            } else {
+                container.innerHTML = `<div class="space-y-4 animate-fadeIn"><h3 class="text-lg font-bold text-indigo-900">${slide.q}</h3><div class="grid gap-2" id="quiz-options"></div><div id="feedback" class="mt-4 hidden p-3 rounded-lg text-xs font-bold"></div></div>`;
+                const optionsContainer = document.getElementById('quiz-options');
+                slide.opts.forEach((o, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = "quiz-option w-full text-right p-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-600";
+                    btn.innerText = o;
+                    btn.onclick = () => checkAns(i, slide.correct);
+                    optionsContainer.appendChild(btn);
+                });
+            }
+            document.getElementById('slide-counter').innerText = `דף ${currentSlideIdx + 1}/${currentStation.slides.length}`;
+            document.getElementById('prev-slide').disabled = currentSlideIdx === 0;
+            document.getElementById('next-slide').classList.toggle('hidden', currentSlideIdx === currentStation.slides.length - 1 || slide.type === 'quiz');
+            document.getElementById('finish-btn').classList.toggle('hidden', currentSlideIdx !== currentStation.slides.length - 1);
+        };
+
+        const checkAns = async (idx, correct) => {
+            const fb = document.getElementById('feedback');
+            fb.classList.remove('hidden');
+            if (idx === correct) {
+                fb.className = "mt-4 p-3 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800";
+                fb.innerText = "נכון! Gemini מסביר...";
+                userData.points += 10;
+                await saveProgress();
+                const exp = await callGemini(`למה התשובה נכונה לשאלה: ${currentStation.slides[currentSlideIdx].q}`, "עוזר למידה.");
+                fb.innerText = "✨ " + exp;
+                setTimeout(() => { if(currentSlideIdx < currentStation.slides.length - 1) { currentSlideIdx++; renderSlide(); } else { document.getElementById('finish-btn').classList.remove('hidden'); } }, 2500);
+            } else { fb.className = "mt-4 p-3 rounded-lg text-xs font-bold bg-red-100 text-red-800"; fb.innerText = "לא נכון, נסה שוב."; }
+        };
+
+        // Auth initialization (Rule 3)
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+            }
+        };
+
+        // UI Event Listeners - Must be defined AFTER DOM is ready and inside module
+        window.addEventListener('DOMContentLoaded', () => {
+            initAuth();
+
+            document.getElementById('start-btn').onclick = async () => {
+                const name = document.getElementById('user-name-input').value.trim();
+                if(!name) return;
+                
+                document.getElementById('btn-text').innerText = "בודק נתונים...";
+                document.getElementById('btn-loader').classList.remove('hidden');
+
+                onAuthStateChanged(auth, async (user) => {
+                    if(user) {
+                        currentUser = user;
+                        try {
+                            const usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+                            const querySnapshot = await getDocs(query(usersRef)); 
+                            
+                            let foundUser = null;
+                            querySnapshot.forEach((doc) => {
+                                if (doc.data().name && doc.data().name.toLowerCase() === name.toLowerCase()) {
+                                    foundUser = { uid: doc.id, ...doc.data() };
+                                }
+                            });
+
+                            if (foundUser) {
+                                userData = foundUser;
+                            } else {
+                                userData = { name: name, uid: user.uid, completed: [], points: 0, lastUpdated: new Date().toISOString() };
+                                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid), userData);
+                            }
+
+                            document.getElementById('login-overlay').classList.add('hidden');
+                            updateUI();
+                        } catch (e) {
+                            console.error("Login process error:", e);
+                            document.getElementById('btn-text').innerText = "שגיאה בחיבור";
+                            document.getElementById('btn-loader').classList.add('hidden');
+                        }
+                    }
+                });
+            };
+
+            document.getElementById('prev-slide').onclick = () => { if(currentSlideIdx > 0) { currentSlideIdx--; renderSlide(); }};
+            document.getElementById('next-slide').onclick = () => { if(currentSlideIdx < currentStation.slides.length - 1) { currentSlideIdx++; renderSlide(); }};
+            document.getElementById('back-to-map-btn').onclick = () => { document.getElementById('dashboard').classList.remove('hidden'); document.getElementById('station-view').classList.add('hidden'); initGrid(); };
+            
+            document.getElementById('finish-btn').onclick = async () => {
+                if(!userData.completed.includes(currentStation.id)) {
+                    userData.completed.push(currentStation.id);
+                    userData.points += 50;
+                    await saveProgress();
+                }
+                document.getElementById('dashboard').classList.remove('hidden'); 
+                document.getElementById('station-view').classList.add('hidden'); 
+                initGrid();
+            };
+
+            document.getElementById('open-admin-btn').onclick = () => document.getElementById('admin-modal').classList.remove('hidden');
+            document.getElementById('close-admin-btn').onclick = () => document.getElementById('admin-modal').classList.add('hidden');
+            
+            document.getElementById('verify-admin-btn').onclick = () => {
+                if(document.getElementById('admin-pass').value === "admin123") {
+                    document.getElementById('admin-auth').classList.add('hidden');
+                    document.getElementById('admin-content').classList.remove('hidden');
+                    onSnapshot(query(collection(db, 'artifacts', appId, 'public', 'data', 'users')), (snap) => {
+                        const tbody = document.getElementById('scores-table-body');
+                        tbody.innerHTML = '';
+                        snap.forEach(dDoc => {
+                            const d = dDoc.data();
+                            tbody.innerHTML += `<tr class="border-b"><td class="p-3">${d.name}</td><td class="p-3">${d.completed?.length || 0}/28</td><td class="p-3 font-bold">${d.points}</td><td class="p-3 text-xs">${new Date(d.lastUpdated).toLocaleString('he-IL')}</td></tr>`;
+                        });
+                    }, (err) => console.error(err));
+                } else alert("סיסמה שגויה");
+            };
+
+            document.getElementById('chat-input').onkeypress = async (e) => {
+                if(e.key === 'Enter') {
+                    const msg = e.target.value;
+                    if(!msg) return;
+                    const chat = document.getElementById('chat-messages');
+                    chat.innerHTML += `<div class="user-msg chat-bubble text-xs">${msg}</div>`;
+                    e.target.value = '';
+                    const context = JSON.stringify(currentStation?.slides || "מידע כללי");
+                    const resp = await callGemini(`שאלה: ${msg}. קונטקסט: ${context}`, "אתה מדריך היסטורי.");
+                    chat.innerHTML += `<div class="bot-msg chat-bubble text-xs">${resp}</div>`;
+                    chat.scrollTop = chat.scrollHeight;
+                }
+            };
+        });
+    </script>
+</body>
+</html>
