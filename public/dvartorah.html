@@ -400,6 +400,29 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=";
         const API_KEY = "AIzaSyCRfkAJH1D5PAS9B6i_2KE3Ctob3FxzEVc"; // Canvas will automatically provide the API key
+        async function fetchWithRetry(data, retries = 5, delay = 2000) {
+    for (let i = 0; i < retries; i++) {
+        const response = await fetch(GEMINI_API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        if (response.ok) return await response.json();
+
+        // If error is 429 (Rate Limit), wait and try again
+        if (response.status === 429 && i < retries - 1) {
+            console.warn(`Rate limit hit. Retrying in ${delay / 1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; // Double the wait time for the next try (exponential backoff)
+            continue;
+        }
+
+        // If it's a different error, stop and throw
+        const errorText = await response.text();
+        throw new Error(`Request failed: ${response.status} - ${errorText}`);
+    }
+}
         
         let db;
         let auth;
