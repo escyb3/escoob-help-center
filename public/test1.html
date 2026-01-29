@@ -156,7 +156,7 @@
     let currentUser = null;
     let inspectingId = null;
 
-    // --- מבנה השאלות (הטקסטים שהעלית) ---
+    // --- מבנה השאלות ---
     const americanQs = [
         {id: 'q1', q: 'מה אפיין את הקבוצה שהנהיג נעים שמכם בראשית דרכה?', opts: ['א. הם היו לוחמים עזים שכבשו ממלכות.', 'ב. הם היו קבוצה ששנאה מלחמות ואהבה שלום ועשיית טוב.', 'ג. הם היו דייגים שהתמחו בצלילה בים.', 'ד. הם היו רופאים נודדים.']},
         {id: 'q2', q: 'מי הפך למנהיג הקבוצה לאחר שנעים שמכם התחתן עם נני?', opts: ['א. פסטון.', 'ב. פוני.', 'ג. אבי תפוח.', 'ד. מתוק בוג\'י.']},
@@ -167,7 +167,7 @@
         {id: 'q7', q: 'מה קרה לכל הטובים במהלך ההנהגה של אבי תפוח?', opts: ['א. הם יצאו למלחמה יזומה נגד הפסטים.', 'ב. הם אירגנו צלילה משותפת בים הסמוך לממלכה.', 'ג. הם עברו לגור בחמשת חלקי הממלכה.', 'ד. הם חגגו את חתונתם של מרדכי וביינה.']},
         {id: 'q8', q: 'מתי החלו המלחמות להיות "תכופות ומסוכנות יותר"?', opts: ['א. מיד לאחר שפסטון נעלם.', 'ב. בתקופה שבה הדור התחלף מ"פסטי" ל"פיסטי".', 'ג. כשפוני היה המנהיג.', 'ד. כשנעים שמכם התחתן עם רותי.']},
         {id: 'q9', q: 'לכמה חלקים חילק המלך מתוק בוג\'י את הממלכה?', opts: ['א. לשלושה חלקים.', 'ב. לשני חלקים (טובים ופסטים).', 'ג. לחמישה חלקים.', 'ד. לעשרה חלקים.']},
-        {id: 'q10', q: 'מיהם דוד וזייני בוג\'י לפי הטקסט?', opts: ['א. הוריהם של כל בני הזוג שנישאו לילדיו של המלך מתוק.', 'ב. המנהיגים של קבוצת הפיסטים.', 'ג. הילדים של מלכה לאה.', 'ד. הרופאים שטיפלו בנני.']}
+        {id: 'q10', q: 'מיהם דוד וזייני בוג\'י לפי הטקסט?', opts: ['א. הוריהם של כל בני הזוג שנישאו לילדיו של המלך מתוק.', 'ב. המנהיגות של קבוצת הפיסטים.', 'ג. הילדים של מלכה לאה.', 'ד. הרופאים שטיפלו בנני.']}
     ];
 
     const openQs = [
@@ -246,16 +246,17 @@
             .onSnapshot(snap => {
                 submissions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // בדיקה אם המשתמש הנוכחי כבר הגיש
-                const mySub = submissions.find(s => s.userId === currentUser.uid);
-                if (mySub && currentView === 'quiz') {
-                    setView('submitted');
+                // תיקון: הבדיקה האוטומטית מתבצעת רק אם המשתמש לא נמצא כרגע בתצוגת מורה
+                if (currentView !== 'teacher') {
+                    const mySub = submissions.find(s => s.userId === currentUser.uid);
+                    if (mySub && currentView === 'quiz') {
+                        setView('submitted');
+                    }
                 }
-            });
+            }, (error) => console.error("Firestore error:", error));
     }
 
     function renderQuiz() {
-        // Render Part A
         const amContainer = document.getElementById('americanQuestions');
         amContainer.innerHTML = americanQs.map((q, i) => `
             <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
@@ -373,7 +374,6 @@
         }
     }
 
-    // פונקציה למחיקת הגשה ישנה (לצרכי בדיקות)
     async function resetForNewTest() {
         const mySub = submissions.find(s => s.userId === currentUser.uid);
         if (mySub) {
@@ -389,14 +389,20 @@
         }
     }
 
-    // --- Teacher logic (same as before) ---
     function handleTeacherAccess() {
-        if (document.getElementById('passInput').value === TEACHER_PASSWORD) setView('teacher');
-        else alert("סיסמה שגויה");
+        if (document.getElementById('passInput').value === TEACHER_PASSWORD) {
+            setView('teacher');
+        } else {
+            alert("סיסמה שגויה");
+        }
     }
 
     function renderSubmissionsTable() {
         const body = document.getElementById('submissionsTableBody');
+        if (submissions.length === 0) {
+            body.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400 italic">טרם התקבלו הגשות.</td></tr>';
+            return;
+        }
         body.innerHTML = submissions.map(s => `
             <tr class="border-b hover:bg-slate-50 transition">
                 <td class="p-4 font-bold text-slate-800">${s.studentName}</td>
