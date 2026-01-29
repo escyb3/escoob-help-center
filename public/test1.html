@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מבחן בכוית ומופסון</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Assistant', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<div id="app" v-cloak>
+    <!-- Quiz Interface -->
+    <div v-if="view === 'quiz'" class="py-10 px-4">
+        <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-3xl overflow-hidden border border-slate-200">
+            <div class="bg-blue-800 text-white p-8 text-center relative">
+                <h1 class="text-4xl font-black mb-2">מבחן בכוית ומופסון</h1>
+                <p class="text-blue-100 italic">"יש לענות רק על מספר השאלות הנדרש בכל חלק"</p>
+                
+                <div class="mt-6 pt-4 border-t border-blue-700/50 flex flex-col items-center">
+                    <div class="flex gap-2">
+                        <input id="passInput" type="password" placeholder="סיסמת מורה" class="text-black text-xs p-1 rounded w-24 outline-none">
+                        <button onclick="handleTeacherAccess()" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-1 rounded">כניסת מורה</button>
+                    </div>
+                </div>
+            </div>
+
+            <form id="quizForm" onsubmit="handleFormSubmit(event)" class="p-8 space-y-12">
+                <section class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                    <label class="block text-lg font-bold mb-2">שם מלא: <span class="text-red-500">*</span></label>
+                    <input required name="studentName" type="text" class="w-full md:w-1/2 p-3 rounded-xl border border-blue-200 outline-none focus:ring-4 focus:ring-blue-100" placeholder="הכנס את שמך...">
+                </section>
+
+                <section>
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="bg-blue-800 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">א</span>
+                        <h2 class="text-2xl font-bold text-slate-800">חלק א': הטובים והפיסטים (50 נקודות)</h2>
+                    </div>
+                    
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-700 mb-4 underline">שאלות אמריקאיות (7 שאלות חובה)</h3>
+                            <div id="americanQuestions" class="space-y-6"></div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-blue-700 mb-4 underline">שאלות פתוחות (6 שאלות חובה)</h3>
+                            <div id="openQuestionsA" class="space-y-6"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="border-t pt-12">
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="bg-green-700 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">ב</span>
+                        <h2 class="text-2xl font-bold text-slate-800">חלק ב': בחירת פרק (50 נקודות)</h2>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 mb-10 text-center">
+                        <button type="button" onclick="selectChapter('A')" id="btnA" class="flex-1 p-6 rounded-2xl border-4 transition border-slate-100">
+                            <h4 class="text-xl font-black">פרק א'</h4>
+                            <p class="text-sm">זאזן ומיכל</p>
+                        </button>
+                        <button type="button" onclick="selectChapter('B')" id="btnB" class="flex-1 p-6 rounded-2xl border-4 transition border-slate-100">
+                            <h4 class="text-xl font-black">פרק ב'</h4>
+                            <p class="text-sm">גיגי ושירה</p>
+                        </button>
+                    </div>
+                    <div id="chapterSection" class="hidden bg-green-50/30 p-6 rounded-3xl border border-green-100 space-y-6 fade-in"></div>
+                </section>
+
+                <button type="submit" id="submitBtn" class="w-full py-6 rounded-full text-2xl font-black text-white shadow-2xl transition transform hover:scale-[1.02] active:scale-95 bg-blue-700 hover:bg-blue-800">
+                    שלח מבחן סופי לבדיקה
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Submitted View -->
+    <div v-if="view === 'submitted'" class="min-h-screen bg-slate-50 flex items-center justify-center p-6 fade-in">
+        <div id="statusCard" class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-center max-w-2xl border-t-8 border-green-500 w-full">
+            <div class="text-7xl mb-6">🏆</div>
+            <h2 class="text-3xl font-bold mb-4">המבחן הוגש בהצלחה!</h2>
+            <div id="submissionContent"></div>
+            <button onclick="location.reload()" class="mt-8 text-blue-500 underline hover:text-blue-700">חזרה לדף הבית</button>
+        </div>
+    </div>
+
+    <!-- Teacher View -->
+    <div v-if="view === 'teacher'" class="min-h-screen bg-slate-100 p-4 md:p-8 fade-in">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold text-slate-800">ניהול ובדיקת מבחנים</h1>
+                <button onclick="setView('quiz')" class="bg-slate-800 text-white px-6 py-2 rounded-lg hover:bg-slate-700">יציאה</button>
+            </div>
+
+            <div id="submissionsList" class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+                <table class="w-full text-right border-collapse">
+                    <thead class="bg-slate-800 text-white">
+                        <tr>
+                            <th class="p-4 border-b">שם התלמיד</th>
+                            <th class="p-4 border-b">זמן הגשה</th>
+                            <th class="p-4 border-b">פרק</th>
+                            <th class="p-4 border-b">סטטוס</th>
+                            <th class="p-4 border-b">פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody id="submissionsTableBody"></tbody>
+                </table>
+            </div>
+
+            <div id="gradingPanel" class="hidden mt-8 bg-white rounded-2xl shadow-2xl p-6 md:p-8 border border-blue-200 fade-in">
+                <!-- Content generated via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Configuration ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyC-9NehHTUoE_vPzsiz4Y0LWgNC1-6W3C0",
+        authDomain: "testnum1-kawitvemufason.firebaseapp.com",
+        projectId: "testnum1-kawitvemufason",
+        storageBucket: "testnum1-kawitvemufason.firebasestorage.app",
+        messagingSenderId: "85481039106",
+        appId: "1:85481039106:web:d82756601be5d3bc4e8e1b",
+        measurementId: "G-ENDQBP3G0P"
+    };
+
+    const TEACHER_PASSWORD = "1234";
+    const appId = "testnum1-kawitvemufason";
+
+    // --- State ---
+    let view = 'quiz';
+    let selectedChapter = null;
+    let submissions = [];
+    let currentUser = null;
+    let inspectingId = null;
+    let unsubscribeSubmissions = null;
+
+    // --- Initialization ---
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // RULE 3: Strict Auth Logic
+    const initApp = async () => {
+        try {
+            // Sign in and wait for completion
+            const userCredential = await auth.signInAnonymously();
+            currentUser = userCredential.user;
+            console.log("Authenticated as:", currentUser.uid);
+            
+            // Start listening ONLY after auth is confirmed
+            setupRealtimeSubmissions();
+        } catch (err) {
+            console.error("Auth initialization failed:", err);
+            // Retry after 2 seconds if failed
+            setTimeout(initApp, 2000);
+        }
+    };
+
+    // Use onAuthStateChanged as a secondary safety net
+    auth.onAuthStateChanged(user => {
+        if (user && !currentUser) {
+            currentUser = user;
+            setupRealtimeSubmissions();
+        }
+    });
+
+    function setView(newView) {
+        view = newView;
+        document.querySelectorAll('#app > div').forEach(div => div.style.display = 'none');
+        const activeView = document.querySelector(`[v-if="view === '${newView}'"]`);
+        if (activeView) activeView.style.display = 'block';
+        if (newView === 'submitted') renderSubmissionStatus();
+        if (newView === 'teacher') renderSubmissionsTable();
+    }
+
+    function setupRealtimeSubmissions() {
+        if (!currentUser) return;
+
+        if (unsubscribeSubmissions) unsubscribeSubmissions();
+
+        // RULE 1: Correct collection path
+        const submissionsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions');
+        
+        unsubscribeSubmissions = submissionsRef.onSnapshot(snapshot => {
+            submissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // RULE 2: Sort in memory
+            submissions.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            
+            if (view === 'teacher') renderSubmissionsTable();
+            if (view === 'submitted') renderSubmissionStatus();
+        }, error => {
+            console.error("Firestore Permission/Snapshot error:", error);
+            // If permission denied, wait and re-init auth
+            if (error.code === 'permission-denied') {
+                console.log("Retrying auth due to permission error...");
+                setTimeout(initApp, 1000);
+            }
+        });
+    }
+
+    // --- Content Rendering ---
+    const americanQs = [
+        {id: 'q1', q: 'מה אפיין את הקבוצה שהנהיג נעים שמכם בראשית דרכה?', opts: ['א. לוחמים עזים', 'ב. קבוצת שלום', 'ג. דייגים', 'ד. רופאים']},
+        {id: 'q2', q: 'מי הפך למנהיג לאחר שנעים התחתן עם נני?', opts: ['א. פסטון', 'ב. פוני', 'ג. אבי תפוח', 'ד. מתוק בוגי']},
+        {id: 'q3', q: 'כיצד הגיעה נני להינשא לרופא נונן?', opts: ['א. התאהבות', 'ב. נעים ויתר', 'ג. אות תודה', 'ד. פסטון ציווה']},
+        {id: 'q4', q: 'מי הייתה בתם של נעים שמכם ורותי?', opts: ['א. מלכה לאה', 'ב. ביינה', 'ג. שירה', 'ד. זייני בוגי']},
+        {id: 'q5', q: 'מה היה יחסו של פסטון כלפי נעים שמכם?', opts: ['א. קנאה', 'ב. נדיבות ואהבה', 'ג. רופא אישי', 'ד. סירוב מפגש']},
+        {id: 'q6', q: 'מה ניבא פסטון על צאצאיו?', opts: ['א. נדיבות', 'ב. צבא מאוחד', 'ג. רוע וסבל לטובים', 'ד. רופאים']},
+        {id: 'q7', q: 'מה קרה לטובים בהנהגת אבי תפוח?', opts: ['א. מלחמה', 'ב. צלילה', 'ג. עברו ל-5 חלקי הממלכה', 'ד. חתונה']}
+    ];
+
+    const openQs = [
+        "תאר את דמותו של נעים שמכם. מה היו ערכיו?",
+        "הסבר את המורכבות בסיפור של נני ונונן.",
+        "מה היה 'הסימן' שהופיע בתקופת אבי תפוח?",
+        "מה משמעות המשפט 'אשוב אל המוקש ואקץ הכל'?",
+        "כיצד השתנה היחס של הפסטים לאחר המלחמה?",
+        "מהו ההבדל בין דור ה'פסטי' לדור ה'פיסטי'?"
+    ];
+
+    function renderQuiz() {
+        const amContainer = document.getElementById('americanQuestions');
+        if (!amContainer) return;
+        amContainer.innerHTML = americanQs.map((q, i) => `
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <p class="font-bold mb-3">${i+1}. ${q.q}</p>
+                <div class="grid md:grid-cols-2 gap-2">
+                    ${q.opts.map(o => `
+                        <label class="flex items-center gap-2 p-2 bg-white rounded-lg border cursor-pointer hover:bg-blue-50">
+                            <input type="radio" name="${q.id}" value="${o[0]}" class="w-4 h-4">
+                            <span class="text-sm">${o}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        const opContainer = document.getElementById('openQuestionsA');
+        if (!opContainer) return;
+        opContainer.innerHTML = openQs.map((q, i) => `
+            <div class="space-y-2">
+                <p class="font-bold">${i+8}. ${q}</p>
+                <textarea name="oa${i}" class="w-full p-4 border rounded-xl min-h-[100px] focus:ring-2 focus:ring-blue-100 outline-none"></textarea>
+            </div>
+        `).join('');
+    }
+
+    function selectChapter(c) {
+        selectedChapter = c;
+        document.getElementById('btnA').className = `flex-1 p-6 rounded-2xl border-4 transition ${c === 'A' ? 'border-green-600 bg-green-50' : 'border-slate-100'}`;
+        document.getElementById('btnB').className = `flex-1 p-6 rounded-2xl border-4 transition ${c === 'B' ? 'border-green-600 bg-green-50' : 'border-slate-100'}`;
+        
+        const section = document.getElementById('chapterSection');
+        section.classList.remove('hidden');
+        section.innerHTML = `
+            <p class="font-bold text-green-800 italic text-center">ענה על שאלות הפרק שבחרת (${c === 'A' ? 'זאזן' : 'גיגי'}):</p>
+            ${[1,2,3].map(i => `
+                <div class="space-y-2">
+                    <p class="font-bold">שאלה פתוחה ${i} לפרק ${c}:</p>
+                    <textarea name="p${c}_q${i}" class="w-full p-4 border rounded-xl min-h-[100px] outline-none bg-white"></textarea>
+                </div>
+            `).join('')}
+        `;
+    }
+
+    // --- Actions ---
+    function handleTeacherAccess() {
+        const pass = document.getElementById('passInput').value;
+        if (pass === TEACHER_PASSWORD) {
+            setView('teacher');
+        } else {
+            alert("סיסמה שגויה!");
+        }
+    }
+
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        if (!currentUser) {
+            alert("המערכת עדיין מתחברת לשרת. אנא המתן רגע ונסה שוב.");
+            initApp();
+            return;
+        }
+
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        if (!data.studentName?.trim()) return alert("יש להזין שם תלמיד");
+        if (!selectedChapter) return alert("יש לבחור פרק בחלק ב'");
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = "שולח מבחן...";
+
+        try {
+            await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').add({
+                studentName: data.studentName,
+                timestamp: Date.now(),
+                responses: data,
+                chapter: selectedChapter,
+                userId: currentUser.uid,
+                finalGrade: null,
+                teacherFeedback: null
+            });
+            setView('submitted');
+        } catch (err) {
+            alert("שגיאה בשמירה: " + err.message);
+            btn.disabled = false;
+            btn.innerText = "שלח מבחן סופי לבדיקה";
+        }
+    }
+
+    function renderSubmissionStatus() {
+        const container = document.getElementById('submissionContent');
+        if (!container) return;
+
+        const mySub = submissions.find(s => s.userId === (currentUser ? currentUser.uid : null));
+        
+        if (!mySub) {
+            container.innerHTML = `<p class="text-xl text-slate-600 mb-6 font-medium">המבחן נשלח למערכת.</p>`;
+            return;
+        }
+
+        if (mySub.finalGrade) {
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-blue-50 p-6 rounded-2xl border-2 border-blue-200">
+                        <p class="text-blue-800 font-bold text-lg">המבחן נבדק!</p>
+                        <p class="text-5xl font-black text-blue-900 mt-2">ציון: ${mySub.finalGrade}</p>
+                    </div>
+                    ${mySub.teacherFeedback ? `
+                        <div class="bg-amber-50 p-6 rounded-2xl border border-amber-200 text-right">
+                            <p class="font-bold text-amber-900 mb-2">הערות המורה:</p>
+                            <p class="text-slate-700 whitespace-pre-wrap">${mySub.teacherFeedback}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="p-6 bg-slate-100 rounded-2xl border border-dashed border-slate-300">
+                    <p class="text-slate-500 italic">התשובות שלך נשמרו. המורה בודק את המבחן כעת.</p>
+                </div>
+            `;
+        }
+    }
+
+    function renderSubmissionsTable() {
+        const body = document.getElementById('submissionsTableBody');
+        if (!body) return;
+        
+        if (submissions.length === 0) {
+            body.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">טרם הוגשו מבחנים</td></tr>`;
+            return;
+        }
+
+        body.innerHTML = submissions.map(s => `
+            <tr class="border-b hover:bg-slate-50 transition">
+                <td class="p-4 font-bold">${s.studentName}</td>
+                <td class="p-4 text-sm text-slate-500">${new Date(s.timestamp).toLocaleString('he-IL')}</td>
+                <td class="p-4 text-center">${s.chapter === 'A' ? 'זאזן' : 'גיגי'}</td>
+                <td class="p-4">
+                    ${s.finalGrade ? 
+                      `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">נבדק (${s.finalGrade})</span>` : 
+                      `<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">ממתין</span>`}
+                </td>
+                <td class="p-4">
+                    <button onclick="inspectSubmission('${s.id}')" class="bg-blue-600 text-white px-4 py-1 rounded-md text-sm hover:bg-blue-700">בדוק</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function inspectSubmission(id) {
+        const sub = submissions.find(s => s.id === id);
+        if (!sub) return;
+        inspectingId = id;
+        document.getElementById('submissionsList').classList.add('hidden');
+        const panel = document.getElementById('gradingPanel');
+        panel.classList.remove('hidden');
+
+        const responsesHtml = Object.entries(sub.responses).map(([k, v]) => `
+            <div class="border-b pb-4">
+                <p class="text-xs font-bold text-blue-500 uppercase">${k}</p>
+                <p class="text-slate-800 bg-slate-50 p-3 rounded-lg mt-1 border border-slate-100">${v || '---'}</p>
+            </div>
+        `).join('');
+
+        panel.innerHTML = `
+            <div class="flex justify-between items-start border-b pb-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-blue-900">בדיקה: ${sub.studentName}</h2>
+                </div>
+                <button onclick="closeGrading()" class="text-slate-400 hover:text-slate-600 font-bold">סגור X</button>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="md:col-span-2 space-y-6 max-h-[60vh] overflow-y-auto pl-4">${responsesHtml}</div>
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4 h-fit sticky top-4">
+                    <h3 class="font-bold text-xl text-slate-800">הערות וציון</h3>
+                    <textarea id="tFeedback" class="w-full p-3 border rounded-xl h-40 outline-none text-sm" placeholder="משוב מה נכון ומה לא...">${sub.teacherFeedback || ''}</textarea>
+                    <input id="tGrade" type="number" class="w-full p-3 border rounded-xl font-bold text-xl text-blue-700 outline-none" placeholder="ציון" value="${sub.finalGrade || ''}">
+                    <button onclick="saveGrading()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 shadow-lg">שמור ושלח</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function closeGrading() {
+        document.getElementById('gradingPanel').classList.add('hidden');
+        document.getElementById('submissionsList').classList.remove('hidden');
+    }
+
+    async function saveGrading() {
+        if (!currentUser) return alert("חיבור אבד. אנא רענן את הדף.");
+        const feedback = document.getElementById('tFeedback').value;
+        const grade = document.getElementById('tGrade').value;
+        try {
+            await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').doc(inspectingId).update({
+                finalGrade: grade,
+                teacherFeedback: feedback,
+                gradedAt: Date.now()
+            });
+            alert("הציון נשמר בהצלחה!");
+            closeGrading();
+        } catch (err) {
+            alert("שגיאה בעדכון: " + err.message);
+        }
+    }
+
+    // Main Run
+    window.onload = () => {
+        renderQuiz();
+        setView('quiz');
+        initApp(); // Start the strict auth-first chain
+    };
+</script>
+
+</body>
+</html>
