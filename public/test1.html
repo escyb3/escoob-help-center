@@ -39,7 +39,7 @@
             <form id="quizForm" onsubmit="handleFormSubmit(event)" class="p-8 space-y-12">
                 <section class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
                     <label class="block text-lg font-bold mb-2">שם מלא: <span class="text-red-500">*</span></label>
-                    <input required name="studentName" type="text" class="w-full md:w-1/2 p-3 rounded-xl border border-blue-200 outline-none focus:ring-4 focus:ring-blue-100" placeholder="הכנס את שמך...">
+                    <input required name="studentName" id="studentNameField" type="text" class="w-full md:w-1/2 p-3 rounded-xl border border-blue-200 outline-none focus:ring-4 focus:ring-blue-100" placeholder="הכנס את שמך...">
                 </section>
 
                 <!-- Part A -->
@@ -95,16 +95,20 @@
         </div>
     </div>
 
-    <!-- Other Views (Submitted, Teacher) same as before -->
+    <!-- Submitted View -->
     <div id="view-submitted" class="view-section min-h-screen bg-slate-50 flex items-center justify-center p-6 fade-in">
         <div id="statusCard" class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl text-center max-w-2xl border-t-8 border-green-500 w-full">
             <div class="text-7xl mb-6">🏆</div>
             <h2 class="text-3xl font-bold mb-4">המבחן הוגש בהצלחה!</h2>
-            <div id="submissionContent"></div>
-            <button onclick="location.reload()" class="mt-8 text-blue-500 underline hover:text-blue-700">חזרה לדף הבית</button>
+            <div id="submissionContent" class="my-6"></div>
+            <div class="flex flex-col gap-3 items-center">
+                <button onclick="resetForNewTest()" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition">התחל מבחן חדש / נסה שוב</button>
+                <button onclick="setView('quiz')" class="text-slate-500 underline hover:text-slate-800">צפייה בתשובותיי (קריאה בלבד)</button>
+            </div>
         </div>
     </div>
 
+    <!-- Teacher View -->
     <div id="view-teacher" class="view-section min-h-screen bg-slate-100 p-4 md:p-8 fade-in">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-8">
@@ -152,44 +156,45 @@
     let currentUser = null;
     let inspectingId = null;
 
+    // --- מבנה השאלות (הטקסטים שהעלית) ---
     const americanQs = [
-        {id: 'q1', q: 'מה אפיין את הקבוצה שהנהיג נעים שמכם בראשית דרכה?', opts: ['א. לוחמים עזים שכבשו ממלכות.', 'ב. קבוצה ששנאה מלחמות ואהבה שלום ועשיית טוב.', 'ג. דייגים שהתמחו בצלילה בים.', 'ד. רופאים נודדים.']},
+        {id: 'q1', q: 'מה אפיין את הקבוצה שהנהיג נעים שמכם בראשית דרכה?', opts: ['א. הם היו לוחמים עזים שכבשו ממלכות.', 'ב. הם היו קבוצה ששנאה מלחמות ואהבה שלום ועשיית טוב.', 'ג. הם היו דייגים שהתמחו בצלילה בים.', 'ד. הם היו רופאים נודדים.']},
         {id: 'q2', q: 'מי הפך למנהיג הקבוצה לאחר שנעים שמכם התחתן עם נני?', opts: ['א. פסטון.', 'ב. פוני.', 'ג. אבי תפוח.', 'ד. מתוק בוג\'י.']},
-        {id: 'q3', q: 'כיצד הגיעה נני להינשא לרופא נונן?', opts: ['א. התאהבה בו בזמן שטיפל בה.', 'ב. נעים שמכם לא רצה בה עוד.', 'ג. נונן ביקש זאת כאות תודה על ריפויה.', 'ד. פסטון ציווה עליה.']},
+        {id: 'q3', q: 'כיצד הגיעה נני להינשא לרופא נונן?', opts: ['א. היא התאהבה בו בזמן שטיפל בה.', 'ב. נעים שמכם לא רצה בה יותר.', 'ג. נונן ביקש זאת כאות תודה על כך שריפא אותה ממחלתה.', 'ד. פסטון ציווה עליה לעשות זאת.']},
         {id: 'q4', q: 'מי הייתה בתם של נעים שמכם ורותי?', opts: ['א. מלכה לאה.', 'ב. ביינה.', 'ג. שירה.', 'ד. זייני בוג\'י.']},
-        {id: 'q5', q: 'מה היה יחסו של פסטון כלפי נעים שמכם?', opts: ['א. קינא וניסה להילחם בו.', 'ב. היה אדם נדיב שאהב אותו.', 'ג. היה הרופא האישי שלו.', 'ד. סירב להיפגש בגלל מחלוקות.']},
-        {id: 'q6', q: 'מה ניבא פסטון על צאצאיו העתידיים?', opts: ['א. ימשיכו את דרכו ויהיו נדיבים.', 'ב. יקימו צבא מאוחד עם הטובים.', 'ג. יהיו רעים לטובים ויגרמו סבל.', 'ד. יהפכו לרופאים מפורסמים.']},
-        {id: 'q7', q: 'מה קרה לכל הטובים במהלך ההנהגה של אבי תפוח?', opts: ['א. יצאו למלחמה יזומה.', 'ב. אירגנו צלילה משותפת.', 'ג. עברו לגור בחמשת חלקי הממלכה.', 'ד. חגגו חתונת מרדכי וביינה.']},
-        {id: 'q8', q: 'מתי החלו המלחמות להיות "תכופות ומסוכנות יותר"?', opts: ['א. מיד לאחר שפסטון נעלם.', 'ב. כשהדור התחלף מ"פסטי" ל"פיסטי".', 'ג. כשפוני היה המנהיג.', 'ד. כשנעים התחתן עם רותי.']},
-        {id: 'q9', q: 'לכמה חלקים חילק המלך מתוק בוג\'י את הממלכה?', opts: ['א. שלושה חלקים.', 'ב. שני חלקים.', 'ג. חמישה חלקים.', 'ד. עשרה חלקים.']},
-        {id: 'q10', q: 'מיהם דוד וזייני בוג\'י לפי הטקסט?', opts: ['א. הוריהם של בני הזוג שנישאו לילדי המלך.', 'ב. מנהיגי הפיסטים.', 'ג. הילדים של מלכה לאה.', 'ד. הרופאים של נני.']}
+        {id: 'q5', q: 'מה היה יחסו של פסטון כלפי נעים שמכם?', opts: ['א. הוא קינא בו וניסה להילחם בו.', 'ב. הוא היה אדם נדיב שאהב את נעים שמכם מאוד.', 'ג. הוא היה הרופא האישי של משפחתו.', 'ד. הוא סירב להיפגש איתו בגלל המחלוקות בין הקבוצות.']},
+        {id: 'q6', q: 'מה ניבא פסטון על צאצאיו העתידיים?', opts: ['א. שהם ימשיכו את דרכו ויהיו נדיבים לטובים.', 'ב. שהם יקימו צבא מאוחד יחד עם הטובים.', 'ג. שהם יהיו רעים לטובים, יגרמו להם סבל ואולי אף יהרגו חלק מהם.', 'ד. שצאצאיו יהפכו לרופאים מפורסמים כמו נונן.']},
+        {id: 'q7', q: 'מה קרה לכל הטובים במהלך ההנהגה של אבי תפוח?', opts: ['א. הם יצאו למלחמה יזומה נגד הפסטים.', 'ב. הם אירגנו צלילה משותפת בים הסמוך לממלכה.', 'ג. הם עברו לגור בחמשת חלקי הממלכה.', 'ד. הם חגגו את חתונתם של מרדכי וביינה.']},
+        {id: 'q8', q: 'מתי החלו המלחמות להיות "תכופות ומסוכנות יותר"?', opts: ['א. מיד לאחר שפסטון נעלם.', 'ב. בתקופה שבה הדור התחלף מ"פסטי" ל"פיסטי".', 'ג. כשפוני היה המנהיג.', 'ד. כשנעים שמכם התחתן עם רותי.']},
+        {id: 'q9', q: 'לכמה חלקים חילק המלך מתוק בוג\'י את הממלכה?', opts: ['א. לשלושה חלקים.', 'ב. לשני חלקים (טובים ופסטים).', 'ג. לחמישה חלקים.', 'ד. לעשרה חלקים.']},
+        {id: 'q10', q: 'מיהם דוד וזייני בוג\'י לפי הטקסט?', opts: ['א. הוריהם של כל בני הזוג שנישאו לילדיו של המלך מתוק.', 'ב. המנהיגים של קבוצת הפיסטים.', 'ג. הילדים של מלכה לאה.', 'ד. הרופאים שטיפלו בנני.']}
     ];
 
     const openQs = [
         "תאר את דמותו של נעים שמכם. מה היו ערכיו וכיצד פעל למען משפחתו?",
         "הסבר את המורכבות בסיפור של נני ונונן. האם לדעתך נונן פעל בצורה מוסרית? נמק.",
         "מה היה \"הסימן\" שהופיע בתקופת אבי תפוח, וכיצד הגיבו הטובים להתקפה המפתיעה?",
-        "פסטון אמר: \"ביום מן המועדים אשוב גם אני אל המוקש ואקץ הכל\". מה המשמעות?",
+        "פסטון אמר: \"ביום מן המועדים אשוב גם אני אל המוקש ואקץ הכל\". מה המשמעות לדעתך?",
         "כיצד השתנה היחס של הפסטים כלפי הטובים לאחר המלחמה הראשונה בים?",
         "מהו ההבדל שמתואר בטקסט בין דור ה\"פסטי\" לבין דור ה\"פיסטי\"?",
-        "המלך מתוק בוג\'י ביצע רפורמה צבאית. הסבר איך הצבא פועל בזמן שלום ובמלחמה.",
+        "המלך מתוק בוג'י ביצע רפורמה צבאית. הסבר איך הצבא פועל בזמן שלום ובמלחמה.",
         "ציין לפחות שלושה מזוגות השליטים (ילדי מתוק ובני זוגם) המוזכרים בטקסט.",
         "כיצד השפיעו קשרי הנישואין בין ילדי מתוק לילדי דוד וזייני על ניהול הממלכה?",
-        "מהו הקונפליקט המרכזי בין ה\"טובים\" לצאצאי פסטון ואיך התפתח לאורך הדורות?"
+        "מהו הקונפליקט המרכזי בסיפור בין קבוצת ה\"טובים\" לצאצאי פסטון ואיך התפתח?"
     ];
 
     const chapterA = {
-        title: "משפחת ז'אזן ומיכל",
+        title: "פרק א': משפחת ז'אזן ומיכל",
         american: [
-            {id: 'pa_q1', q: 'מי מילדיהם של ז\'אזן ומיכל נישאה למלך "כחול-ים"?', opts: ['אילנה', 'נעה', 'דבורה', 'חנה']},
-            {id: 'pa_q2', q: 'מה התגלה לבארי במהלך הלידה של 10 ילדיו מאשתו הראשונה?', opts: ['שרדובילה ממשפחת הפיסטים', 'שרדובילה היא דובה מסוכנת', 'היא קרובת משפחה של מגנום', 'היא חלתה במחלה קשה']},
-            {id: 'pa_q3', q: 'מי הייתה הבת שנולדה לבארי מאשתו השנייה, מרים?', opts: ['סימה', 'אילנה', 'דבורה', 'חנה']},
-            {id: 'pa_q4', q: 'מה עשה סיק קרמר לאחר שפגע באילנה והיא ברחה?', opts: ['חיפש אותה לסליחה', 'עבר לגור עם נסיך הדרבניקלים', 'תכנן נקמה עם אמו וסבתו', 'התחתן עם רדובילה']},
-            {id: 'pa_q5', q: 'מיהו אדוארד-דוד תנון?', opts: ['בנם של ז\'אזן ומיכל', 'נסיך הדרבניקלים שנישא לאילנה', 'המלך של ממלכת דוושה', 'חברו של סיק קרמר']}
+            {id: 'pa_q1', q: 'מי מילדיהם של ז\'אזן ומיכל נישאה למלך "כחול-ים"?', opts: ['א. אילנה.', 'ב. נעה.', 'ג. דבורה.', 'ד. חנה.']},
+            {id: 'pa_q2', q: 'מה התגלה לבארי במהלך הלידה של 10 ילדיו מאשתו הראשונה?', opts: ['א. שרדובילה היא בעצם ממשפחת הפיסטים.', 'ב. שרדובילה לא סיפרה לו שהיא דובה מסוכנת.', 'ג. שרדובילה היא קרובת משפחה של המלך מגנום.', 'ד. שרדובילה חלתה במחלה קשה.']},
+            {id: 'pa_q3', q: 'מי הייתה הבת שנולדה לבארי מאשתו השנייה, מרים?', opts: ['א. סימה.', 'ב. אילנה.', 'ג. דבורה.', 'ד. חנה.']},
+            {id: 'pa_q4', q: 'מה עשה סיק קרמר לאחר שפגע באילנה והיא ברחה?', opts: ['א. הוא חיפש אותה ברחובות.', 'ב. הוא עבר לגור עם נסיך הדרבניקלים.', 'ג. הוא תכנן נקמה באילנה יחד עם אמו וסבתו.', 'ד. הוא התחתן עם רדובילה בלקן.']},
+            {id: 'pa_q5', q: 'מיהו אדוארד-דוד תנון?', opts: ['א. בנם של ז\'אזן ומיכל.', 'ב. נסיך הדרבניקלים שנישא לאילנה.', 'ג. המלך של ממלכת דוושה.', 'ד. חברו הטוב ביותר של סיק קרמר.']}
         ],
         open: [
-            "כיצד שילבו ז'אזן ומיכל בין ניהול הממלכה לבין חיי המשפחה שלהם?",
-            "תאר את גלגולי הנישואין של בארי. כמה נשים היו לו ומה קרה עם כל אחת?",
+            "כיצד שילבו ז'אזן ומיכל בין ניהול הממלכה לבין חיי המשפחה?",
+            "תאר את גלגולי הנישואין של בארי. כמה נשים היו לו ומה קרה?",
             "מדוע נאלצה אילנה לברוח מביתה, ומה היה מצבה לפני שפגשה את הנסיך?",
             "מי היו סימה וגגרא, ומי היה בנם של סימה?",
             "הסבר את תפקידן של \"אמו וסבתו\" של סיק קרמר בסיפורה של אילנה."
@@ -197,24 +202,60 @@
     };
 
     const chapterB = {
-        title: "משפחת גי'גי ושירה",
+        title: "פרק ב': משפחת גי'גי ושירה",
         american: [
-            {id: 'pb_q1', q: 'מה הייתה האמונה המוזרה של שירה בנוגע לחשמל?', opts: ['מיוצר ע"י פיסטים', 'עשוי מקיר', 'מגיע מהים', 'מתנה מהמלך']},
-            {id: 'pb_q2', q: 'מדוע גי\'גי לא הגיע לרוב המסיבות של אשתו?', opts: ['לא אהב אותה', 'היה עסוק במלחמות נגד פיסטים ודוושה', 'העדיף לבלות עם סנדי', 'לא האמין שחשמל מהקיר']},
-            {id: 'pb_q3', q: 'מיהו שמעון סרגלי?', opts: ['בעלה השני של קרולין', 'אדם רשע שפגע בה', 'בעלה הראשון, אדם ובעל טוב', 'מנהיג דוושה']},
-            {id: 'pb_q4', q: 'מהם המאפיינים של קרפדה, בעלה השני של קרולין?', opts: ['נסיך עשיר', 'לוחם אמיץ', 'עצלן ומוזנח עם מרק נזלת', 'רופא מומחה']},
-            {id: 'pb_q5', q: 'מי הייתה סנדי ומה היה הקשר שלה לשירה?', opts: ['בתם של גי\'גי ושירה', 'אישה שתמכה ברעיונות שירה ועברה לגור איתה', 'מלכת דוושה', 'אחות של קרפדה']}
+            {id: 'pb_q1', q: 'מה הייתה האמונה המוזרה של שירה בנוגע לחשמל?', opts: ['א. שחשמל מיוצר ע"י הפיסטים.', 'ב. שחשמל עשוי מקיר.', 'ג. שחשמל מגיע מהים.', 'ד. שחשמל הוא מתנה.']},
+            {id: 'pb_q2', q: 'מדוע גי\'גי לא הגיע לרוב המסיבות של אשתו?', opts: ['א. כי לא אהב את שירה.', 'ב. כי היה עסוק במלחמות נגד הפיסטים וממלכת דוושה.', 'ג. כי העדיף לבלות עם סנדי.', 'ד. כי לא האמין שחשמל מקיר.']},
+            {id: 'pb_q3', q: 'מיהו שמעון סרגלי?', opts: ['א. בעלה השני של קרולין.', 'ב. אדם רשע שפגע בה.', 'ג. בעלה הראשון, שהיה אדם ובעל טוב.', 'ד. מנהיג ממלכת דוושה.']},
+            {id: 'pb_q4', q: 'מהם המאפיינים של קרפדה, בעלה השני של קרולין?', opts: ['א. נסיך עשיר ונדיב.', 'ב. לוחם אמיץ.', 'ג. אדם עצלן ומוזנח שהכין לה מרק נזלת.', 'ד. רופא מומחה.']},
+            {id: 'pb_q5', q: 'מי הייתה סנדי ומה היה הקשר שלה לשירה?', opts: ['א. הבת של גי\'גי ושירה.', 'ב. אישה שתמכה ברעיונות שירה ועברה לגור איתה.', 'ג. המלכה של ממלכת דוושה.', 'ד. האחות של קרפדה.']}
         ],
         open: [
-            "תאר את מערכת היחסים בין גי'גי לשירה. איך הסתדרו למרות עיסוקיו?",
+            "תאר את מערכת היחסים בין גי'גי לשירה. איך הסתדרו?",
             "מה גרם להידרדרות במצבה הבריאותי של קרולין לאחר נישואיה השניים?",
             "הסבר את המהלך הבלתי מוסבר של קרולין בנוגע לגירושיה משמעון סרגלי.",
-            "מדוע ניסו הוריה של קרולין לאשפז אותה, וכיצד הגיבה לכך?",
+            "מדוע ניסו הוריה של קרולין לאשפז אותה, וכיצד הגיבה?",
             "מה ידוע לנו על ממלכת דוושה מתוך התיאור של חייו של גי'גי?"
         ]
     };
 
+    function setView(newView) {
+        currentView = newView;
+        document.querySelectorAll('.view-section').forEach(div => div.classList.remove('active'));
+        document.getElementById(`view-${newView}`).classList.add('active');
+        
+        if (newView === 'submitted') renderSubmissionStatus();
+        if (newView === 'teacher') renderSubmissionsTable();
+        window.scrollTo(0, 0);
+    }
+
+    async function initApp() {
+        try {
+            const userCredential = await auth.signInAnonymously();
+            currentUser = userCredential.user;
+            setupRealtimeSubmissions();
+            renderQuiz();
+        } catch (err) {
+            console.error("Auth Error:", err);
+            setTimeout(initApp, 2000);
+        }
+    }
+
+    function setupRealtimeSubmissions() {
+        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions')
+            .onSnapshot(snap => {
+                submissions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // בדיקה אם המשתמש הנוכחי כבר הגיש
+                const mySub = submissions.find(s => s.userId === currentUser.uid);
+                if (mySub && currentView === 'quiz') {
+                    setView('submitted');
+                }
+            });
+    }
+
     function renderQuiz() {
+        // Render Part A
         const amContainer = document.getElementById('americanQuestions');
         amContainer.innerHTML = americanQs.map((q, i) => `
             <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
@@ -242,15 +283,14 @@
     function selectChapter(c) {
         selectedChapter = c;
         const data = c === 'A' ? chapterA : chapterB;
-        document.getElementById('btnA').className = `flex-1 p-6 rounded-2xl border-4 transition ${c === 'A' ? 'border-green-600 bg-green-50' : 'border-slate-100'}`;
-        document.getElementById('btnB').className = `flex-1 p-6 rounded-2xl border-4 transition ${c === 'B' ? 'border-green-600 bg-green-50' : 'border-slate-100'}`;
+        document.getElementById('btnA').className = `flex-1 p-6 rounded-2xl border-4 transition ${c === 'A' ? 'border-green-600 bg-green-50 shadow-inner' : 'border-slate-100'}`;
+        document.getElementById('btnB').className = `flex-1 p-6 rounded-2xl border-4 transition ${c === 'B' ? 'border-green-600 bg-green-50 shadow-inner' : 'border-slate-100'}`;
         
         const section = document.getElementById('chapterSection');
         section.classList.remove('hidden');
         section.innerHTML = `
             <h3 class="text-xl font-bold text-green-800 text-center mb-4 underline">${data.title}</h3>
             <div class="space-y-6">
-                <p class="font-bold text-slate-700">שאלות אמריקאיות לפרק זה:</p>
                 ${data.american.map((q, i) => `
                     <div class="p-4 bg-white rounded-xl border border-green-100">
                         <p class="font-bold mb-3">${i+1}. ${q.q}</p>
@@ -264,8 +304,6 @@
                         </div>
                     </div>
                 `).join('')}
-                
-                <p class="font-bold text-slate-700 mt-8">שאלות פתוחות לפרק זה:</p>
                 ${data.open.map((q, i) => `
                     <div class="space-y-2">
                         <p class="font-bold">${i+1}. ${q}</p>
@@ -276,63 +314,102 @@
         `;
     }
 
-    // Auth & Persistence Logic (Same as updated version)
-    const initApp = async () => {
-        try {
-            const userCredential = await auth.signInAnonymously();
-            currentUser = userCredential.user;
-            setupRealtimeSubmissions();
-        } catch (err) { console.error(err); setTimeout(initApp, 2000); }
-    };
-
-    function setView(newView) {
-        currentView = newView;
-        document.querySelectorAll('.view-section').forEach(div => div.classList.remove('active'));
-        document.getElementById(`view-${newView}`).classList.add('active');
-        if (newView === 'submitted') renderSubmissionStatus();
-        if (newView === 'teacher') renderSubmissionsTable();
-    }
-
-    function setupRealtimeSubmissions() {
-        if (!currentUser) return;
-        db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions')
-            .onSnapshot(snap => {
-                submissions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                submissions.sort((a,b) => b.timestamp - a.timestamp);
-                if (currentView === 'teacher') renderSubmissionsTable();
-                if (currentView === 'submitted') renderSubmissionStatus();
-            });
-    }
-
     async function handleFormSubmit(e) {
         e.preventDefault();
         if (!selectedChapter) return alert("אנא בחר פרק בחלק ב'");
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
+        
         const btn = document.getElementById('submitBtn');
-        btn.disabled = true; btn.innerText = "שולח...";
+        btn.disabled = true;
+        btn.innerText = "שולח מבחן...";
+
+        const formData = new FormData(e.target);
+        const responses = Object.fromEntries(formData.entries());
+
         try {
             await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').add({
-                studentName: data.studentName,
+                studentName: responses.studentName,
                 timestamp: Date.now(),
-                responses: data,
+                responses: responses,
                 chapter: selectedChapter,
-                userId: currentUser.uid
+                userId: currentUser.uid,
+                finalGrade: null,
+                teacherFeedback: ""
             });
             setView('submitted');
-        } catch (err) { alert(err.message); btn.disabled = false; }
+        } catch (err) {
+            alert("שגיאה בשליחה: " + err.message);
+            btn.disabled = false;
+            btn.innerText = "שלח מבחן סופי לבדיקה";
+        }
     }
 
-    // Teacher & Status functions same as before...
+    function renderSubmissionStatus() {
+        const container = document.getElementById('submissionContent');
+        const mySub = submissions.find(s => s.userId === currentUser.uid);
+        
+        if (!mySub) {
+            container.innerHTML = `<p>המבחן נשלח. ממתין לסנכרון...</p>`;
+            return;
+        }
+
+        if (mySub.finalGrade !== null && mySub.finalGrade !== undefined) {
+            container.innerHTML = `
+                <div class="bg-blue-50 p-6 rounded-2xl border-2 border-blue-200">
+                    <p class="text-sm text-blue-600 font-bold mb-1">הציון שלך:</p>
+                    <p class="text-5xl font-black text-blue-800">${mySub.finalGrade}</p>
+                    <div class="mt-4 pt-4 border-t border-blue-100 text-right">
+                        <p class="font-bold text-slate-700">הערות המורה:</p>
+                        <p class="text-slate-600 italic">${mySub.teacherFeedback || 'אין הערות.'}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="bg-yellow-50 p-6 rounded-2xl border border-yellow-200">
+                    <p class="text-yellow-700 font-bold">המבחן הוגש בהצלחה!</p>
+                    <p class="text-slate-600 text-sm mt-2">המורה טרם בדק את המבחן. ברגע שיוזן ציון, הוא יופיע כאן.</p>
+                </div>
+            `;
+        }
+    }
+
+    // פונקציה למחיקת הגשה ישנה (לצרכי בדיקות)
+    async function resetForNewTest() {
+        const mySub = submissions.find(s => s.userId === currentUser.uid);
+        if (mySub) {
+            if (confirm("האם אתה בטוח שברצונך למחוק את ההגשה הקודמת ולהתחיל מחדש?")) {
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').doc(mySub.id).delete();
+                document.getElementById('quizForm').reset();
+                selectedChapter = null;
+                document.getElementById('chapterSection').classList.add('hidden');
+                setView('quiz');
+            }
+        } else {
+            setView('quiz');
+        }
+    }
+
+    // --- Teacher logic (same as before) ---
+    function handleTeacherAccess() {
+        if (document.getElementById('passInput').value === TEACHER_PASSWORD) setView('teacher');
+        else alert("סיסמה שגויה");
+    }
+
     function renderSubmissionsTable() {
         const body = document.getElementById('submissionsTableBody');
         body.innerHTML = submissions.map(s => `
-            <tr class="border-b">
-                <td class="p-4 font-bold">${s.studentName}</td>
-                <td class="p-4">${new Date(s.timestamp).toLocaleTimeString()}</td>
-                <td class="p-4 text-center">${s.chapter}</td>
-                <td class="p-4">${s.finalGrade ? 'נבדק' : 'ממתין'}</td>
-                <td class="p-4"><button onclick="inspectSubmission('${s.id}')" class="bg-blue-600 text-white px-3 py-1 rounded">בדוק</button></td>
+            <tr class="border-b hover:bg-slate-50 transition">
+                <td class="p-4 font-bold text-slate-800">${s.studentName}</td>
+                <td class="p-4 text-slate-600 text-sm">${new Date(s.timestamp).toLocaleTimeString()}</td>
+                <td class="p-4 text-center">פרק ${s.chapter}</td>
+                <td class="p-4">
+                    <span class="px-2 py-1 rounded-full text-xs font-bold ${s.finalGrade !== null ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">
+                        ${s.finalGrade !== null ? 'נבדק' : 'ממתין'}
+                    </span>
+                </td>
+                <td class="p-4">
+                    <button onclick="inspectSubmission('${s.id}')" class="bg-blue-600 text-white px-4 py-1 rounded-lg hover:bg-blue-700">בדוק</button>
+                </td>
             </tr>
         `).join('');
     }
@@ -343,19 +420,35 @@
         document.getElementById('submissionsList').classList.add('hidden');
         const panel = document.getElementById('gradingPanel');
         panel.classList.remove('hidden');
+        
         panel.innerHTML = `
-            <div class="flex justify-between mb-4">
-                <h2 class="text-2xl font-bold">תשובות של ${sub.studentName}</h2>
-                <button onclick="closeGrading()" class="text-red-500">סגור X</button>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">בדיקת מבחן: ${sub.studentName}</h2>
+                <button onclick="closeGrading()" class="text-slate-400 hover:text-red-500 text-2xl">✕</button>
             </div>
-            <div class="grid md:grid-cols-2 gap-4">
-                <div class="max-h-[60vh] overflow-y-auto space-y-4">
-                    ${Object.entries(sub.responses).map(([k,v]) => `<div class="p-2 border-b"><b>${k}:</b> <p>${v}</p></div>`).join('')}
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="max-h-[65vh] overflow-y-auto pr-2 space-y-6">
+                    <h3 class="font-bold underline text-blue-700">תשובות התלמיד:</h3>
+                    ${Object.entries(sub.responses).map(([key, val]) => `
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                            <p class="text-xs text-slate-400 mb-1">${key}:</p>
+                            <p class="text-slate-800">${val || '<i class="text-slate-300">ללא תשובה</i>'}</p>
+                        </div>
+                    `).join('')}
                 </div>
-                <div class="bg-slate-50 p-4 rounded">
-                    <textarea id="tFeedback" class="w-full h-32 border p-2 mb-2" placeholder="הערות...">${sub.teacherFeedback || ''}</textarea>
-                    <input id="tGrade" type="number" class="w-full border p-2 mb-2" placeholder="ציון" value="${sub.finalGrade || ''}">
-                    <button onclick="saveGrading()" class="w-full bg-green-600 text-white p-4 font-bold rounded">שמור ציון</button>
+                <div class="bg-blue-50 p-6 rounded-2xl border border-blue-200 h-fit sticky top-0">
+                    <h3 class="font-bold mb-4">הזנת ציון ומשוב</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm mb-1">ציון סופי:</label>
+                            <input type="number" id="tGrade" value="${sub.finalGrade || ''}" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-400">
+                        </div>
+                        <div>
+                            <label class="block text-sm mb-1">הערות לבדיקה:</label>
+                            <textarea id="tFeedback" class="w-full h-32 p-3 border rounded-xl outline-none focus:ring-2 focus:ring-blue-400">${sub.teacherFeedback || ''}</textarea>
+                        </div>
+                        <button onclick="saveGrading()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold hover:bg-green-700 transition shadow-lg">שמור ושלח ציון לתלמיד</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -369,30 +462,17 @@
     async function saveGrading() {
         const grade = document.getElementById('tGrade').value;
         const feedback = document.getElementById('tFeedback').value;
-        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').doc(inspectingId).update({
-            finalGrade: grade,
-            teacherFeedback: feedback
-        });
-        alert("נשמר!");
-        closeGrading();
+        try {
+            await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').doc(inspectingId).update({
+                finalGrade: grade === "" ? null : Number(grade),
+                teacherFeedback: feedback
+            });
+            alert("הציון נשמר בהצלחה!");
+            closeGrading();
+        } catch (err) { alert("שגיאה בשמירה: " + err.message); }
     }
 
-    function handleTeacherAccess() {
-        if (document.getElementById('passInput').value === TEACHER_PASSWORD) setView('teacher');
-        else alert("טעות");
-    }
-
-    function renderSubmissionStatus() {
-        const container = document.getElementById('submissionContent');
-        const mySub = submissions.find(s => s.userId === currentUser.uid);
-        if (mySub && mySub.finalGrade) {
-            container.innerHTML = `<div class="bg-blue-50 p-4 rounded border-2 border-blue-200"><p class="text-3xl font-bold">ציון: ${mySub.finalGrade}</p><p class="mt-2">${mySub.teacherFeedback || ''}</p></div>`;
-        } else {
-            container.innerHTML = `<p>המבחן הוגש וממתין לבדיקה.</p>`;
-        }
-    }
-
-    window.onload = () => { renderQuiz(); initApp(); };
+    window.onload = initApp;
 </script>
 
 </body>
