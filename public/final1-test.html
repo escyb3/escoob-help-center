@@ -15,8 +15,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
         body { font-family: 'Assistant', sans-serif; background-color: #f3f4f6; }
         .question-card { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 2rem; border: 1px solid #e5e7eb; }
-        input[type="text"], textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.75rem; margin-top: 0.5rem; }
+        input[type="text"], textarea, select { width: 100%; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.75rem; margin-top: 0.5rem; }
         .score-badge { background: #fee2e2; color: #991b1b; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: bold; font-size: 0.875rem; }
+        th, td { border: 1px solid #e5e7eb; padding: 0.75rem; text-align: center; }
+        th { background-color: #f9fafb; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -39,7 +41,7 @@
     <!-- מסך תוצאות לתלמיד -->
     <div id="status-screen" class="max-w-2xl mx-auto mt-20 hidden">
         <div class="bg-white p-8 rounded-xl shadow-lg border-t-8 border-green-500 text-center">
-            <h2 id="status-title" class="text-3xl font-bold mb-4">שלום, [שם]</h2>
+            <h2 id="status-title" class="text-3xl font-bold mb-4">שלום</h2>
             <div id="grade-display" class="mb-6 p-6 bg-blue-50 rounded-lg inline-block">
                 <p class="text-gray-600">הציון שלך:</p>
                 <div id="final-score" class="text-5xl font-black text-blue-800">--</div>
@@ -61,13 +63,13 @@
         </header>
 
         <form id="quiz-form">
-            <!-- שאלות המבחן -->
+            <!-- שאלה 1 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-bold">שאלה 1 – ידע בסיסי</h3>
                     <span class="score-badge">10 נקודות</span>
                 </div>
-                <p class="mb-2">רשום את שמות ילדיהם של המלך מתוק בוג'י ובני/בנות זוגם:</p>
+                <p class="mb-4 font-semibold">רשום את שמות ילדיהם של המלך מתוק בוג'י ובני/בנות זוגם:</p>
                 <div class="space-y-3">
                     <div class="flex items-center gap-2"><input type="text" name="q1_child1" placeholder="שם הילד/ה"> נישא/ה ל- <input type="text" name="q1_spouse1" placeholder="שם בן/בת הזוג"></div>
                     <div class="flex items-center gap-2"><input type="text" name="q1_child2" placeholder="שם הילד/ה"> נישא/ה ל- <input type="text" name="q1_spouse2" placeholder="שם בן/בת הזוג"></div>
@@ -77,108 +79,149 @@
                 </div>
             </div>
 
+            <!-- שאלה 2 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-bold">שאלה 2 – הבנת הדמות</h3>
                     <span class="score-badge">5 נקודות</span>
                 </div>
-                <p>מי היה פסטון, וכיצד התנהג במהלך חייו?</p>
-                <textarea name="q2" rows="4"></textarea>
+                <p class="mb-2">מי היה פסטון, וכיצד התנהג במהלך חייו? (התייחס לאופיו, לקשר שלו עם נעים שמכם ולדברים שאמר לפני היעלמותו)</p>
+                <textarea name="q2" rows="4" placeholder="הקלד תשובה כאן..."></textarea>
             </div>
 
+            <!-- שאלה 3 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-bold">שאלה 3 – שאלת אמריקאית</h3>
                     <span class="score-badge">5 נקודות</span>
                 </div>
-                <p class="mb-4">מתי החלו בפועל המלחמות של הפסטים / פיסטים נגד הטובים?</p>
+                <p class="mb-4 font-semibold">מתי החלו בפועל המלחמות של הפסטים / פיסטים נגד הטובים?</p>
                 <div class="space-y-2">
-                    <label class="block cursor-pointer"><input type="radio" name="q3" value="א"> א. לאחר היעלמותו של פסטון</label>
-                    <label class="block cursor-pointer"><input type="radio" name="q3" value="ב"> ב. בחתונה של נעים ורותי שמכם</label>
-                    <label class="block cursor-pointer"><input type="radio" name="q3" value="ג"> ג. בזמן התכנסות חשובה בממלכה</label>
-                    <label class="block cursor-pointer"><input type="radio" name="q3" value="ד"> ד. לאחר פעילות גיבוש משותפת בים</label>
+                    <label class="block cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="q3" value="א"> א. לאחר היעלמותו של פסטון</label>
+                    <label class="block cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="q3" value="ב"> ב. בחתונה של נעים ורותי שמכם</label>
+                    <label class="block cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="q3" value="ג"> ג. בזמן התכנסות חשובה בממלכה</label>
+                    <label class="block cursor-pointer p-2 border rounded hover:bg-gray-50"><input type="radio" name="q3" value="ד"> ד. לאחר פעילות גיבוש משותפת בים</label>
                 </div>
             </div>
 
+            <!-- שאלה 4 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-bold">שאלה 4 – נכון / לא נכון</h3>
                     <span class="score-badge">5 נקודות</span>
                 </div>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center p-2 border-b"><span>א. מלכה לאה היא בתם של נעים ונני שמכם</span> <select name="q4_a" class="p-1 border rounded"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
-                    <div class="flex justify-between items-center p-2 border-b"><span>ב. פוני היה בנו של נעים שמכם והפך למנהיג הטובים</span> <select name="q4_b" class="p-1 border rounded"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
-                    <div class="flex justify-between items-center p-2 border-b"><span>ג. נונן ביקש להתחתן עם נני כאות תודה על הטיפול</span> <select name="q4_c" class="p-1 border rounded"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                <p class="mb-4">סמן ✓ ליד המשפטים הנכונים ו-✗ ליד השגויים:</p>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-2 border-b"><span>א. מלכה לאה היא בתם של נעים ונני שמכם</span> <select name="q4_a" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ב. פוני היה בנו של נעים שמכם והפך למנהיג הטובים</span> <select name="q4_b" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ג. נונן ביקש להתחתן עם נני כאות תודה על הטיפול</span> <select name="q4_c" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ד. הפיסטים הופיעו לראשונה בזמן הנהגתו של אבי תפוח</span> <select name="q4_d" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ה. מתוק בוג'י חילק את הממלכה לחמישה חלקים צבאיים</span> <select name="q4_e" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
                 </div>
             </div>
 
+            <!-- שאלה 5 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-lg font-bold">שאלה 5 – שאלת עומק (אילנה)</h3>
+                    <h3 class="text-lg font-bold">שאלה 5 – שאלת עומק (דמות 1)</h3>
                     <span class="score-badge">10 נקודות</span>
                 </div>
-                <p>תאר בקצרה את סיפור חייה של אילנה (נישואיה, בריחתה, חייה לאחר מכן):</p>
+                <p class="mb-2">תאר בקצרה את סיפור חייה של אילנה: התייחס לנישואיה, לבריחתה, ולחייה לאחר מכן.</p>
                 <textarea name="q5" rows="4"></textarea>
             </div>
 
+            <!-- שאלה 6 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-bold">שאלה 6 – התאמה</h3>
                     <span class="score-badge">5 נקודות</span>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-10 py-4">
-                        <p>1. שירה | 2. קרפדה | 3. ז'אזן | 4. מגנום גלר</p>
+                <p class="mb-4">התאם בין הדמות לתיאור הנכון (רשום מספר ליד כל היגד):</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded">
+                        <p>1. שירה</p><p>2. קרפדה</p><p>3. ז'אזן</p><p>4. מגנום גלר</p>
                     </div>
-                    <div class="space-y-2">
-                        <input type="text" name="q6_match" placeholder="התאם בין הדמויות לתיאורים">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2"><input type="text" name="q6_1" placeholder="מס' דמות" class="w-20"> <span>האמינה שחשמל עשוי מקיר</span></div>
+                        <div class="flex items-center gap-2"><input type="text" name="q6_2" placeholder="מס' דמות" class="w-20"> <span>שליט שנישא למיכל</span></div>
+                        <div class="flex items-center gap-2"><input type="text" name="q6_3" placeholder="מס' דמות" class="w-20"> <span>פגע בבריאות אשתו אך היא אהבה אותו</span></div>
+                        <div class="flex items-center gap-2"><input type="text" name="q6_4" placeholder="מס' דמות" class="w-20"> <span>מלך הכחול-ים</span></div>
                     </div>
                 </div>
             </div>
 
+            <!-- שאלה 7 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-lg font-bold">שאלה 7 – שאלת ידע קצרה</h3>
+                    <h3 class="text-lg font-bold">שאלה 7 – שאלת ידע קצרה (דמות 2)</h3>
                     <span class="score-badge">5 נקודות</span>
                 </div>
-                <p>מי הייתה קרולין, ומה הייתה תגובת הוריה לבחירותיה הזוגיות?</p>
+                <p class="mb-2">מי הייתה קרולין, ומה הייתה תגובת הוריה לבחירותיה הזוגיות?</p>
                 <textarea name="q7" rows="3"></textarea>
             </div>
 
+            <!-- שאלה 8 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-bold">שאלה 8 – מגילת הפיסטי</h3>
                     <span class="score-badge">10 נקודות</span>
                 </div>
-                <p>הסבר מדוע המספרים אינם אמינים ומה מטרת הכתיבה:</p>
-                <textarea name="q8" rows="4"></textarea>
+                <p class="mb-4 bg-gray-50 p-4 rounded italic">"ויהי בימי פסטי בן פסטי בן פסטי בן פסטי בן פסטי בן פסטי בן פסטי אשר בן יקר בן פסטי בן יקר בן פסטי בן פסטי בן פסטי: ויעלו טובים מן הים ויהרגו חמשת אלפים מאיתנו ונהרוג חמישה מיליון מהם כי הרגו יותר מאיתנו ויטבחו בנו וייקחו שלל רב"</p>
+                <div class="space-y-4">
+                    <div><label>א. מי מתואר במגילה כמי שפתח באירוע האלים?</label><input type="text" name="q8_a"></div>
+                    <div><label>ב. הסבר מדוע המספרים במגילה אינם אמינים מבחינה היסטורית:</label><textarea name="q8_b" rows="2"></textarea></div>
+                    <div><label>ג. מה מטרת כתיבת המגילה לדעתך – תיעוד היסטורי או תעמולה? נמק:</label><textarea name="q8_c" rows="2"></textarea></div>
+                </div>
             </div>
 
+            <!-- שאלה 9 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-bold">שאלה 9 – מגילת הפיסטי: נכון / לא נכון</h3>
                     <span class="score-badge">5 נקודות</span>
                 </div>
-                <select name="q9" class="p-2 border rounded w-full"><option value="">בחר סטטוס נכונות</option><option>הרוב נכון</option><option>הרוב שגוי</option></select>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-2 border-b"><span>א. מגילת הפיסטי נכתבה מנקודת מבטם של הפיסטים</span> <select name="q9_a" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ב. לפי המגילה, הפיסטים הם שפתחו במלחמה</span> <select name="q9_b" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ג. המספרים במגילה תואמים להיגיון צבאי ולמציאות</span> <select name="q9_c" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ד. המגילה מציגה את הפיסטים כקורבנות</span> <select name="q9_d" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ה. מטרת המגילה היא בעיקר חיזוק הזהות והמורל של הפיסטים</span> <select name="q9_e" class="w-24"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                </div>
             </div>
 
+            <!-- שאלה 10 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-bold">שאלה 10 – השוואה בין מקורות</h3>
                     <span class="score-badge">10 נקודות</span>
                 </div>
-                <textarea name="q10" rows="4" placeholder="השווה בין המקורות..."></textarea>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr><th>נושא</th><th>מגילת הפיסטי</th><th>גרסת הטובים</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>מי התחיל</td><td><input type="text" name="q10_start_p"></td><td><input type="text" name="q10_start_t"></td></tr>
+                        <tr><td>מספר הרוגים</td><td><input type="text" name="q10_deaths_p"></td><td><input type="text" name="q10_deaths_t"></td></tr>
+                        <tr><td>הצגת הכותב</td><td><input type="text" name="q10_author_p"></td><td><input type="text" name="q10_author_t"></td></tr>
+                        <tr><td>מטרת הסיפור</td><td><input type="text" name="q10_goal_p"></td><td><input type="text" name="q10_goal_t"></td></tr>
+                    </tbody>
+                </table>
             </div>
 
+            <!-- שאלה 11 -->
             <div class="question-card">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="text-lg font-bold">שאלה 11 – מי משקר ולמה?</h3>
                     <span class="score-badge">10 נקודות</span>
                 </div>
-                <textarea name="q11" rows="4"></textarea>
+                <div class="space-y-4">
+                    <div><label>א. מי לדעתך מעוות יותר את המציאות?</label><textarea name="q11_a" rows="2"></textarea></div>
+                    <div><label>ב. הסבר מדוע אותו צד בחר להציג כך את הסיפור (פוליטיקה/מורל):</label><textarea name="q11_b" rows="3"></textarea></div>
+                    <div><label>ג. כיצד היסטוריון אחראי צריך להתייחס למקורות כאלה?</label><textarea name="q11_c" rows="2"></textarea></div>
+                </div>
             </div>
 
-            <button type="button" onclick="submitExam()" id="submit-btn" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-green-700 shadow-lg mb-20">הגש מבחן</button>
+            <button type="button" onclick="submitExam()" id="submit-btn" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-green-700 shadow-lg mb-20 transition">הגש מבחן</button>
         </form>
     </div>
 
@@ -188,14 +231,8 @@
             <h1 class="text-2xl font-bold text-red-800">לוח בקרה למורה</h1>
             <button onclick="location.reload()" class="bg-gray-200 px-4 py-2 rounded">התנתק</button>
         </header>
-        
-        <div id="submissions-list" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <!-- כרטיסי תלמידים יופיעו כאן -->
-        </div>
-
-        <div id="submission-detail" class="bg-white p-8 rounded-xl shadow border-t-8 border-red-500 hidden">
-            <!-- פרטי מבחן מפורטים יופיעו כאן בבדיקה -->
-        </div>
+        <div id="submissions-list" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"></div>
+        <div id="submission-detail" class="bg-white p-8 rounded-xl shadow border-t-8 border-red-500 hidden"></div>
     </div>
 
     <script>
@@ -208,10 +245,10 @@
             appId: "1:898249382863:web:aa3309802a746c757990ba"
         };
         
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(app);
-        const auth = firebase.auth(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'history-test-101';
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'history-test-final';
         
         let currentUser = null;
         const maxPoints = { 1:10, 2:5, 3:5, 4:5, 5:10, 6:5, 7:5, 8:10, 9:5, 10:10, 11:10 };
@@ -229,34 +266,26 @@
         auth.onAuthStateChanged(user => { currentUser = user; });
         initAuth();
 
-        // בדיקת סטטוס תלמיד קיים
         async function checkUserStatus() {
             const name = document.getElementById('user-fullname').value.trim();
             if (!name) return alert("נא להזין שם מלא");
 
             const loginBtn = document.getElementById('login-btn');
             loginBtn.disabled = true;
-            document.getElementById('login-text').innerText = "בודק נתונים...";
 
             try {
-                const q = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions')
-                          .where("studentName", "==", name);
-                const snapshot = await q.get();
+                const snapshot = await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions')
+                          .where("studentName", "==", name).get();
 
                 if (!snapshot.empty) {
-                    // תלמיד כבר ביצע מבחן
-                    const subData = snapshot.docs[0].data();
-                    showStatus(name, subData);
+                    showStatus(name, snapshot.docs[0].data());
                 } else {
-                    // תלמיד חדש - התחל מבחן
                     startExam(name);
                 }
             } catch (e) {
-                console.error(e);
                 alert("שגיאה בגישה לשרת");
             } finally {
                 loginBtn.disabled = false;
-                document.getElementById('login-text').innerText = "התחל מבחן / בדוק ציון";
             }
         }
 
@@ -264,7 +293,6 @@
             document.getElementById('auth-screen').classList.add('hidden');
             const statusScreen = document.getElementById('status-screen');
             statusScreen.classList.remove('hidden');
-            
             document.getElementById('status-title').innerText = `שלום, ${name}`;
             document.getElementById('final-score').innerText = data.grade !== null ? data.grade : "--";
             document.getElementById('comments-text').innerText = data.teacherNote || "טרם נכתבו הערות על ידי המורה.";
@@ -278,22 +306,19 @@
         }
 
         async function submitExam() {
-            if (!currentUser) return alert("שגיאת התחברות.");
             const name = document.getElementById('user-fullname').value;
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
-            btn.innerText = "שולח...";
 
             const formData = new FormData(document.getElementById('quiz-form'));
             const data = {
                 studentName: name,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 answers: Object.fromEntries(formData.entries()),
-                detailedScores: {},
-                detailedNotes: {},
-                status: 'submitted',
                 grade: null,
-                teacherNote: ""
+                teacherNote: "",
+                detailedScores: {},
+                detailedNotes: {}
             };
 
             try {
@@ -301,12 +326,11 @@
                 document.getElementById('exam-screen').innerHTML = `
                     <div class="text-center p-20 bg-white rounded-xl shadow mt-10">
                         <h2 class="text-4xl font-bold text-green-600 mb-4">המבחן הוגש בהצלחה!</h2>
-                        <p class="text-xl">תוכל לחזור לכאן מאוחר יותר כדי לבדוק את הציון שלך.</p>
-                        <button onclick="location.reload()" class="mt-8 bg-blue-600 text-white px-8 py-3 rounded-lg font-bold">חזרה</button>
-                    </div>
-                `;
+                        <p>תוכל לחזור לכאן מאוחר יותר כדי לבדוק את הציון שלך.</p>
+                        <button onclick="location.reload()" class="mt-8 bg-blue-600 text-white px-8 py-3 rounded-lg">חזרה</button>
+                    </div>`;
             } catch (e) {
-                alert("שגיאה בשליחה: " + e.message);
+                alert("שגיאה: " + e.message);
                 btn.disabled = false;
             }
         }
@@ -318,23 +342,18 @@
         }
 
         function loadSubmissions() {
-            if (!currentUser) return setTimeout(loadSubmissions, 500);
-            const container = document.getElementById('submissions-list');
-            
             db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions')
                 .onSnapshot(snapshot => {
+                    const container = document.getElementById('submissions-list');
                     container.innerHTML = "";
                     snapshot.forEach(doc => {
                         const sub = doc.data();
                         const card = document.createElement('div');
-                        card.className = "bg-white p-4 rounded-xl shadow-md cursor-pointer hover:border-red-500 border-2 border-transparent transition";
+                        card.className = "bg-white p-4 rounded-xl shadow-md cursor-pointer border-2 border-transparent hover:border-red-500";
                         card.innerHTML = `
-                            <div class="flex justify-between items-center">
-                                <span class="font-bold text-lg">${sub.studentName}</span>
-                                <span class="bg-gray-100 px-2 py-1 rounded text-xs">${sub.grade !== null ? 'נבדק' : 'ממתין'}</span>
-                            </div>
-                            <div class="text-sm text-gray-500 mt-1">${sub.timestamp?.toDate().toLocaleString() || 'נשלח עכשיו'}</div>
-                            <div class="mt-3 text-red-700 font-bold">ציון: ${sub.grade || '--'}</div>
+                            <div class="font-bold">${sub.studentName}</div>
+                            <div class="text-sm text-gray-500">${sub.timestamp?.toDate().toLocaleString() || ''}</div>
+                            <div class="mt-2 text-red-700">ציון: ${sub.grade ?? '--'}</div>
                         `;
                         card.onclick = () => showAdminDetail(doc.id, sub);
                         container.appendChild(card);
@@ -346,108 +365,64 @@
             const detail = document.getElementById('submission-detail');
             detail.classList.remove('hidden');
             
-            let html = `
-                <div class="flex justify-between items-center mb-8 pb-4 border-b">
-                    <h2 class="text-2xl font-bold">בדיקת מבחן: ${sub.studentName}</h2>
-                    <button onclick="document.getElementById('submission-detail').classList.add('hidden')" class="text-gray-500 text-2xl">×</button>
-                </div>
-                <div class="space-y-6">
-            `;
-
-            // יצירת ממשק לכל שאלה
+            let questionsHtml = "";
             for (let i = 1; i <= 11; i++) {
-                const currentScore = sub.detailedScores?.[i] || 0;
-                const currentNote = sub.detailedNotes?.[i] || "";
-                
-                // שליחת התשובה הרלוונטית (בצורה פשוטה לצרכי תצוגה)
-                let relevantAnswers = "";
+                let ans = "";
                 for(let key in sub.answers) {
-                    if(key.startsWith(`q${i}`) || key.startsWith(`match_${i}`)) {
-                        relevantAnswers += `<div><strong>${key}:</strong> ${sub.answers[key]}</div>`;
-                    }
+                    if(key.startsWith(`q${i}`)) ans += `<div class="mb-1"><strong>${key}:</strong> ${sub.answers[key]}</div>`;
                 }
-
-                html += `
-                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div class="flex justify-between mb-2">
-                            <span class="font-bold">שאלה ${i} (מקסימום ${maxPoints[i]} נק')</span>
+                questionsHtml += `
+                    <div class="p-4 bg-gray-50 rounded mb-4 border">
+                        <div class="font-bold mb-2">שאלה ${i} (מקסימום ${maxPoints[i]} נק')</div>
+                        <div class="bg-white p-2 rounded border mb-2 text-sm">${ans || 'אין תשובה'}</div>
+                        <div class="flex gap-4">
+                            <input type="number" class="q-score border p-1 rounded w-20" data-idx="${i}" max="${maxPoints[i]}" value="${sub.detailedScores?.[i] || 0}">
+                            <input type="text" class="q-note border p-1 rounded flex-1" data-idx="${i}" value="${sub.detailedNotes?.[i] || ''}" placeholder="הערה לשאלה...">
                         </div>
-                        <div class="bg-white p-3 rounded border mb-3 text-sm">
-                            ${relevantAnswers || '<span class="text-gray-400 italic">אין נתונים</span>'}
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="text-xs block">ניקוד שניתן:</label>
-                                <input type="number" class="q-score border p-1 rounded w-20" data-idx="${i}" max="${maxPoints[i]}" min="0" value="${currentScore}">
-                            </div>
-                            <div>
-                                <label class="text-xs block">הערה לשאלה זו:</label>
-                                <input type="text" class="q-note border p-1 rounded w-full" data-idx="${i}" value="${currentNote}" placeholder="הערה ספציפית...">
-                            </div>
-                        </div>
-                    </div>
-                `;
+                    </div>`;
             }
 
-            html += `
-                <div class="mt-10 p-6 bg-red-50 rounded-xl border-2 border-red-200">
-                    <h3 class="font-bold mb-4">סיכום והערה כללית</h3>
-                    <textarea id="admin-overall-note" class="w-full p-2 border mb-4" rows="3" placeholder="הערה שתופיע בסוף המבחן לתלמיד...">${sub.teacherNote || ""}</textarea>
-                    <div class="flex items-center justify-between">
-                        <div class="text-xl font-bold">ציון משוקלל: <span id="calc-total">--</span></div>
-                        <button onclick="saveAdminGrading('${id}')" class="bg-red-600 text-white px-8 py-3 rounded-lg font-bold shadow hover:bg-red-700">שמור ציון והערות</button>
+            detail.innerHTML = `
+                <div class="flex justify-between mb-6 border-b pb-4">
+                    <h2 class="text-xl font-bold">בדיקה: ${sub.studentName}</h2>
+                    <button onclick="document.getElementById('submission-detail').classList.add('hidden')">סגור</button>
+                </div>
+                ${questionsHtml}
+                <div class="mt-6 p-4 bg-red-50 rounded">
+                    <textarea id="overall-note" class="w-full p-2 border mb-2" placeholder="הערה כללית...">${sub.teacherNote || ''}</textarea>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xl font-bold">ציון: <span id="live-total">0</span></span>
+                        <button onclick="saveGrading('${id}')" class="bg-red-600 text-white px-6 py-2 rounded">שמור ציון</button>
                     </div>
-                </div>
-                </div>
-            `;
-
-            detail.innerHTML = html;
+                </div>`;
             
-            // האזנה לשינויים לחישוב אוטומטי
-            const scoreInputs = document.querySelectorAll('.q-score');
-            const calcTotal = () => {
-                let total = 0;
-                scoreInputs.forEach(input => total += Number(input.value || 0));
-                document.getElementById('calc-total').innerText = total;
+            const inputs = document.querySelectorAll('.q-score');
+            const update = () => {
+                let t = 0;
+                inputs.forEach(i => t += Number(i.value));
+                document.getElementById('live-total').innerText = t;
             };
-            scoreInputs.forEach(input => input.oninput = calcTotal);
-            calcTotal();
-            window.scrollTo({ top: detail.offsetTop - 20, behavior: 'smooth' });
+            inputs.forEach(i => i.oninput = update);
+            update();
         }
 
-        async function saveAdminGrading(docId) {
-            const overallNote = document.getElementById('admin-overall-note').value;
-            const scoreElements = document.querySelectorAll('.q-score');
-            const noteElements = document.querySelectorAll('.q-note');
-            
-            let detailedScores = {};
-            let detailedNotes = {};
-            let finalGrade = 0;
-
-            scoreElements.forEach(el => {
-                const idx = el.dataset.idx;
-                const val = Number(el.value);
-                detailedScores[idx] = val;
-                finalGrade += val;
+        async function saveGrading(docId) {
+            const scores = {}, notes = {};
+            let final = 0;
+            document.querySelectorAll('.q-score').forEach(el => {
+                scores[el.dataset.idx] = Number(el.value);
+                final += Number(el.value);
             });
+            document.querySelectorAll('.q-note').forEach(el => notes[el.dataset.idx] = el.value);
 
-            noteElements.forEach(el => {
-                detailedNotes[el.dataset.idx] = el.value;
+            await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').doc(docId).update({
+                grade: final,
+                teacherNote: document.getElementById('overall-note').value,
+                detailedScores: scores,
+                detailedNotes: notes
             });
-
-            try {
-                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').doc(docId).update({
-                    grade: finalGrade,
-                    teacherNote: overallNote,
-                    detailedScores: detailedScores,
-                    detailedNotes: detailedNotes,
-                    status: 'graded'
-                });
-                alert("הציון נשמר! התלמיד יכול לראות אותו כעת.");
-                document.getElementById('submission-detail').classList.add('hidden');
-            } catch (e) {
-                alert("שגיאה בשמירה: " + e.message);
-            }
+            alert("הציון נשמר!");
+            document.getElementById('submission-detail').classList.add('hidden');
         }
     </script>
 </body>
