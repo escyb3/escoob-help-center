@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מבחן סוף עונה - הטובים והפיסטים</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&display=swap');
+        body { font-family: 'Assistant', sans-serif; background-color: #f3f4f6; }
+        .question-card { background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 2rem; border: 1px solid #e5e7eb; }
+        input[type="text"], textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.75rem; margin-top: 0.5rem; }
+        .score-badge { background: #fee2e2; color: #991b1b; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: bold; font-size: 0.875rem; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- מסך כניסה ובדיקת סטטוס -->
+    <div id="auth-screen" class="max-w-md mx-auto mt-20 bg-white p-8 rounded-xl shadow-lg border border-blue-100">
+        <h1 class="text-2xl font-bold mb-6 text-center text-blue-800">מערכת המבחן - כניסה</h1>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">שם מלא של התלמיד</label>
+                <input type="text" id="user-fullname" placeholder="הקלד שם מלא..." class="mt-1">
+            </div>
+            <button onclick="checkUserStatus()" id="login-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition flex justify-center items-center">
+                <span id="login-text">התחל מבחן / בדוק ציון</span>
+            </button>
+            <button onclick="toggleAdmin()" class="w-full mt-4 text-sm text-gray-500 underline text-center block">כניסת מורה</button>
+        </div>
+    </div>
+
+    <!-- מסך תוצאות לתלמיד -->
+    <div id="status-screen" class="max-w-2xl mx-auto mt-20 hidden">
+        <div class="bg-white p-8 rounded-xl shadow-lg border-t-8 border-green-500 text-center">
+            <h2 id="status-title" class="text-3xl font-bold mb-4">שלום, [שם]</h2>
+            <div id="grade-display" class="mb-6 p-6 bg-blue-50 rounded-lg inline-block">
+                <p class="text-gray-600">הציון שלך:</p>
+                <div id="final-score" class="text-5xl font-black text-blue-800">--</div>
+            </div>
+            <div id="teacher-comments" class="text-right bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200 min-h-[100px]">
+                <h4 class="font-bold border-b pb-2 mb-4">הערות כלליות מהמורה:</h4>
+                <div id="comments-text" class="text-gray-700 whitespace-pre-wrap"></div>
+            </div>
+            <button onclick="location.reload()" class="bg-gray-200 px-6 py-2 rounded-lg font-bold">חזרה לדף הבית</button>
+        </div>
+    </div>
+
+    <!-- ממשק תלמיד - המבחן -->
+    <div id="exam-screen" class="max-w-4xl mx-auto hidden">
+        <header class="mb-8 text-center bg-white p-6 rounded-xl shadow-sm border">
+            <h1 class="text-3xl font-bold text-blue-900">מבחן סוף העונה - הצגות 1-30</h1>
+            <p class="text-xl text-blue-700">ראשית הטובים והפיסטים + דורות הטובים</p>
+            <div id="student-name-display" class="mt-2 font-bold text-gray-600"></div>
+        </header>
+
+        <form id="quiz-form">
+            <!-- שאלות המבחן -->
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 1 – ידע בסיסי</h3>
+                    <span class="score-badge">10 נקודות</span>
+                </div>
+                <p class="mb-2">רשום את שמות ילדיהם של המלך מתוק בוג'י ובני/בנות זוגם:</p>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2"><input type="text" name="q1_child1" placeholder="שם הילד/ה"> נישא/ה ל- <input type="text" name="q1_spouse1" placeholder="שם בן/בת הזוג"></div>
+                    <div class="flex items-center gap-2"><input type="text" name="q1_child2" placeholder="שם הילד/ה"> נישא/ה ל- <input type="text" name="q1_spouse2" placeholder="שם בן/בת הזוג"></div>
+                    <div class="flex items-center gap-2"><input type="text" name="q1_child3" placeholder="שם הילד/ה"> נישא/ה ל- <input type="text" name="q1_spouse3" placeholder="שם בן/בת הזוג"></div>
+                    <div class="flex items-center gap-2"><input type="text" name="q1_child4" placeholder="שם הילד/ה"> נישא/ה ל- <input type="text" name="q1_spouse4" placeholder="שם בן/בת הזוג"></div>
+                    <div class="flex items-center gap-2"><input type="text" name="q1_child5" placeholder="שם הילד/ה"> נישא/ה ל- <input type="text" name="q1_spouse5" placeholder="שם בן/בת הזוג"></div>
+                </div>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 2 – הבנת הדמות</h3>
+                    <span class="score-badge">5 נקודות</span>
+                </div>
+                <p>מי היה פסטון, וכיצד התנהג במהלך חייו?</p>
+                <textarea name="q2" rows="4"></textarea>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 3 – שאלת אמריקאית</h3>
+                    <span class="score-badge">5 נקודות</span>
+                </div>
+                <p class="mb-4">מתי החלו בפועל המלחמות של הפסטים / פיסטים נגד הטובים?</p>
+                <div class="space-y-2">
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="א"> א. לאחר היעלמותו של פסטון</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="ב"> ב. בחתונה של נעים ורותי שמכם</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="ג"> ג. בזמן התכנסות חשובה בממלכה</label>
+                    <label class="block cursor-pointer"><input type="radio" name="q3" value="ד"> ד. לאחר פעילות גיבוש משותפת בים</label>
+                </div>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 4 – נכון / לא נכון</h3>
+                    <span class="score-badge">5 נקודות</span>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-2 border-b"><span>א. מלכה לאה היא בתם של נעים ונני שמכם</span> <select name="q4_a" class="p-1 border rounded"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ב. פוני היה בנו של נעים שמכם והפך למנהיג הטובים</span> <select name="q4_b" class="p-1 border rounded"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                    <div class="flex justify-between items-center p-2 border-b"><span>ג. נונן ביקש להתחתן עם נני כאות תודה על הטיפול</span> <select name="q4_c" class="p-1 border rounded"><option value="">בחר</option><option value="V">✓</option><option value="X">✗</option></select></div>
+                </div>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 5 – שאלת עומק (אילנה)</h3>
+                    <span class="score-badge">10 נקודות</span>
+                </div>
+                <p>תאר בקצרה את סיפור חייה של אילנה (נישואיה, בריחתה, חייה לאחר מכן):</p>
+                <textarea name="q5" rows="4"></textarea>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 6 – התאמה</h3>
+                    <span class="score-badge">5 נקודות</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-10 py-4">
+                        <p>1. שירה | 2. קרפדה | 3. ז'אזן | 4. מגנום גלר</p>
+                    </div>
+                    <div class="space-y-2">
+                        <input type="text" name="q6_match" placeholder="התאם בין הדמויות לתיאורים">
+                    </div>
+                </div>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 7 – שאלת ידע קצרה</h3>
+                    <span class="score-badge">5 נקודות</span>
+                </div>
+                <p>מי הייתה קרולין, ומה הייתה תגובת הוריה לבחירותיה הזוגיות?</p>
+                <textarea name="q7" rows="3"></textarea>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 8 – מגילת הפיסטי</h3>
+                    <span class="score-badge">10 נקודות</span>
+                </div>
+                <p>הסבר מדוע המספרים אינם אמינים ומה מטרת הכתיבה:</p>
+                <textarea name="q8" rows="4"></textarea>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 9 – מגילת הפיסטי: נכון / לא נכון</h3>
+                    <span class="score-badge">5 נקודות</span>
+                </div>
+                <select name="q9" class="p-2 border rounded w-full"><option value="">בחר סטטוס נכונות</option><option>הרוב נכון</option><option>הרוב שגוי</option></select>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 10 – השוואה בין מקורות</h3>
+                    <span class="score-badge">10 נקודות</span>
+                </div>
+                <textarea name="q10" rows="4" placeholder="השווה בין המקורות..."></textarea>
+            </div>
+
+            <div class="question-card">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-lg font-bold">שאלה 11 – מי משקר ולמה?</h3>
+                    <span class="score-badge">10 נקודות</span>
+                </div>
+                <textarea name="q11" rows="4"></textarea>
+            </div>
+
+            <button type="button" onclick="submitExam()" id="submit-btn" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-green-700 shadow-lg mb-20">הגש מבחן</button>
+        </form>
+    </div>
+
+    <!-- ממשק מורה -->
+    <div id="admin-screen" class="max-w-6xl mx-auto hidden">
+        <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-xl border border-red-200">
+            <h1 class="text-2xl font-bold text-red-800">לוח בקרה למורה</h1>
+            <button onclick="location.reload()" class="bg-gray-200 px-4 py-2 rounded">התנתק</button>
+        </header>
+        
+        <div id="submissions-list" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <!-- כרטיסי תלמידים יופיעו כאן -->
+        </div>
+
+        <div id="submission-detail" class="bg-white p-8 rounded-xl shadow border-t-8 border-red-500 hidden">
+            <!-- פרטי מבחן מפורטים יופיעו כאן בבדיקה -->
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZ6tmWYyhrK_zNa3Ah9cgDD5IzI9tJZNU",
+            authDomain: "km-test1-11ad4.firebaseapp.com",
+            projectId: "km-test1-11ad4",
+            storageBucket: "km-test1-11ad4.firebasestorage.app",
+            messagingSenderId: "898249382863",
+            appId: "1:898249382863:web:aa3309802a746c757990ba"
+        };
+        
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+        const auth = firebase.auth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'history-test-101';
+        
+        let currentUser = null;
+        const maxPoints = { 1:10, 2:5, 3:5, 4:5, 5:10, 6:5, 7:5, 8:10, 9:5, 10:10, 11:10 };
+
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await auth.signInWithCustomToken(__initial_auth_token);
+                } else {
+                    await auth.signInAnonymously();
+                }
+            } catch (e) { console.error("Auth error", e); }
+        }
+
+        auth.onAuthStateChanged(user => { currentUser = user; });
+        initAuth();
+
+        // בדיקת סטטוס תלמיד קיים
+        async function checkUserStatus() {
+            const name = document.getElementById('user-fullname').value.trim();
+            if (!name) return alert("נא להזין שם מלא");
+
+            const loginBtn = document.getElementById('login-btn');
+            loginBtn.disabled = true;
+            document.getElementById('login-text').innerText = "בודק נתונים...";
+
+            try {
+                const q = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions')
+                          .where("studentName", "==", name);
+                const snapshot = await q.get();
+
+                if (!snapshot.empty) {
+                    // תלמיד כבר ביצע מבחן
+                    const subData = snapshot.docs[0].data();
+                    showStatus(name, subData);
+                } else {
+                    // תלמיד חדש - התחל מבחן
+                    startExam(name);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("שגיאה בגישה לשרת");
+            } finally {
+                loginBtn.disabled = false;
+                document.getElementById('login-text').innerText = "התחל מבחן / בדוק ציון";
+            }
+        }
+
+        function showStatus(name, data) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            const statusScreen = document.getElementById('status-screen');
+            statusScreen.classList.remove('hidden');
+            
+            document.getElementById('status-title').innerText = `שלום, ${name}`;
+            document.getElementById('final-score').innerText = data.grade !== null ? data.grade : "--";
+            document.getElementById('comments-text').innerText = data.teacherNote || "טרם נכתבו הערות על ידי המורה.";
+        }
+
+        function startExam(name) {
+            document.getElementById('student-name-display').innerText = "תלמיד/ה: " + name;
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+
+        async function submitExam() {
+            if (!currentUser) return alert("שגיאת התחברות.");
+            const name = document.getElementById('user-fullname').value;
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = "שולח...";
+
+            const formData = new FormData(document.getElementById('quiz-form'));
+            const data = {
+                studentName: name,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                answers: Object.fromEntries(formData.entries()),
+                detailedScores: {},
+                detailedNotes: {},
+                status: 'submitted',
+                grade: null,
+                teacherNote: ""
+            };
+
+            try {
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').add(data);
+                document.getElementById('exam-screen').innerHTML = `
+                    <div class="text-center p-20 bg-white rounded-xl shadow mt-10">
+                        <h2 class="text-4xl font-bold text-green-600 mb-4">המבחן הוגש בהצלחה!</h2>
+                        <p class="text-xl">תוכל לחזור לכאן מאוחר יותר כדי לבדוק את הציון שלך.</p>
+                        <button onclick="location.reload()" class="mt-8 bg-blue-600 text-white px-8 py-3 rounded-lg font-bold">חזרה</button>
+                    </div>
+                `;
+            } catch (e) {
+                alert("שגיאה בשליחה: " + e.message);
+                btn.disabled = false;
+            }
+        }
+
+        function toggleAdmin() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('admin-screen').classList.remove('hidden');
+            loadSubmissions();
+        }
+
+        function loadSubmissions() {
+            if (!currentUser) return setTimeout(loadSubmissions, 500);
+            const container = document.getElementById('submissions-list');
+            
+            db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions')
+                .onSnapshot(snapshot => {
+                    container.innerHTML = "";
+                    snapshot.forEach(doc => {
+                        const sub = doc.data();
+                        const card = document.createElement('div');
+                        card.className = "bg-white p-4 rounded-xl shadow-md cursor-pointer hover:border-red-500 border-2 border-transparent transition";
+                        card.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg">${sub.studentName}</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded text-xs">${sub.grade !== null ? 'נבדק' : 'ממתין'}</span>
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">${sub.timestamp?.toDate().toLocaleString() || 'נשלח עכשיו'}</div>
+                            <div class="mt-3 text-red-700 font-bold">ציון: ${sub.grade || '--'}</div>
+                        `;
+                        card.onclick = () => showAdminDetail(doc.id, sub);
+                        container.appendChild(card);
+                    });
+                });
+        }
+
+        function showAdminDetail(id, sub) {
+            const detail = document.getElementById('submission-detail');
+            detail.classList.remove('hidden');
+            
+            let html = `
+                <div class="flex justify-between items-center mb-8 pb-4 border-b">
+                    <h2 class="text-2xl font-bold">בדיקת מבחן: ${sub.studentName}</h2>
+                    <button onclick="document.getElementById('submission-detail').classList.add('hidden')" class="text-gray-500 text-2xl">×</button>
+                </div>
+                <div class="space-y-6">
+            `;
+
+            // יצירת ממשק לכל שאלה
+            for (let i = 1; i <= 11; i++) {
+                const currentScore = sub.detailedScores?.[i] || 0;
+                const currentNote = sub.detailedNotes?.[i] || "";
+                
+                // שליחת התשובה הרלוונטית (בצורה פשוטה לצרכי תצוגה)
+                let relevantAnswers = "";
+                for(let key in sub.answers) {
+                    if(key.startsWith(`q${i}`) || key.startsWith(`match_${i}`)) {
+                        relevantAnswers += `<div><strong>${key}:</strong> ${sub.answers[key]}</div>`;
+                    }
+                }
+
+                html += `
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold">שאלה ${i} (מקסימום ${maxPoints[i]} נק')</span>
+                        </div>
+                        <div class="bg-white p-3 rounded border mb-3 text-sm">
+                            ${relevantAnswers || '<span class="text-gray-400 italic">אין נתונים</span>'}
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs block">ניקוד שניתן:</label>
+                                <input type="number" class="q-score border p-1 rounded w-20" data-idx="${i}" max="${maxPoints[i]}" min="0" value="${currentScore}">
+                            </div>
+                            <div>
+                                <label class="text-xs block">הערה לשאלה זו:</label>
+                                <input type="text" class="q-note border p-1 rounded w-full" data-idx="${i}" value="${currentNote}" placeholder="הערה ספציפית...">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="mt-10 p-6 bg-red-50 rounded-xl border-2 border-red-200">
+                    <h3 class="font-bold mb-4">סיכום והערה כללית</h3>
+                    <textarea id="admin-overall-note" class="w-full p-2 border mb-4" rows="3" placeholder="הערה שתופיע בסוף המבחן לתלמיד...">${sub.teacherNote || ""}</textarea>
+                    <div class="flex items-center justify-between">
+                        <div class="text-xl font-bold">ציון משוקלל: <span id="calc-total">--</span></div>
+                        <button onclick="saveAdminGrading('${id}')" class="bg-red-600 text-white px-8 py-3 rounded-lg font-bold shadow hover:bg-red-700">שמור ציון והערות</button>
+                    </div>
+                </div>
+                </div>
+            `;
+
+            detail.innerHTML = html;
+            
+            // האזנה לשינויים לחישוב אוטומטי
+            const scoreInputs = document.querySelectorAll('.q-score');
+            const calcTotal = () => {
+                let total = 0;
+                scoreInputs.forEach(input => total += Number(input.value || 0));
+                document.getElementById('calc-total').innerText = total;
+            };
+            scoreInputs.forEach(input => input.oninput = calcTotal);
+            calcTotal();
+            window.scrollTo({ top: detail.offsetTop - 20, behavior: 'smooth' });
+        }
+
+        async function saveAdminGrading(docId) {
+            const overallNote = document.getElementById('admin-overall-note').value;
+            const scoreElements = document.querySelectorAll('.q-score');
+            const noteElements = document.querySelectorAll('.q-note');
+            
+            let detailedScores = {};
+            let detailedNotes = {};
+            let finalGrade = 0;
+
+            scoreElements.forEach(el => {
+                const idx = el.dataset.idx;
+                const val = Number(el.value);
+                detailedScores[idx] = val;
+                finalGrade += val;
+            });
+
+            noteElements.forEach(el => {
+                detailedNotes[el.dataset.idx] = el.value;
+            });
+
+            try {
+                await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').doc(docId).update({
+                    grade: finalGrade,
+                    teacherNote: overallNote,
+                    detailedScores: detailedScores,
+                    detailedNotes: detailedNotes,
+                    status: 'graded'
+                });
+                alert("הציון נשמר! התלמיד יכול לראות אותו כעת.");
+                document.getElementById('submission-detail').classList.add('hidden');
+            } catch (e) {
+                alert("שגיאה בשמירה: " + e.message);
+            }
+        }
+    </script>
+</body>
+</html>
