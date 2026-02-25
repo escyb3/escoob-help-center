@@ -3,317 +3,443 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escoob Elite v6.1</title>
+    <title>Escoob Pro | פורטל לימודים רשמי</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
-        .dark { --primary: #60a5fa; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
-        body { background-color: var(--bg); color: var(--text); font-family: 'Assistant', sans-serif; transition: all 0.3s ease; margin: 0; }
-        .glass-card { background: var(--card); border: 1px solid rgba(0,0,0,0.05); }
-        .nav-link.active { background-color: var(--primary); color: white !important; }
-        .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px); transition: all 0.3s ease; z-index: 1000; }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        #qrcode img { margin: 0 auto; border: 10px solid white; border-radius: 1rem; }
-        .loading-dots:after { content: ' .'; animation: dots 1.5s steps(5, end) infinite; }
-        @keyframes dots { 0%, 20% { content: ' .'; } 40% { content: ' ..'; } 60% { content: ' ...'; } 80%, 100% { content: ''; } }
+        body { font-family: 'Assistant', sans-serif; background: #f1f5f9; color: #0f172a; overflow-x: hidden; }
+        .auth-gradient { background: radial-gradient(circle at top right, #2563eb, #1e40af); }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+        .nav-link.active { background-color: #2563eb; color: white !important; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3); }
+        .hidden-section { display: none; }
+        .input-field { width: 100%; padding: 0.85rem 1rem; border-radius: 1rem; border: 1px solid #e2e8f0; outline: none; transition: all 0.2s; background: #fff; }
+        .input-field:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #2563eb; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <!-- Toast -->
-    <div id="toast" class="toast bg-slate-800 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
-        <span id="toast-icon">✨</span>
-        <span id="toast-msg"></span>
-    </div>
-
-    <!-- Simple Loading State -->
-    <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-slate-900 flex items-center justify-center z-[100]">
-        <div class="text-center">
-            <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p class="font-bold loading-dots">מתחבר למערכת</p>
+    <!-- Auth View -->
+    <div id="auth-view" class="fixed inset-0 z-[100] auth-gradient flex items-center justify-center p-4">
+        <div class="bg-white/95 backdrop-blur-md w-full max-w-md rounded-[2.5rem] shadow-2xl p-10 text-center border border-white/20">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-8 flex items-center justify-center text-white text-4xl font-black shadow-xl rotate-3">E</div>
+            <h1 class="text-3xl font-black mb-2 text-slate-800">Escoob Pro</h1>
+            <p class="text-slate-500 mb-8 font-semibold">התחברות למערכת הניהול והלמידה</p>
+            
+            <form id="login-form" class="space-y-4 text-right">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 mr-2">דואר אלקטרוני</label>
+                    <input type="email" id="login-email" class="input-field" placeholder="student@escoob.co.il" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-1 mr-2">סיסמה</label>
+                    <input type="password" id="login-password" class="input-field" placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="btn-login" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-lg hover:bg-blue-700 transition-all shadow-lg hover:scale-[1.02] active:scale-95">כניסה למערכת</button>
+            </form>
+            <div id="auth-error" class="mt-4 text-red-500 text-sm font-bold hidden bg-red-50 p-3 rounded-xl"></div>
         </div>
     </div>
 
-    <div id="app-container" class="hidden flex flex-col lg:flex-row min-h-screen">
+    <!-- App View -->
+    <div id="app-view" class="hidden flex flex-col lg:flex-row min-h-screen">
         
         <!-- Sidebar -->
-        <aside id="sidebar" class="fixed inset-y-0 right-0 w-72 glass-card border-l z-40 transition-transform lg:translate-x-0 translate-x-full">
-            <div class="p-8 flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold">E</div>
-                <span class="text-2xl font-black">Escoob</span>
+        <aside class="w-full lg:w-80 bg-white border-l p-8 flex flex-col shadow-xl z-10">
+            <div class="flex items-center gap-4 mb-12">
+                <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-lg">E</div>
+                <div class="flex flex-col">
+                    <span class="text-2xl font-black leading-none">Escoob <span class="text-blue-600">Pro</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Learning Management</span>
+                </div>
             </div>
-            
-            <nav class="p-4 space-y-1" id="nav-list"></nav>
 
-            <div class="absolute bottom-0 w-full p-6 space-y-4">
-                <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">🪙</span>
-                        <span class="font-black text-amber-600" id="user-points">0</span>
+            <nav class="flex-1 space-y-3" id="nav-container"></nav>
+
+            <div class="mt-8 pt-8 border-t border-slate-100">
+                <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl mb-4">
+                    <div id="user-avatar" class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center font-black text-blue-600 text-xl border-2 border-white shadow-sm">?</div>
+                    <div class="overflow-hidden">
+                        <p id="user-display-name" class="font-black text-slate-800 truncate"></p>
+                        <p id="user-role-tag" class="text-[9px] font-black text-blue-500 uppercase tracking-widest"></p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 p-2">
-                    <div id="user-avatar" class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">?</div>
-                    <div class="flex-1 overflow-hidden">
-                        <p id="user-name-sidebar" class="font-bold truncate text-sm">טוען...</p>
-                        <p id="user-role-label" class="text-[10px] opacity-50 font-bold uppercase">סטודנט</p>
-                    </div>
-                </div>
-                <button id="logout-button" class="w-full py-3 text-red-500 font-bold text-sm hover:bg-red-50 rounded-xl">יציאה</button>
+                <button onclick="window.logout()" class="w-full py-3 text-slate-400 font-bold text-sm hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">התנתקות בטוחה</button>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 lg:mr-72 p-4 lg:p-8">
-            <header class="mb-8 flex justify-between items-center lg:hidden">
-                <div class="font-black text-xl">Escoob</div>
-                <button id="mobile-menu-toggle" class="p-2">☰</button>
-            </header>
-
-            <div class="max-w-5xl mx-auto space-y-8">
-                <div id="header-section">
-                    <h1 id="page-title" class="text-4xl font-black tracking-tight">הלוח שלי</h1>
-                </div>
-
+        <main class="flex-1 p-6 lg:p-12 overflow-y-auto bg-slate-50">
+            <div class="max-w-6xl mx-auto">
+                
                 <!-- Dashboard -->
-                <section id="dashboard" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 space-y-6">
-                        <div class="glass-card p-6 rounded-[2rem]">
-                            <h3 class="font-bold mb-4 flex items-center gap-2">🚀 פעולות מהירות</h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <button onclick="window.switchTab('attendance')" class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-center hover:bg-blue-100 transition-all">
-                                    <div class="text-2xl mb-1">📍</div>
-                                    <div class="text-sm font-bold text-blue-600">דיווח נוכחות</div>
-                                </button>
-                                <button onclick="window.switchTab('shop')" class="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl text-center hover:bg-amber-100 transition-all">
-                                    <div class="text-2xl mb-1">🎁</div>
-                                    <div class="text-sm font-bold text-amber-600">חנות בונוסים</div>
-                                </button>
+                <section id="dashboard" class="tab-content space-y-10">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 class="text-5xl font-black text-slate-900">שלום, <span id="welcome-name" class="text-blue-600">...</span> 👋</h1>
+                            <p class="text-slate-500 font-bold mt-2">הנה מה שחדש עבורך היום במערכת</p>
+                        </div>
+                        <div id="points-badge" class="px-6 py-3 bg-white shadow-sm rounded-2xl border border-slate-200 flex items-center gap-3">
+                            <span class="text-2xl">🪙</span>
+                            <span class="font-black text-lg text-slate-700">0 נקודות</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 glass-card p-10 rounded-[3rem] shadow-sm border-none relative overflow-hidden group">
+                            <div class="absolute top-0 left-0 w-2 h-full bg-blue-600"></div>
+                            <h3 class="font-black text-2xl mb-6 flex items-center gap-3">
+                                <span class="p-2 bg-blue-50 rounded-lg">🎯</span> משימות ומטרות מהמורה
+                            </h3>
+                            <div id="active-task-container" class="space-y-4">
+                                <!-- Tasks go here -->
+                                <div class="animate-pulse flex space-x-4">
+                                    <div class="flex-1 space-y-4 py-1">
+                                        <div class="h-4 bg-slate-200 rounded w-3/4"></div>
+                                        <div class="h-4 bg-slate-200 rounded"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div id="materials-list" class="space-y-4"></div>
-                    </div>
-                    <div class="glass-card rounded-[2rem] h-[500px] flex flex-col overflow-hidden">
-                        <div class="p-4 border-b font-bold">צ'אט כיתתי</div>
-                        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm"></div>
-                        <form id="chat-form" class="p-3 border-t flex gap-2">
-                            <input type="text" id="chat-input" placeholder="הודעה..." class="flex-1 p-2 bg-slate-100 dark:bg-slate-800 rounded-xl outline-none">
-                            <button class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold">></button>
-                        </form>
-                    </div>
-                </section>
-
-                <!-- Attendance (QR) -->
-                <section id="attendance" class="tab-content hidden text-center space-y-6">
-                    <div class="glass-card p-8 rounded-[2.5rem] max-w-md mx-auto">
-                        <h3 class="text-2xl font-black mb-2">דיווח נוכחות חכם</h3>
-                        <p class="text-sm opacity-60 mb-8">סרוק את הקוד בכיתה כדי לקבל נקודות נוכחות</p>
-                        <div id="qrcode" class="mb-8"></div>
-                        <div id="attendance-status" class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-bold">
-                            ממתין לסריקה...
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Shop -->
-                <section id="shop" class="tab-content hidden grid grid-cols-1 md:grid-cols-3 gap-6" id="shop-items-container"></section>
-
-                <!-- Admin Panel -->
-                <section id="admin-panel" class="tab-content hidden space-y-6">
-                    <div class="glass-card p-6 rounded-[2rem]">
-                        <h3 class="text-xl font-bold mb-4">ניהול תלמידים</h3>
-                        <div id="admin-controls" class="space-y-4">
-                            <select id="student-selector" class="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-xl"></select>
-                            <div class="flex gap-2">
-                                <input type="number" id="points-to-add" placeholder="כמות נקודות" class="flex-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-xl">
-                                <button onclick="window.adminAddPoints()" class="bg-amber-500 text-white px-6 py-3 rounded-xl font-bold">הוסף 🪙</button>
+                        
+                        <div class="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl flex flex-col justify-between">
+                            <div>
+                                <p class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-2">נוכחות שנתית</p>
+                                <h3 class="text-6xl font-black italic">98%</h3>
+                            </div>
+                            <div class="mt-8">
+                                <p class="text-sm text-slate-400 mb-2 font-bold">מצוינות בהתמדה!</p>
+                                <div class="h-3 bg-white/10 rounded-full overflow-hidden">
+                                    <div class="bg-blue-500 h-full w-[98%] shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
+
+                <!-- Library -->
+                <section id="library" class="tab-content hidden-section space-y-8">
+                    <h2 class="text-4xl font-black">ספריית חומרים 📚</h2>
+                    <div id="library-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </section>
+
+                <!-- Store -->
+                <section id="store" class="tab-content hidden-section space-y-8">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-4xl font-black">חנות ה-Escoob 🛒</h2>
+                        <div class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-100 font-black text-amber-600">
+                            יתרה: <span id="store-points-val">0</span> 🪙
+                        </div>
+                    </div>
+                    <div id="store-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                </section>
+
+                <!-- Grades -->
+                <section id="grades" class="tab-content hidden-section space-y-8">
+                    <h2 class="text-4xl font-black">לוח הישגים 🏆</h2>
+                    <div class="bg-white rounded-[2.5rem] shadow-sm overflow-hidden border border-slate-100">
+                        <table class="w-full text-right">
+                            <thead class="bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th class="p-6 font-black text-slate-500 uppercase text-xs tracking-widest">נושא המבחן/מטלה</th>
+                                    <th class="p-6 font-black text-slate-500 uppercase text-xs tracking-widest text-center">ציון סופי</th>
+                                    <th class="p-6 font-black text-slate-500 uppercase text-xs tracking-widest">תאריך הזנה</th>
+                                </tr>
+                            </thead>
+                            <tbody id="grades-table-body" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Teacher Panel -->
+                <section id="teacher" class="tab-content hidden-section space-y-10">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-blue-600 text-white rounded-2xl text-2xl">🎓</div>
+                        <h2 class="text-4xl font-black">ניהול פדגוגי</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- New Grade -->
+                        <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
+                            <h4 class="font-black text-xl mb-8 flex items-center gap-3"><span class="w-8 h-8 bg-blue-50 text-blue-600 flex items-center justify-center rounded-lg text-sm">+</span> הזנת ציון חדש</h4>
+                            <div class="space-y-5">
+                                <select id="admin-student-select" class="input-field font-bold text-slate-600"></select>
+                                <input type="text" id="admin-grade-subject" class="input-field" placeholder="שם המקצוע / מבחן">
+                                <input type="number" id="admin-grade-value" class="input-field" placeholder="ציון (0-100)">
+                                <button onclick="window.saveGrade()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700 transition-all shadow-lg">עדכן ציון במערכת</button>
+                            </div>
+                        </div>
+
+                        <!-- New Task -->
+                        <div class="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
+                            <h4 class="font-black text-xl mb-8 flex items-center gap-3"><span class="w-8 h-8 bg-amber-50 text-amber-600 flex items-center justify-center rounded-lg text-sm">!</span> פרסום משימה חדשה</h4>
+                            <div class="space-y-5">
+                                <input type="text" id="admin-task-title" class="input-field" placeholder="כותרת המשימה">
+                                <textarea id="admin-task-desc" class="input-field h-24 resize-none" placeholder="תיאור המשימה או המטרה..."></textarea>
+                                <input type="date" id="admin-task-due" class="input-field">
+                                <button onclick="window.saveTask()" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black hover:bg-slate-800 transition-all shadow-lg">פרסם לכל התלמידים</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
             </div>
         </main>
     </div>
 
+    <!-- Toast UI -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl transition-all duration-300 opacity-0 translate-y-20 z-[200] pointer-events-none font-black flex items-center gap-3">
+        <span id="toast-icon">✨</span>
+        <span id="toast-msg"></span>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, addDoc, query, orderBy, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = JSON.parse('{"apiKey":"AIzaSyDxskoU67b71cr_idv79DLHX3PgvvwW4UM","authDomain":"escoobportal.firebaseapp.com","projectId":"escoobportal","storageBucket":"escoobportal.firebasestorage.app","messagingSenderId":"249473201330","appId":"1:249473201330:web:7a4ba82e67d654324b45ab"}');
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
         const auth = getAuth(app);
-        const appId = "escoob-v6-1";
+        const db = getFirestore(app);
+        const appId = "escoob_pro_v10"; // Updated version ID
 
-        let currentUserData = null;
+        let userData = null;
+        let listeners = [];
 
-        async function start() {
+        // Auth Handler
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            const btn = document.getElementById('btn-login');
+            const err = document.getElementById('auth-error');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loader"></span>';
+            err.classList.add('hidden');
+
             try {
-                // Auth Handling
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
-                        const snap = await getDoc(userRef);
-                        
-                        if (!snap.exists()) {
-                            const defaultData = {
-                                uid: user.uid,
-                                name: "משתמש " + user.uid.slice(0,4),
-                                role: 'student',
-                                points: 100,
-                                joined: serverTimestamp()
-                            };
-                            await setDoc(userRef, defaultData);
-                            currentUserData = defaultData;
-                        }
-
-                        onSnapshot(userRef, (s) => {
-                            currentUserData = { ...user, ...s.data() };
-                            updateUI();
-                        });
-
-                        setupListeners();
-                        document.getElementById('loading-overlay').classList.add('hidden');
-                        document.getElementById('app-container').classList.remove('hidden');
-                        switchTab('dashboard');
-                    }
-                });
+                await signInWithEmailAndPassword(auth, email, pass);
             } catch (e) {
-                console.error(e);
-                document.querySelector('.loading-dots').textContent = "שגיאת חיבור. נסה לרענן.";
+                err.textContent = "אימייל או סיסמה אינם תקינים. נסה שוב.";
+                err.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = "כניסה למערכת";
             }
-        }
+        });
 
-        function updateUI() {
-            if (!currentUserData) return;
-            document.getElementById('user-name-sidebar').textContent = currentUserData.name;
-            document.getElementById('user-avatar').textContent = currentUserData.name[0];
-            document.getElementById('user-points').textContent = currentUserData.points || 0;
-            document.getElementById('user-role-label').textContent = currentUserData.role === 'teacher' ? 'סגל' : 'תלמיד';
-            renderNav();
-        }
+        onAuthStateChanged(auth, async (user) => {
+            // Clean up old listeners
+            listeners.forEach(unsub => unsub());
+            listeners = [];
 
-        function renderNav() {
-            const navs = [
-                { id: 'dashboard', label: 'הלוח שלי', icon: '🏠' },
-                { id: 'attendance', label: 'נוכחות QR', icon: '📍' },
-                { id: 'shop', label: 'חנות', icon: '🛍️' },
-                { id: 'admin-panel', label: 'ניהול', icon: '⚙️', admin: true }
+            if (user) {
+                document.getElementById('auth-view').classList.add('hidden');
+                document.getElementById('app-view').classList.remove('hidden');
+                
+                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid);
+                
+                try {
+                    const snap = await getDoc(userRef);
+                    if (!snap.exists()) {
+                        await setDoc(userRef, { 
+                            uid: user.uid, 
+                            name: user.email.split('@')[0], 
+                            role: user.email.includes('admin') || user.email.includes('teacher') ? 'teacher' : 'student', 
+                            points: 100, 
+                            email: user.email 
+                        });
+                    }
+
+                    // Sync User Data
+                    listeners.push(onSnapshot(userRef, (d) => {
+                        userData = d.data();
+                        renderSidebar();
+                        updateDashboardHeader();
+                        renderLibrary();
+                        renderStore();
+                    }));
+
+                    startDataStreams();
+                } catch (e) { console.error("Init Error:", e); }
+            } else {
+                document.getElementById('app-view').classList.add('hidden');
+                document.getElementById('auth-view').classList.remove('hidden');
+                document.getElementById('btn-login').textContent = "כניסה למערכת";
+                document.getElementById('btn-login').disabled = false;
+            }
+        });
+
+        function renderSidebar() {
+            if (!userData) return;
+            document.getElementById('user-display-name').textContent = userData.name;
+            document.getElementById('user-role-tag').textContent = userData.role === 'teacher' ? 'סגל הוראה' : 'תלמיד מן המניין';
+            document.getElementById('user-avatar').textContent = userData.name[0].toUpperCase();
+
+            const navItems = [
+                { id: 'dashboard', label: 'דאשבורד', icon: '🏠' },
+                { id: 'library', label: 'ספרייה', icon: '📚' },
+                { id: 'store', label: 'חנות', icon: '🛒' },
+                { id: 'grades', label: 'ציונים', icon: '🏆' },
+                { id: 'teacher', label: 'ניהול פדגוגי', icon: '🎓', teacherOnly: true }
             ];
-            document.getElementById('nav-list').innerHTML = navs
-                .filter(n => !n.admin || currentUserData.role === 'teacher')
-                .map(n => `
-                    <button onclick="window.switchTab('${n.id}')" data-tab="${n.id}" class="nav-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800">
-                        <span>${n.icon}</span> ${n.label}
+
+            document.getElementById('nav-container').innerHTML = navItems
+                .filter(item => !item.teacherOnly || userData.role === 'teacher')
+                .map(item => `
+                    <button onclick="switchTab('${item.id}')" data-tab="${item.id}" class="nav-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black transition-all text-slate-400 hover:text-slate-600 hover:bg-slate-50">
+                        <span class="text-xl">${item.icon}</span> ${item.label}
                     </button>
                 `).join('');
+            
+            if (!window.activeTab) switchTab('dashboard');
         }
 
-        function setupListeners() {
-            // Chat
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), (snap) => {
-                const container = document.getElementById('chat-messages');
-                let msgs = [];
-                snap.forEach(d => msgs.push(d.data()));
-                msgs.sort((a,b) => (a.at?.seconds || 0) - (b.at?.seconds || 0));
-                container.innerHTML = msgs.slice(-30).map(m => `
-                    <div class="${m.uid === auth.currentUser.uid ? 'text-left' : 'text-right'}">
-                        <div class="inline-block px-3 py-2 rounded-xl ${m.uid === auth.currentUser.uid ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800'}">
-                            ${m.text}
-                        </div>
-                    </div>
-                `).join('');
-                container.scrollTop = container.scrollHeight;
-            });
+        function updateDashboardHeader() {
+            document.getElementById('welcome-name').textContent = userData.name;
+            document.getElementById('points-badge').querySelector('span:last-child').textContent = `${userData.points} נקודות`;
+            document.getElementById('store-points-val').textContent = userData.points;
+        }
 
-            // Admin Student List
-            if (currentUserData.role === 'teacher') {
-                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
-                    const sel = document.getElementById('student-selector');
-                    sel.innerHTML = '<option value="">בחר תלמיד...</option>';
-                    snap.forEach(d => {
-                        const u = d.data();
-                        if (u.role === 'student') sel.innerHTML += `<option value="${u.uid}">${u.name}</option>`;
-                    });
+        function startDataStreams() {
+            // Grades Stream
+            listeners.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'grades'), (snap) => {
+                const tbody = document.getElementById('grades-table-body');
+                tbody.innerHTML = "";
+                snap.forEach(d => {
+                    const g = d.data();
+                    if (g.studentId === auth.currentUser.uid || userData.role === 'teacher') {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="p-6 font-bold text-slate-700">${g.subject}</td>
+                                <td class="p-6 text-center"><span class="px-4 py-2 ${g.value >= 90 ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'} rounded-xl font-black">${g.value}</span></td>
+                                <td class="p-6 text-slate-400 text-sm font-medium">${g.createdAt?.toDate().toLocaleDateString('he-IL') || 'זה עתה'}</td>
+                            </tr>
+                        `;
+                    }
                 });
-            }
+            }));
 
-            // Shop Generation
-            const items = [
-                { id: 'b1', name: 'בונוס למבחן', price: 250, icon: '📝' },
-                { id: 'b2', name: 'דילוג על מטלה', price: 400, icon: '⏭️' },
-                { id: 'b3', name: 'יום חופש', price: 1000, icon: '🏖️' }
-            ];
-            document.getElementById('shop').innerHTML = items.map(i => `
-                <div class="glass-card p-6 rounded-[2rem] text-center space-y-4">
-                    <div class="text-4xl">${i.icon}</div>
-                    <h4 class="font-bold">${i.name}</h4>
-                    <button onclick="window.buyItem('${i.id}', ${i.price})" class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold">${i.price} 🪙</button>
-                </div>
-            `).join('');
+            // Tasks Stream
+            listeners.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), (snap) => {
+                const container = document.getElementById('active-task-container');
+                let html = "";
+                snap.forEach(d => {
+                    const t = d.data();
+                    html += `
+                        <div class="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 hover:border-blue-200 transition-all group">
+                            <div class="flex justify-between items-start mb-2">
+                                <h5 class="font-black text-lg text-slate-800">${t.title}</h5>
+                                <span class="text-[10px] bg-red-100 text-red-600 px-3 py-1 rounded-full font-black uppercase">עד: ${t.due || 'ASAP'}</span>
+                            </div>
+                            <p class="text-sm text-slate-500 font-medium leading-relaxed">${t.desc}</p>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html || '<div class="text-center py-10 text-slate-300 font-bold italic">אין משימות חדשות כרגע</div>';
+            }));
+
+            // Students List (For Teacher)
+            if (userData.role === 'teacher') {
+                listeners.push(onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
+                    const sel = document.getElementById('admin-student-select');
+                    if (sel) {
+                        sel.innerHTML = '<option value="">בחר סטודנט/ית...</option>';
+                        snap.forEach(d => {
+                            if (d.data().role === 'student') sel.innerHTML += `<option value="${d.id}">${d.data().name}</option>`;
+                        });
+                    }
+                }));
+            }
         }
 
         window.switchTab = (id) => {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.querySelector(`[data-tab="${id}"]`)?.classList.add('active');
-            
-            if (id === 'attendance') {
-                document.getElementById('qrcode').innerHTML = "";
-                new QRCode(document.getElementById("qrcode"), {
-                    text: `https://escoob.org/checkin?uid=${auth.currentUser.uid}&ts=${Date.now()}`,
-                    width: 200, height: 200
-                });
-            }
-        };
-
-        window.buyItem = async (id, price) => {
-            if (currentUserData.points < price) return showToast("אין לך מספיק נקודות!", "⚠️");
-            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', auth.currentUser.uid);
-            await updateDoc(userRef, { points: increment(-price) });
-            showToast("רכישה הצליחה!", "🎁");
-        };
-
-        window.adminAddPoints = async () => {
-            const sid = document.getElementById('student-selector').value;
-            const pts = parseInt(document.getElementById('points-to-add').value);
-            if (!sid || !pts) return;
-            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', sid);
-            await updateDoc(userRef, { points: increment(pts) });
-            showToast("נקודות עודכנו!", "✅");
-        };
-
-        document.getElementById('chat-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const val = document.getElementById('chat-input').value;
-            if (!val) return;
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), {
-                text: val, uid: auth.currentUser.uid, at: serverTimestamp()
+            window.activeTab = id;
+            document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden-section'));
+            document.getElementById(id).classList.remove('hidden-section');
+            document.querySelectorAll('.nav-link').forEach(l => {
+                l.classList.remove('active');
+                if (l.dataset.tab === id) l.classList.add('active');
             });
-            document.getElementById('chat-input').value = "";
         };
 
-        function showToast(msg, icon) {
+        window.renderLibrary = () => {
+            const library = [
+                { title: 'מדריך JavaScript מתקדם', icon: '📜', color: 'blue' },
+                { title: 'מבוא לעיצוב UI/UX', icon: '🎨', color: 'purple' },
+                { title: 'קוד מקור - פרויקט סיום', icon: '💻', color: 'green' }
+            ];
+            document.getElementById('library-grid').innerHTML = library.map(item => `
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all cursor-pointer group">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform">${item.icon}</div>
+                    <h4 class="font-black text-lg mb-2">${item.title}</h4>
+                    <p class="text-xs text-slate-400 font-bold">זמין להורדה וצפייה</p>
+                </div>
+            `).join('');
+        };
+
+        window.renderStore = () => {
+            const items = [
+                { id: 's1', name: 'בונוס 10 נקודות למבחן', cost: 400, icon: '🎓' },
+                { id: 's2', name: 'יום ללא שיעורי בית', cost: 800, icon: '🛌' },
+                { id: 's3', name: 'כרטיס מתנה לקפיטריה', cost: 1200, icon: '🍔' }
+            ];
+            document.getElementById('store-grid').innerHTML = items.map(i => `
+                <div class="bg-white p-8 rounded-[3rem] text-center border border-slate-100 relative shadow-sm">
+                    <div class="text-6xl mb-6">${i.icon}</div>
+                    <h4 class="font-black text-xl mb-1">${i.name}</h4>
+                    <p class="text-amber-600 font-black text-lg mb-6">${i.cost} 🪙</p>
+                    <button onclick="window.buy('${i.id}', ${i.cost})" 
+                            class="w-full py-4 rounded-2xl font-black transition-all ${userData.points >= i.cost ? 'bg-blue-600 text-white shadow-lg hover:bg-blue-700' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}">
+                        ${userData.points >= i.cost ? 'לרכישה' : 'חסר לך קרדיט'}
+                    </button>
+                </div>
+            `).join('');
+        };
+
+        // Actions
+        window.saveGrade = async () => {
+            const sid = document.getElementById('admin-student-select').value;
+            const sub = document.getElementById('admin-grade-subject').value;
+            const val = document.getElementById('admin-grade-value').value;
+            if (!sid || !sub || !val) return showToast("מלא את כל הפרטים", "❌");
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'grades'), {
+                studentId: sid, subject: sub, value: parseInt(val), createdAt: serverTimestamp()
+            });
+            showToast("הציון הוזן בהצלחה!", "✅");
+        };
+
+        window.saveTask = async () => {
+            const title = document.getElementById('admin-task-title').value;
+            const desc = document.getElementById('admin-task-desc').value;
+            const due = document.getElementById('admin-task-due').value;
+            if (!title || !desc) return showToast("מלא כותרת ותיאור", "❌");
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), {
+                title, desc, due, createdAt: serverTimestamp()
+            });
+            showToast("המשימה פורסמה לכולם!", "🚀");
+        };
+
+        window.buy = async (id, cost) => {
+            if (userData.points < cost) return;
+            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', auth.currentUser.uid);
+            await updateDoc(userRef, { points: userData.points - cost });
+            showToast("תתחדש! הרכישה הצליחה", "🎁");
+        };
+
+        window.logout = () => signOut(auth);
+
+        function showToast(msg, icon = "✨") {
             const t = document.getElementById('toast');
             document.getElementById('toast-msg').textContent = msg;
             document.getElementById('toast-icon').textContent = icon;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
+            t.classList.remove('opacity-0', 'translate-y-20');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-20'), 3500);
         }
-
-        window.onload = start;
-        document.getElementById('mobile-menu-toggle').onclick = () => document.getElementById('sidebar').classList.toggle('translate-x-full');
-        document.getElementById('logout-button').onclick = () => signOut(auth).then(() => location.reload());
     </script>
 </body>
 </html>
