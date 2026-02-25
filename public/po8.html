@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escoob OS - Educational Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+        .dark {
+            --primary: #60a5fa;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f1f5f9;
+        }
+        body { 
+            background-color: var(--bg); 
+            color: var(--text);
+            font-family: 'Assistant', sans-serif;
+            transition: all 0.3s ease;
+        }
+        .glass-card {
+            background: var(--card);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .nav-link.active {
+            background-color: var(--primary);
+            color: white !important;
+        }
+        .schedule-slot {
+            min-height: 80px;
+            transition: transform 0.2s;
+        }
+        .schedule-slot:hover {
+            transform: translateY(-2px);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Animations */
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide { animation: slideIn 0.4s ease forwards; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Login/Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[100]">
+        <div class="text-center animate-pulse">
+            <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-4 flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-blue-500/50">E</div>
+            <h2 class="text-white text-xl font-bold">טוען את Escoob OS...</h2>
+        </div>
+    </div>
+
+    <div id="app-container" class="hidden flex flex-col lg:flex-row min-h-screen">
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 right-0 w-72 glass-card border-l z-40 transition-transform lg:translate-x-0 translate-x-full">
+            <div class="p-8 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">E</div>
+                    <span class="text-2xl font-black">Escoob</span>
+                </div>
+            </div>
+            
+            <nav class="p-4 space-y-1" id="nav-list"></nav>
+
+            <div class="absolute bottom-0 w-full p-6 space-y-4">
+                <div class="p-4 rounded-2xl bg-blue-600/10 flex items-center justify-between">
+                    <span class="text-xs font-bold">מצב לילה</span>
+                    <button id="dark-mode-toggle" class="w-12 h-6 bg-slate-200 dark:bg-slate-700 rounded-full relative transition-colors">
+                        <div class="absolute top-1 left-1 dark:left-7 w-4 h-4 bg-white rounded-full transition-all"></div>
+                    </button>
+                </div>
+                <div class="flex items-center gap-3 p-2">
+                    <div id="user-avatar" class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold"></div>
+                    <div class="flex-1 overflow-hidden">
+                        <p id="user-name-sidebar" class="font-bold truncate text-sm"></p>
+                        <p id="user-role-label" class="text-[10px] opacity-50 font-bold uppercase"></p>
+                    </div>
+                </div>
+                <button id="logout-button" class="w-full py-3 text-red-500 font-bold text-sm hover:bg-red-50 rounded-xl transition-colors">יציאה</button>
+            </div>
+        </aside>
+
+        <!-- Content -->
+        <main class="flex-1 lg:mr-72 p-4 lg:p-8">
+            <header class="mb-8 flex justify-between items-center lg:hidden">
+                <div class="font-black text-xl">Escoob</div>
+                <button id="mobile-menu-toggle" class="p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16m-7 6h7"></path></svg></button>
+            </header>
+
+            <div class="max-w-6xl mx-auto space-y-8 animate-slide">
+                <div id="header-section">
+                    <h1 id="page-title" class="text-4xl font-black tracking-tight">הלוח שלי</h1>
+                    <p id="page-desc" class="opacity-60 font-semibold mt-1">ברוך הבא לפורטל הלמידה המקדם</p>
+                </div>
+
+                <!-- DASHBOARD TAB -->
+                <section id="dashboard" class="tab-content grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Schedule -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="glass-card p-6 rounded-[2.5rem] shadow-sm">
+                            <h3 class="text-xl font-black mb-6 flex items-center gap-2">
+                                📅 סדר יום - <span id="current-day-name"></span>
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="schedule-container">
+                                <!-- Schedule items go here -->
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-6 rounded-[2.5rem] shadow-sm">
+                            <h3 class="text-xl font-black mb-4">חומרים חדשים</h3>
+                            <div id="recent-materials" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                        </div>
+                    </div>
+
+                    <!-- Chat & Social -->
+                    <div class="space-y-6">
+                        <div class="glass-card rounded-[2.5rem] overflow-hidden flex flex-col h-[550px]">
+                            <div class="p-6 border-b flex items-center justify-between">
+                                <h3 class="font-bold">צ'אט כיתתי</h3>
+                                <div class="flex -space-x-2 space-x-reverse" id="active-users"></div>
+                            </div>
+                            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar"></div>
+                            <form id="chat-form" class="p-4 border-t flex gap-2">
+                                <input type="text" id="chat-input" placeholder="הודעה לקבוצה..." class="flex-1 p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 ring-blue-500">
+                                <button class="bg-blue-600 text-white p-3 rounded-2xl">➤</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SUBJECTS TAB -->
+                <section id="subjects" class="tab-content hidden grid grid-cols-1 md:grid-cols-3 gap-6"></section>
+
+                <!-- GRADES TAB -->
+                <section id="grades" class="tab-content hidden glass-card rounded-[2.5rem] overflow-hidden">
+                    <table class="w-full text-right">
+                        <thead class="bg-slate-50 dark:bg-slate-800">
+                            <tr><th class="p-6">מקצוע</th><th class="p-6">ציון</th><th class="p-6">תאריך</th></tr>
+                        </thead>
+                        <tbody id="grades-table-body"></tbody>
+                    </table>
+                </section>
+
+                <!-- ADMIN TAB -->
+                <section id="admin-panel" class="tab-content hidden grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="glass-card p-8 rounded-[2.5rem]">
+                        <h3 class="text-2xl font-black mb-6 text-blue-600">הזנת נתונים</h3>
+                        <form id="admin-form" class="space-y-4">
+                            <select id="admin-target-student" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl font-bold"></select>
+                            <input type="text" id="admin-subject" placeholder="שם המקצוע" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                            <input type="number" id="admin-grade" placeholder="ציון" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl">עדכן תלמיד</button>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxskoU67b71cr_idv79DLHX3PgvvwW4UM",
+            authDomain: "escoobportal.firebaseapp.com",
+            projectId: "escoobportal",
+            storageBucket: "escoobportal.firebasestorage.app",
+            messagingSenderId: "249473201330",
+            appId: "1:249473201330:web:7a4ba82e67d654324b45ab"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = "escoob-v5-os";
+
+        let user = null;
+        const STAFF = ['bella@escoob.org', 'yair@escoob.org', 'avishai@escoob.org', 'manager@escoob.org'];
+
+        // Initial Auth Check (Auto-login for demo purposes if not logged in - in real app would show login)
+        onAuthStateChanged(auth, async (u) => {
+            if (u) {
+                user = u;
+                const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u.uid);
+                const snap = await getDoc(userRef);
+                if (!snap.exists()) {
+                    await setDoc(userRef, { name: u.email.split('@')[0], role: STAFF.includes(u.email) ? 'teacher' : 'student', email: u.email });
+                }
+                user.data = (await getDoc(userRef)).data();
+                setupUI();
+            } else {
+                // For this demo, let's keep it simple. If you refresh and aren't logged in, it shows the overlay.
+                // In a real scenario, we'd have a login UI here.
+            }
+        });
+
+        function setupUI() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('user-name-sidebar').textContent = user.data.name;
+            document.getElementById('user-avatar').textContent = user.data.name[0].toUpperCase();
+            document.getElementById('user-role-label').textContent = user.data.role === 'teacher' ? 'סגל הוראה' : 'סטודנט';
+            
+            renderNav();
+            loadSchedule();
+            initListeners();
+            switchTab('dashboard');
+        }
+
+        function renderNav() {
+            const nav = [
+                { id: 'dashboard', label: 'לוח בקרה', icon: '⚡' },
+                { id: 'subjects', label: 'קורסים', icon: '📖' },
+                { id: 'grades', label: 'ציונים', icon: '🏆' },
+                { id: 'admin-panel', label: 'ניהול', icon: '🛠️', teacher: true }
+            ];
+            document.getElementById('nav-list').innerHTML = nav
+                .filter(n => !n.teacher || user.data.role === 'teacher')
+                .map(n => `
+                    <button onclick="window.switchTab('${n.id}')" data-tab="${n.id}" class="nav-link w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <span>${n.icon}</span> ${n.label}
+                    </button>
+                `).join('');
+        }
+
+        function loadSchedule() {
+            const days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+            const today = days[new Date().getDay()];
+            document.getElementById('current-day-name').textContent = today;
+
+            const mockSchedule = [
+                { time: '09:00 - 10:30', subject: 'פיתוח Fullstack', room: 'מעבדה א' },
+                { time: '11:00 - 12:30', subject: 'עיצוב ממשק', room: 'כיתה 4' },
+                { time: '13:30 - 15:00', subject: 'סדנת תיאטרון', room: 'אולם' }
+            ];
+
+            document.getElementById('schedule-container').innerHTML = mockSchedule.map(s => `
+                <div class="schedule-slot p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-r-4 border-blue-500">
+                    <p class="text-[10px] font-bold opacity-50">${s.time}</p>
+                    <h4 class="font-bold text-lg">${s.subject}</h4>
+                    <p class="text-xs opacity-70">${s.room}</p>
+                </div>
+            `).join('');
+        }
+
+        function initListeners() {
+            // Chat
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), (snap) => {
+                const container = document.getElementById('chat-messages');
+                let html = '';
+                const msgs = [];
+                snap.forEach(d => msgs.push(d.data()));
+                msgs.sort((a,b) => (a.at?.seconds || 0) - (b.at?.seconds || 0));
+                msgs.forEach(m => {
+                    const isMe = m.uid === user.uid;
+                    html += `
+                        <div class="flex flex-col ${isMe ? 'items-start' : 'items-end'}">
+                            <div class="max-w-[80%] p-3 rounded-2xl ${isMe ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800'} text-sm">
+                                ${m.text}
+                            </div>
+                            <span class="text-[8px] mt-1 opacity-40 px-2">${m.author}</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+                container.scrollTop = container.scrollHeight;
+            });
+
+            // Materials
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'materials'), (snap) => {
+                const recent = document.getElementById('recent-materials');
+                const full = document.getElementById('subjects');
+                let html = '';
+                snap.forEach(d => {
+                    const m = d.data();
+                    html += `
+                        <div class="p-5 glass-card rounded-3xl border">
+                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-4">📂</div>
+                            <h4 class="font-bold mb-1">${m.title}</h4>
+                            <p class="text-xs opacity-60 line-clamp-2">${m.body}</p>
+                        </div>
+                    `;
+                });
+                recent.innerHTML = html;
+                full.innerHTML = html;
+            });
+
+            // Grades
+            const gradesRef = collection(db, 'artifacts', appId, 'public', 'data', 'grades');
+            const qG = user.data.role === 'student' ? query(gradesRef, where('studentId', '==', user.uid)) : gradesRef;
+            onSnapshot(qG, (snap) => {
+                const tbody = document.getElementById('grades-table-body');
+                tbody.innerHTML = '';
+                snap.forEach(d => {
+                    const g = d.data();
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-100 dark:border-slate-800">
+                            <td class="p-6 font-bold">${g.subject}</td>
+                            <td class="p-6"><span class="text-blue-600 font-black">${g.grade}</span></td>
+                            <td class="p-6 text-sm opacity-50">היום</td>
+                        </tr>
+                    `;
+                });
+            });
+
+            // User list for admin
+            if(user.data.role === 'teacher') {
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
+                    const select = document.getElementById('admin-target-student');
+                    select.innerHTML = '';
+                    snap.forEach(d => {
+                        const u = d.data();
+                        if(u.role === 'student') select.innerHTML += `<option value="${u.uid}">${u.name}</option>`;
+                    });
+                });
+            }
+        }
+
+        // Global functions
+        window.switchTab = (id) => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.querySelector(`[data-tab="${id}"]`)?.classList.add('active');
+            document.getElementById('sidebar').classList.add('translate-x-full');
+        };
+
+        document.getElementById('dark-mode-toggle').onclick = () => {
+            document.documentElement.classList.toggle('dark');
+        };
+
+        document.getElementById('chat-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const val = document.getElementById('chat-input').value;
+            if(!val) return;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'chats'), {
+                text: val, author: user.data.name, uid: user.uid, at: serverTimestamp()
+            });
+            document.getElementById('chat-input').value = '';
+        };
+
+        document.getElementById('admin-form').onsubmit = async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'grades'), {
+                studentId: document.getElementById('admin-target-student').value,
+                subject: document.getElementById('admin-subject').value,
+                grade: document.getElementById('admin-grade').value,
+                teacher: user.data.name
+            });
+            e.target.reset();
+        };
+
+        document.getElementById('mobile-menu-toggle').onclick = () => {
+            document.getElementById('sidebar').classList.toggle('translate-x-full');
+        };
+
+        document.getElementById('logout-button').onclick = () => signOut(auth);
+
+    </script>
+</body>
+</html>
