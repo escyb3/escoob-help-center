@@ -292,9 +292,16 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = JSON.parse('{"apiKey":"AIzaSyDxskoU67b71cr_idv79DLHX3PgvvwW4UM","authDomain":"escoobportal.firebaseapp.com","projectId":"escoobportal","storageBucket":"escoobportal.firebasestorage.app","messagingSenderId":"249473201330","appId":"1:249473201330:web:7a4ba82e67d654324b45ab"}');
+   import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+const firebaseConfig = {
+  apiKey: "AIzaSyApNlllWSEDNt-rdIKNrzbpcjFLeR0fekw",
+  authDomain: "portalescoob.firebaseapp.com",
+  projectId: "portalescoob",
+  storageBucket: "portalescoob.firebasestorage.app",
+  messagingSenderId: "452147662441",
+  appId: "1:452147662441:web:d702c4a3e371d94dbe9cf8"
+};
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
