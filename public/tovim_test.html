@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מבחן בכוית ומופסון ומערכת ניהול</title>
+    <style>
+        :root {
+            --primary-color: #673ab7;
+            --primary-hover: #512da8;
+            --bg-color: #f0ebf8;
+            --text-color: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 10px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        .admin-container {
+            max-width: 1000px;
+            border-top-color: #3f51b5;
+        }
+        h1, h2, h3 {
+            color: #4a148c;
+        }
+        .header-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+        }
+        .question-block {
+            background-color: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .points {
+            font-size: 0.9em;
+            color: #666;
+            float: left;
+            background: #eee;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        label.main-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: normal;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .option:hover {
+            background-color: #eee;
+        }
+        .option input {
+            margin-left: 10px;
+        }
+        input[type="text"], input[type="password"], input[type="email"], textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 1em;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .source-box {
+            background-color: #e8eaf6;
+            border-right: 4px solid #3f51b5;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-style: italic;
+            border-radius: 4px;
+        }
+        .reflection-scale {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .reflection-scale label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: normal;
+            cursor: pointer;
+            padding: 5px;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        button.secondary {
+            background-color: #757575;
+            margin-top: 10px;
+        }
+        button.secondary:hover {
+            background-color: #616161;
+        }
+        
+        /* Utility classes */
+        .hidden { display: none !important; }
+        
+        /* Admin Login & Dashboard Styles */
+        .footer-links {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9em;
+        }
+        .footer-links a {
+            color: #999;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Submissions Grid */
+        .submission-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-right: 5px solid #3f51b5;
+        }
+        .submission-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #3f51b5;
+        }
+        .submission-date {
+            font-size: 0.8em;
+            color: #757575;
+            font-weight: normal;
+        }
+        .answer-row {
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        .answer-label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+        }
+        .answer-value {
+            background: #f9f9f9;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+            white-space: pre-wrap;
+        }
+        
+        /* Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Overlay טעינה -->
+<div id="loading-overlay" class="hidden">
+    <div class="loader"></div>
+</div>
+
+<!-- ==================== תצוגת מבחן (תלמיד) ==================== -->
+<div id="student-view" class="container">
+    <h1>מבחן בכוית ומופסון - בוחן מסכם הצגות 1-36</h1>
+    <div class="header-text">
+        <p>תלמידים יקרים,<br>המבחן אינו קשה, ויש לכם את כל הזמן שבעולם עבורו.. בהצלחה רבה!</p>
+        <p><strong>צוות הפיקוח לכוית ומופסון והמורים</strong></p>
+    </div>
+
+    <form id="quiz-form">
+        
+        <div class="question-block">
+            <span class="points">3 נקודות</span>
+            <label class="main-label">רשמו את שמכם וכיתתם ושם המורה/תיאטרון *</label>
+            <input type="text" name="studentName" placeholder="שמך וכיתה.. תודה רבה" required>
+        </div>
+
+        <div class="question-block">
+            <label class="main-label">כתובת אימייל (דוא"ל) *</label>
+            <input type="email" name="studentEmail" placeholder="הזן את כתובת האימייל שלך..." required>
+        </div>
+
+        <h2>🧠 חלק א – שאלות ידע (35 נקודות)</h2>
+        
+        <div class="question-block">
+            <span class="points">5 נקודות</span>
+            <label class="main-label">מי הנהיג את קבוצת הטובים בתחילתה בפועל? *</label>
+            <label class="option"><input type="radio" name="q1_leader" value="נעים שמכם" required> נעים שמכם</label>
+            <label class="option"><input type="radio" name="q1_leader" value="פוני"> פוני</label>
+            <label class="option"><input type="radio" name="q1_leader" value="בארי תפוח"> בארי תפוח</label>
+            <label class="option"><input type="radio" name="q1_leader" value="מתוק בוג'י"> מתוק בוג'י</label>
+        </div>
+
+        <div class="question-block">
+            <span class="points">5 נקודות</span>
+            <label class="main-label">מה גרם לעזיבתה של נני? *</label>
+            <label class="option"><input type="radio" name="q2_nani" value="מלחמה" required> מלחמה</label>
+            <label class="option"><input type="radio" name="q2_nani" value="מחלה"> מחלה</label>
+            <label class="option"><input type="radio" name="q2_nani" value="דרישת נונן להתחתן איתה"> דרישת נונן להתחתן איתה</label>
+            <label class="option"><input type="radio" name="q2_nani" value="ריב עם פוני"> ריב עם פוני</label>
+        </div>
+
+        <div class="question-block">
+            <span class="points">5 נקודות</span>
+            <label class="main-label">מה היה תפקיד המקל של בארי תפוח? *</label>
+            <label class="option"><input type="radio" name="q3_stick" value="כלי נשק" required> כלי נשק</label>
+            <label class="option"><input type="radio" name="q3_stick" value="מקום מגורים רגיל"> מקום מגורים רגיל</label>
+            <label class="option"><input type="radio" name="q3_stick" value="מערכת הגנה עם כפר פנימי"> מערכת הגנה עם כפר פנימי</label>
+            <label class="option"><input type="radio" name="q3_stick" value="סמל שלטון"> סמל שלטון</label>
+        </div>
+
+        <div class="question-block">
+            <span class="points">5 נקודות</span>
+            <label class="main-label">כיצד הצליחה מיפל פלת להשתלט על ממלכות? *</label>
+            <label class="option"><input type="radio" name="q4_maple" value="רק בכוח צבאי" required> רק בכוח צבאי</label>
+            <label class="option"><input type="radio" name="q4_maple" value="דרך הפגנות וניצול חולשה פנימית"> דרך הפגנות וניצול חולשה פנימית</label>
+            <label class="option"><input type="radio" name="q4_maple" value="בעזרת פסטון"> בעזרת פסטון</label>
+            <label class="option"><input type="radio" name="q4_maple" value="בעזרת פוני"> בעזרת פוני</label>
+        </div>
+
+        <div class="question-block">
+            <span class="points">5 נקודות</span>
+            <label class="main-label">מה ניתן ללמוד מדברי פסטון? *</label>
+            <label class="option"><input type="radio" name="q5_peston" value="העתיד בטוח וטוב" required> העתיד בטוח וטוב</label>
+            <label class="option"><input type="radio" name="q5_peston" value="אין סכנה לטובים"> אין סכנה לטובים</label>
+            <label class="option"><input type="radio" name="q5_peston" value="צפוי סבל ומלחמות"> צפוי סבל ומלחמות</label>
+            <label class="option"><input type="radio" name="q5_peston" value="הוא לא בטוח בדבריו"> הוא לא בטוח בדבריו</label>
+        </div>
+
+        <div class="question-block">
+            <span class="points">10 נקודות</span>
+            <label class="main-label">מיהם הפיסטים?</label>
+            <textarea name="q6_pists" placeholder="הקלד את תשובתך כאן..."></textarea>
+        </div>
+
+        <div class="question-block">
+            <span class="points">10 נקודות</span>
+            <label class="main-label">מה קרה לממלכת ג'יג'י?</label>
+            <textarea name="q7_gigi" placeholder="הקלד את תשובתך כאן..."></textarea>
+        </div>
+
+        <h2>📖 🍲 חלק ב – ניתוח מקורות</h2>
+        <p>לפניכם שני מקורות. בחרו אחד מהם וענו על השאלות שאחריו.</p>
+
+        <h3>📜 קטע מקור א – נבואת פסטון</h3>
+        <div class="source-box">
+            "אני יודע שצאצאיי יהיו בעתיד רעים עבור הטובים ויגרמו להם סבל רב, ואולי אף יהרגו מהם. אך ביום מן המועדים אשוב גם אני אל המוקש ואקץ הכל."
+        </div>
+        
+        <div class="question-block">
+            <span class="points">15 נקודות</span>
+            <label class="main-label">הסבר את דברי פסטון במילים שלך:</label>
+            <textarea name="sourceA_explain" placeholder="הקלד את תשובתך כאן..."></textarea>
+        </div>
+
+        <div class="question-block">
+            <span class="points">15 נקודות</span>
+            <label class="main-label">מה המשמעות של "אשוב ואקץ הכל"?</label>
+            <textarea name="sourceA_meaning" placeholder="הקלד את תשובתך כאן..."></textarea>
+        </div>
+
+        <h3>📜 קטע מקור ב – מיפל פלת</h3>
+        <div class="source-box">
+            "ווצים אופיי? אני ווק צריפה להפין לפם או.פל פדש… וזה בתנאי אפד – שאני נושפת אתפם. אופל של מיפל מקבלים ווק בעד כסף."
+        </div>
+
+        <div class="question-block">
+            <span class="points">15 נקודות</span>
+            <label class="main-label">מה מציעה מיפל פלת ומה המחיר?</label>
+            <textarea name="sourceB_offer" placeholder="הקלד את תשובתך כאן..."></textarea>
+        </div>
+
+        <div class="question-block">
+            <span class="points">15 נקודות</span>
+            <label class="main-label">מה ניתן ללמוד על אופייה?</label>
+            <label class="option"><input type="radio" name="sourceB_character" value="נחמדה, בעלת אופי חם"> נחמדה, בעלת אופי חם</label>
+            <label class="option"><input type="radio" name="sourceB_character" value="רגזנית"> רגזנית</label>
+            <label class="option"><input type="radio" name="sourceB_character" value="עצובה ומושפלת, שרוצה לנקום"> עצובה ומושפלת, שרוצה לנקום</label>
+            <label class="option"><input type="radio" name="sourceB_character" value="אף תשובה אינה נכונה"> אף תשובה אינה נכונה</label>
+        </div>
+
+        <h2>⚔️ חלק ד – השוואה (20 נקודות)</h2>
+        <div class="question-block">
+            <label class="main-label">השווה בין פסטון למיפל פלת (כוונות, אופן פעולה, יחס לטובים):</label>
+            <textarea name="compare_characters" placeholder="הקלד את תשובתך כאן..." style="height: 120px;"></textarea>
+        </div>
+
+        <h2>💭 חלק ה – חשיבה גבוהה</h2>
+        <div class="question-block">
+            <span class="points">10 נקודות</span>
+            <label class="main-label">האם הנבואה היא הגורם המרכזי לכל מה שקרה? נמק:</label>
+            <textarea name="thinking_prophecy" placeholder="הקלד את תשובתך כאן..."></textarea>
+        </div>
+
+        <div class="question-block">
+            <span class="points">10 נקודות</span>
+            <label class="main-label">מי לדעתך מסוכן יותר – הפיסטים או מיפל פלת? נמק:</label>
+            <textarea name="thinking_dangerous" placeholder="הקלד את תשובתך כאן..."></textarea>
+        </div>
+
+        <h2>רפלקציה</h2>
+        <div class="question-block">
+            <label class="main-label">ענו בכנות על השאלות הבאות: עד כמה הגעתם מוכנים למבחן?</label>
+            <div class="reflection-scale">
+                <label>1<input type="radio" name="reflection" value="1"></label>
+                <label>2<input type="radio" name="reflection" value="2"></label>
+                <label>3<input type="radio" name="reflection" value="3"></label>
+                <label>4<input type="radio" name="reflection" value="4"></label>
+                <label>5<input type="radio" name="reflection" value="5"></label>
+                <label>6<input type="radio" name="reflection" value="6"></label>
+                <label>7<input type="radio" name="reflection" value="7"></label>
+                <label>8<input type="radio" name="reflection" value="8"></label>
+                <label>9<input type="radio" name="reflection" value="9"></label>
+                <label>10<input type="radio" name="reflection" value="10" required></label>
+            </div>
+        </div>
+
+        <h3 style="text-align: center;">!!בהצלחה רבה</h3>
+        
+        <button type="submit">שלח מבחן</button>
+    </form>
+
+    <div class="footer-links">
+        <a onclick="showView('login-view')">🔒 כניסת מנהל (צוות מורים)</a>
+    </div>
+</div>
+
+<!-- ==================== מסך התחברות למנהל ==================== -->
+<div id="login-view" class="container hidden" style="max-width: 400px; text-align: center;">
+    <h2>כניסת מנהל צוות</h2>
+    <p>הכנס סיסמה לצפייה בתשובות התלמידים</p>
+    <form id="login-form">
+        <input type="password" id="admin-password" placeholder="סיסמת מנהל (admin123)" required>
+        <button type="submit" style="margin-top: 15px;">היכנס לדאשבורד</button>
+        <button type="button" class="secondary" onclick="showView('student-view')">חזור למבחן</button>
+    </form>
+</div>
+
+<!-- ==================== דאשבורד מנהל (Firebase) ==================== -->
+<div id="dashboard-view" class="container admin-container hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
+        <h2>📊 דאשבורד מורים - תוצאות המבחן</h2>
+        <button class="secondary" style="width: auto; margin:0;" onclick="showView('student-view')">יציאה (חזרה למבחן)</button>
+    </div>
+    
+    <div id="submissions-container">
+        <!-- התשובות יוזרקו לכאן על ידי JS -->
+        <p style="text-align:center; color:#666;">טוען נתונים מהענן...</p>
+    </div>
+</div>
+
+<!-- ==================== Firebase & App Logic ==================== -->
+<script type="module">
+    // ייבוא פונקציות פיירבייס חיוניות
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // קריאת משתני סביבה (Firebase Config & App ID)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDgUgPiQeRMjSWEf5CIqOROweYzgdYmLE4",
+      authDomain: "test-num190.firebaseapp.com",
+      projectId: "test-num190",
+      storageBucket: "test-num190.firebasestorage.app",
+      messagingSenderId: "11691835204",
+      appId: "1:11691835204:web:adf3ec528bb8b9c6d06111",
+      measurementId: "G-H1JBGLFMQ4"
+    };
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'test-app-id';
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    // אתחול
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // משתנים גלובליים
+    let currentUser = null;
+    let dashboardUnsubscribe = null;
+
+    // ניהול תצוגות במסך
+    window.showView = function(viewId) {
+        document.getElementById('student-view').classList.add('hidden');
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('dashboard-view').classList.add('hidden');
+        
+        document.getElementById(viewId).classList.remove('hidden');
+
+        if(viewId === 'dashboard-view') {
+            loadDashboardData();
+        } else {
+            if(dashboardUnsubscribe) dashboardUnsubscribe(); // ניתוק האזנה כשיוצאים
+        }
+    }
+
+    // פונקציית טעינה / אנימציה
+    function setLoading(isLoading) {
+        document.getElementById('loading-overlay').classList.toggle('hidden', !isLoading);
+    }
+
+    // 1. התחברות שקופה מול Firebase לפני הכל (חובה לפי החוקים)
+    const initAuth = async () => {
+        try {
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+        } catch (error) {
+            console.error("שגיאת התחברות ל-Firebase:", error);
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+    });
+
+    // הפעלת חיבור מיידית
+    initAuth();
+
+    // 2. הגשת המבחן (לתלמיד) ושמירה ב-Firestore
+    document.getElementById('quiz-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!currentUser) {
+            alert("שגיאת תקשורת. אנא ודא חיבור לאינטרנט ונסה שוב.");
+            return;
+        }
+
+        setLoading(true);
+        const form = e.target;
+        const formData = new FormData(form);
+        const submissionData = Object.fromEntries(formData.entries());
+        
+        // הוספת חותמת זמן
+        submissionData.timestamp = Date.now();
+
+        try {
+            // שמירה בנתיב הציבורי כפי שנדרש - 'submissions'
+            const submissionsRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
+            await addDoc(submissionsRef, submissionData);
+            
+            setLoading(false);
+            
+            // הודעת סיום מותאמת אישית
+            const successMsg = document.createElement('div');
+            successMsg.innerHTML = `<h2 style="color:var(--primary-color)">המבחן הוגש בהצלחה! 🎉</h2><p>תודה רבה, ${submissionData.studentName}.</p>`;
+            successMsg.style.textAlign = 'center';
+            successMsg.style.padding = '40px';
+            
+            form.innerHTML = '';
+            form.appendChild(successMsg);
+
+        } catch (error) {
+            console.error("שגיאה בשמירת המבחן:", error);
+            setLoading(false);
+            alert("אירעה שגיאה בשליחת המבחן. אנא נסה שוב.");
+        }
+    });
+
+    // 3. כניסת מנהל מקומית (סיסמה פשוטה)
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const pwd = document.getElementById('admin-password').value;
+        if(pwd === 'admin123') {
+            document.getElementById('admin-password').value = '';
+            showView('dashboard-view');
+        } else {
+            alert('סיסמה שגויה!');
+        }
+    });
+
+    // 4. טעינת נתונים לדאשבורד (מנהל)
+    function loadDashboardData() {
+        if (!currentUser) return;
+        
+        const submissionsContainer = document.getElementById('submissions-container');
+        submissionsContainer.innerHTML = '<div class="loader"></div><p style="text-align:center;">טוען מבחנים...</p>';
+
+        const submissionsRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
+        
+        // האזנה בזמן אמת - ללא שאילתות מורכבות, הכל נמשך ואז ממוין ב-JS
+        dashboardUnsubscribe = onSnapshot(submissionsRef, (snapshot) => {
+            const submissions = [];
+            snapshot.forEach(doc => {
+                submissions.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // מיון בזיכרון - חדש ביותר למעלה
+            submissions.sort((a, b) => b.timestamp - a.timestamp);
+            
+            renderDashboard(submissions);
+        }, (error) => {
+            console.error("שגיאה במשיכת נתונים:", error);
+            submissionsContainer.innerHTML = '<p style="color:red; text-align:center;">שגיאה בטעינת הנתונים.</p>';
+        });
+    }
+
+    // ציור התוצאות על המסך
+    function renderDashboard(submissions) {
+        const container = document.getElementById('submissions-container');
+        container.innerHTML = '';
+
+        if(submissions.length === 0) {
+            container.innerHTML = '<p style="text-align:center; padding:20px; background:#f9f9f9; border-radius:8px;">עדיין אין מבחנים מוגשים.</p>';
+            return;
+        }
+
+        const statsDiv = document.createElement('div');
+        statsDiv.innerHTML = `<p style="font-weight:bold; margin-bottom:15px;">סך הכל מבחנים שהוגשו: ${submissions.length}</p>`;
+        container.appendChild(statsDiv);
+
+        submissions.forEach(sub => {
+            const dateStr = new Date(sub.timestamp).toLocaleString('he-IL');
+            const card = document.createElement('div');
+            card.className = 'submission-card';
+            
+            // תבנית כרטיסייה לכל מבחן
+            card.innerHTML = `
+                <div class="submission-header">
+                    <span>🧑‍🎓 שם התלמיד: ${sub.studentName || 'ללא שם'}</span>
+                    <span class="submission-date">📅 הוגש ב: ${dateStr}</span>
+                </div>
+                
+                <div class="answer-row"><span class="answer-label">דוא"ל:</span> <div class="answer-value">${sub.studentEmail || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">1. מנהיג הטובים:</span> <div class="answer-value">${sub.q1_leader || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">2. עזיבת נני:</span> <div class="answer-value">${sub.q2_nani || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">3. תפקיד המקל של בארי:</span> <div class="answer-value">${sub.q3_stick || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">4. כיצד מיפל השתלטה:</span> <div class="answer-value">${sub.q4_maple || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">5. מדברי פסטון נלמד:</span> <div class="answer-value">${sub.q5_peston || '-'}</div></div>
+                
+                <div class="answer-row"><span class="answer-label">מי הם הפיסטים?</span> <div class="answer-value">${sub.q6_pists || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">מה קרה לממלכת ג'יג'י?</span> <div class="answer-value">${sub.q7_gigi || '-'}</div></div>
+                
+                <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
+                
+                <div class="answer-row"><span class="answer-label">הסבר פסטון:</span> <div class="answer-value">${sub.sourceA_explain || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">אשוב ואקץ הכל:</span> <div class="answer-value">${sub.sourceA_meaning || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">הצעת מיפל והמחיר:</span> <div class="answer-value">${sub.sourceB_offer || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">אופייה של מיפל:</span> <div class="answer-value">${sub.sourceB_character || '-'}</div></div>
+                
+                <hr style="border:0; border-top:1px dashed #ccc; margin:10px 0;">
+
+                <div class="answer-row"><span class="answer-label">השוואה (פסטון / מיפל):</span> <div class="answer-value">${sub.compare_characters || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">האם הנבואה היא הגורם?</span> <div class="answer-value">${sub.thinking_prophecy || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">מי מסוכן יותר?</span> <div class="answer-value">${sub.thinking_dangerous || '-'}</div></div>
+                <div class="answer-row"><span class="answer-label">רפלקציה (1-10):</span> <div class="answer-value" style="font-weight:bold; color:var(--primary-color)">${sub.reflection || '-'} / 10</div></div>
+            `;
+            container.appendChild(card);
+        });
+    }
+</script>
+
+</body>
+</html>
