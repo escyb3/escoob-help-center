@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת מבחן ולימוד: מגילת הפיסטי והדורות</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Rubik', 'Assistant', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#b9defe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts (Rubik) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase Compat SDKs (Reliable inside single HTML iframe) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+        }
+        /* Custom scrollbar for better UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header (Exactly Matching Visual Reference) -->
+    <header class="bg-brand-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-400 p-2 rounded-lg text-slate-900 font-bold">
+                    📝
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">מגילת הפיסטי והדורות</h1>
+                    <p class="text-xs text-brand-200">מערכת בחינה וסימולציית למידה • תשפ"ו עונה 1-2</p>
+                </div>
+            </div>
+            
+            <!-- Beautiful Tab Buttons (From Image) -->
+            <div class="flex flex-wrap bg-brand-800/80 p-1.5 rounded-xl text-sm gap-1">
+                <button onclick="switchTab('test')" id="tab-test" class="px-4 py-2.5 rounded-lg font-bold transition-all bg-brand-500 text-white shadow flex items-center gap-1">
+                    ✍️ ביצוע מבחן
+                </button>
+                <button onclick="switchTab('view-grade')" id="tab-view-grade" class="px-4 py-2.5 rounded-lg font-bold transition-all text-brand-200 hover:text-white flex items-center gap-1">
+                    🔍 צפייה בציון
+                </button>
+                <button onclick="switchTab('study')" id="tab-study" class="px-4 py-2.5 rounded-lg font-bold transition-all text-brand-200 hover:text-white flex items-center gap-1">
+                    📖 חומר לימוד וספר מקור
+                </button>
+                <button onclick="switchTab('grading')" id="tab-grading" class="px-4 py-2.5 rounded-lg font-bold transition-all text-brand-200 hover:text-white flex items-center gap-1">
+                    👑 שולחן בדיקה וציון
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Student Name Floating Bar (From Image) -->
+    <div class="bg-brand-50 border-b border-brand-100 py-3 shadow-inner">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <span class="font-bold text-brand-900 shrink-0">שם התלמיד/ה:</span>
+                <input type="text" id="studentName" placeholder="הקלד שם כאן..." oninput="syncStudentName(this.value)" class="px-3 py-1.5 rounded-lg border border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-500 w-full sm:w-64 bg-white shadow-sm font-medium">
+            </div>
+            <div class="flex items-center gap-4 text-xs sm:text-sm text-slate-600 font-bold">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                    <span>צבירת נקודות מקסימלית: 100</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                    <span>בונוס מורה: עד 10 נק'</span>
+                </div>
+                <!-- Real-time Cloud Indicator -->
+                <div id="cloud-badge" class="flex items-center gap-1 text-slate-400">
+                    <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+                    <span id="cloud-status">מתחבר...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Banner Placeholder (No alert box!) -->
+    <div id="custom-alert-box" class="hidden max-w-4xl mx-auto mt-4 px-4">
+        <div id="custom-alert-content" class="p-4 rounded-xl text-sm font-bold flex items-center justify-between shadow-sm">
+            <span id="custom-alert-text"></span>
+            <button onclick="dismissAlert()" class="text-xs underline ml-2 opacity-80 hover:opacity-100">סגור</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+        
+        <!-- Tab: STUDY / SOURCE TEXT -->
+        <div id="panel-study" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Table of Contents -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-lg text-slate-900 border-b pb-2 mb-3 flex items-center gap-2">
+                        <span>📚</span> תוכנית הלימודים - עונה 1-2
+                    </h3>
+                    <ul class="space-y-2.5 text-sm">
+                        <li>
+                            <a href="#study-sec1" class="block p-2.5 rounded bg-slate-50 hover:bg-brand-50 hover:text-brand-700 transition font-medium border-r-4 border-emerald-500">
+                                פרק א: נעים שמכם, פסטון והקמת "הטובים"
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#study-sec2" class="block p-2.5 rounded bg-slate-50 hover:bg-brand-50 hover:text-brand-700 transition font-medium border-r-4 border-amber-500">
+                                פרק ב: השחייה בים, פרוץ המלחמה והגנות המקל
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#study-sec3" class="block p-2.5 rounded bg-slate-50 hover:bg-brand-50 hover:text-brand-700 transition font-medium border-r-4 border-blue-500">
+                                פרק ג: חלוקת הממלכה ומשפחת בוג'י
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#study-sec4" class="block p-2.5 rounded bg-slate-50 hover:bg-brand-50 hover:text-brand-700 transition font-medium border-r-4 border-purple-500">
+                                פרק ד: שירה וחשמל מהקיר, קרולין וקרפדה
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#study-sec5" class="block p-2.5 rounded bg-slate-50 hover:bg-brand-50 hover:text-brand-700 transition font-medium border-r-4 border-red-500">
+                                פרק ה: נפילת הממלכות, מיפל פלת וסגירת המעגל
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Full Text Document -->
+            <div class="lg:col-span-2 bg-white p-6 sm:p-8 rounded-xl shadow-sm border border-slate-200 space-y-6 overflow-y-auto max-h-[80vh]">
+                <div class="border-b pb-4">
+                    <span class="bg-brand-100 text-brand-800 text-xs font-bold px-2.5 py-1 rounded">חומר מקור מאושר</span>
+                    <h2 class="text-2xl font-bold text-slate-900 mt-2">ספר הלימוד וההיסטוריה: מגילת הפיסטי והדורות</h2>
+                </div>
+
+                <div id="study-sec1" class="space-y-3 pt-2">
+                    <h3 class="text-lg font-bold text-emerald-700">פרק א: נעים שמכם, פסטון והקמת "הטובים"</h3>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        היה היה אדם ושמו <strong>נעים שמכם</strong>. הוא היה חלק מקבוצה שונה משאר בני האדם שחיו באותה התקופה, הוא היה שייך לקבוצה ששנאה מלחמות ואהבה רוגע, שלום ועשייה של טוב.
+                    </p>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        נעים שמכם התחתן עם <strong>נני</strong> ובמהרה נולד להם בן - <strong>פוני</strong>. הוא במהרה נהפך למנהיגם של הקבוצה (שבהמשך שינתה את שמה ל<strong>טובים</strong> - כי הם אהבו לעשות טוב תמיד). הקבוצה חיה באושר ובשלום לצד העמים השונים.
+                    </p>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        לאחר מספר שנים, אשתו של נעים, נני, חלתה במחלה קשה מאוד שיכלה להוביל למותה. נעים שמכם חיפש את מיטב הרופאים עד שהגיע לרופא ששמו היה <strong>נונן</strong>. נעים שמכם שילם לנונן מאות אלפי שקלים ונונן טיפל בה עד שהחלימה. כאות תודה, נונן דרש להתחתן עם נני והיא נאלצה להסכים לבקשתו. נני לקחה את פוני הקטן ועזבה את ביתו של נעים שמכם. נעים שמכם נישא בשנית לרותי ולהם נולדה בת בשם מלכה לאה.
+                    </p>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        באותו האיזור חי אדם נדיב מאוד - ושמו <strong>פסטון</strong>. פסטון אהב מאוד את נעים שמכם והם נפגשו לעיתים קרובות אחד אצל השני. הוא היה נותן לו הרבה מתנות, והם בילו שעות ארוכות ומהנות ביחד. יום אחד, באחת מפגישותיהם השגרתיות, פסטון סיפר לו שהוא יודע שצאצאיו יהיו בעתיד רעים עבור הטובים וייגרמו להם סבל רב, ואולי אפילו יצליחו להרוג מהם, אך, הוסיף ואמר: <span class="italic text-brand-700 font-medium">"ביום מן המועדים אשוב גם אני אל המוקש ואקץ הכל"</span>. נעים לא הבין למה התכוון פסטון, אך לאחר המילים האלו פסטון לא חש בטוב, ויום למחרת הוא נעלם במפתיע. בתו של נעים שמכם נישאה במהרה לאדם מקבוצתם, ששמו היה מתוק תפוח. להם נולדו 18 ילדים, ועשרות נכדים!
+                    </p>
+                </div>
+
+                <div id="study-sec2" class="space-y-3 pt-4 border-t border-slate-100">
+                    <h3 class="text-lg font-bold text-amber-700">פרק ב: השחייה בים, פרוץ המלחמה והגנות המקל</h3>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        אחת נכדותיה של מלכה לאה, רחלה, לא ידעה מאומה ממה שאירע עם פסטון, ונישאה לאחד מצאצאיו בשם פסטי. לא נולדו להם ילדים.
+                    </p>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        לאחר עשרות שנים, בזמן הנהגתו של <strong>אבי תפוח</strong> (בן-נינה של מלכה לאה), הופיע הסימן לכך. אבי תפוח אירגן צלילה משותפת לכל הטובים בים הסמוך לממלכה. השחייה המשותפת הייתה חוויה עבור כולם, אך כשיצאו מהים, הופיעו <strong>הפסטים</strong> (צאצאי פסטון) והתחילו להילחם בטובים והרגו הרבה מהם. הטובים התארגנו מהר למלחמה והצליחו להרוג עשרות פסטים. לאחר המלחמה, הפסטים היו מאוד עוינים לטובים. הם ניסו להציק להם בכל דרך אפשרית.
+                    </p>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        בהמשך הדורות, הדור של פסטי התחלף לפיסטי אך המלחמות נגד הטובים לא נגמרו, במיוחד אז! המלחמות נהיו יותר תקופות ואף מסוכנות יותר. <strong>בארי תפוח</strong>, נכדו של אבי, שהמשיך לשלוט, מינה את <strong>ליפא בוג'י</strong>, צאצא של מלכה מענף אחר, למלך במקומו כדי שיהיה לו יותר פנאי לפתח הגנות לטובים. בארי תפוח, ביחד עם אשתו, יצרו מקל שבתוכו יש כפר קטן וממוגן, והכניסה אליו באמצעות זיהוי ואישור מחדר ההגדרות שבתוך המקל. הפיסטים המשיכו להילחם בטובים, וביצעו ניסיונות רבים לפגוע במקל, אך כולם נכשלו.
+                    </p>
+                </div>
+
+                <div id="study-sec3" class="space-y-3 pt-4 border-t border-slate-100">
+                    <h3 class="text-lg font-bold text-blue-700">פרק ג: חלוקת הממלכה ומשפחת בוג'י</h3>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        בנו של ליפא, המלך <strong>מתוק בוג'י</strong> חילק את הממלכה לחמישה חלקים שלכל חלק יש צבא משלו, ובזמן מלחמה, כל הצבאות יתאספו יחדיו. על כל חלק שלט אחד מילדיו של מתוק: מרדכי נישא לביינה, רחל לאבישי, ג'יג'י/חיים לשירה, ז'אזן/יוסף למיכל, וז'ונית/מרים לבנימין/ביבי.
+                    </p>
+                </div>
+
+                <div id="study-sec4" class="space-y-3 pt-4 border-t border-slate-100">
+                    <h3 class="text-lg font-bold text-purple-700">פרק ד: שירה וחשמל מהקיר, קרולין וקרפדה</h3>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        אילנה התחתנה עם סיק קרמר. לאחר הנישואים ובמיוחד לאחר לידת חנה, סיק פגע בה קשות עד שברחה והייתה בודדה ברחוב, עד שנסיך הדרבניקלים, אדוארד-דוד תנון, מצא אותה ונישא לה.
+                    </p>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        מילדותה של שירה, היא האמינה שחשמל עשוי מקיר, עשתה מסיבות ואף ייצרה חשמל מקיר! לקרולין (בתם של ג'יג'י ושירה) נולד בן, מיכאל. היא התגרשה משמעון סרגלי ונישאה לקרפדה העצלן שפגע בבריאותה, אך היא אהבה אותו בכל ליבה.
+                    </p>
+                </div>
+
+                <div id="study-sec5" class="space-y-3 pt-4 border-t border-slate-100">
+                    <h3 class="text-lg font-bold text-red-700">פרק ה: נפילת הממלכות, מיפל פלת וסגירת המעגל</h3>
+                    <p class="text-slate-700 leading-relaxed text-sm sm:text-base">
+                        מיפל פלת גנבה ספר מתכונים בילדותה, נשכה אנשים ברחוב והשתלטה על הממלכות. מרדכי וביינה נותרו היחידים והקימו ועדה דחופה, בעוד דוושה מנסה לחדור בזהות בדויה בשם "עטרת" ומגורשת.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: TEST EXAM SHEET (Beautiful visual styling, clean and un-highlighted) -->
+        <div id="panel-test" class="space-y-6">
+            <!-- Instructions and Overview -->
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm text-amber-950 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="space-y-1">
+                    <h3 class="font-bold text-lg flex items-center gap-2">
+                        <span>📋</span> הוראות לביצוע המבחן הממוחשב
+                    </h3>
+                    <p class="text-xs md:text-sm leading-relaxed">
+                        עליכם לענות על <strong>3 שאלות מתוך 5</strong> בכל אחד מהחלקים (א', ב', ג', ד'). 
+                        במידה ותענו על יותר שאלות מהנדרש, המערכת תשקלל אוטומטית את <strong>3 השאלות הראשונות בלבד</strong>.
+                    </p>
+                </div>
+                <div class="bg-amber-100 text-amber-800 text-xs font-bold px-4 py-2 rounded-lg border border-amber-300">
+                    סה"כ ניקוד: 100 נקודות
+                </div>
+            </div>
+
+            <!-- Quiz Form Grid -->
+            <form id="quizForm" class="space-y-8" onsubmit="event.preventDefault();">
+                
+                <!-- PART A -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-emerald-600 text-white p-4 flex justify-between items-center">
+                        <h2 class="font-bold text-lg">חלק א' – ראשית הסיפור (עד 25 נק')</h2>
+                        <span class="bg-emerald-700 text-xs px-3 py-1 rounded-full font-bold">3 שאלות מוצגות</span>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        
+                        <!-- Part A - Q1 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 1 (5 נק') • בחירה מרובעת</h4>
+                                <span class="text-emerald-700 font-bold text-xs bg-emerald-100/60 px-2.5 py-1 rounded border border-emerald-200">בדיקה אוטומטית</span>
+                            </div>
+                            <p class="text-slate-800 font-medium">מה אפיין את הקבוצה של נעים שמכם?</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partA_q1" value="אהבת מלחמות" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+                                    <span>אהבת מלחמות</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partA_q1" value="אהבת שלום ועשיית טוב" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+                                    <span>אהבת שלום ועשיית טוב</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partA_q1" value="שלטון צבאי" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+                                    <span>שלטון צבאי</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partA_q1" value="מסחר" class="text-emerald-600 focus:ring-emerald-500 h-4 w-4">
+                                    <span>מסחר</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Part A - Q2 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 2 (5 נק') • טבלת נכון / לא נכון</h4>
+                                <span class="text-emerald-700 font-bold text-xs bg-emerald-100/60 px-2.5 py-1 rounded border border-emerald-200">1.25 נק' לכל סעיף</span>
+                            </div>
+                            <p class="text-slate-800 font-medium">סמנו נכון או לא נכון עבור הטענות הבאות:</p>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm border-collapse bg-white rounded-lg overflow-hidden border">
+                                    <thead>
+                                        <tr class="bg-slate-100 text-slate-700 border-b">
+                                            <th class="p-3 text-right">סעיף</th>
+                                            <th class="p-3 text-center w-28">נכון</th>
+                                            <th class="p-3 text-center w-28">לא נכון</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr>
+                                            <td class="p-3 font-medium">פוני היה בנו של נעים</td>
+                                            <td class="p-3 text-center"><input type="radio" name="partA_q2_s1" value="נכון" class="h-4 w-4 text-emerald-600"></td>
+                                            <td class="p-3 text-center"><input type="radio" name="partA_q2_s1" value="לא נכון" class="h-4 w-4 text-emerald-600"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3 font-medium">נעים היה מנהיג הטובים</td>
+                                            <td class="p-3 text-center"><input type="radio" name="partA_q2_s2" value="נכון" class="h-4 w-4 text-emerald-600"></td>
+                                            <td class="p-3 text-center"><input type="radio" name="partA_q2_s2" value="לא נכון" class="h-4 w-4 text-emerald-600"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3 font-medium">פסטון היה חבר של נעים</td>
+                                            <td class="p-3 text-center"><input type="radio" name="partA_q2_s3" value="נכון" class="h-4 w-4 text-emerald-600"></td>
+                                            <td class="p-3 text-center"><input type="radio" name="partA_q2_s3" value="לא נכון" class="h-4 w-4 text-emerald-600"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3 font-medium">נני עזבה עם פוני</td>
+                                            <td class="p-3 text-center"><input type="radio" name="partA_q2_s4" value="נכון" class="h-4 w-4 text-emerald-600"></td>
+                                            <td class="p-3 text-center"><input type="radio" name="partA_q2_s4" value="לא נכון" class="h-4 w-4 text-emerald-600"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Part A - Q3 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 3 (10 נק') • שאלה פתוחה</h4>
+                            <p class="text-slate-800 font-medium">הסבר בקצרה את הקשר בין נעים שמכם לפסטון.</p>
+                            <textarea id="partA_q3" rows="3" placeholder="הקלד/י את תשובתך כאן בהתבסס על החומר שנלמד..." class="w-full p-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-sm sm:text-base"></textarea>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- PART B -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-amber-600 text-white p-4 flex justify-between items-center">
+                        <h2 class="font-bold text-lg">חלק ב' – מלחמות הפיסטים (עד 25 נק')</h2>
+                        <span class="bg-amber-700 text-xs px-3 py-1 rounded-full font-bold">3 שאלות מוצגות</span>
+                    </div>
+                    <div class="p-6 space-y-6">
+
+                        <!-- Part B - Q1 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 1 (5 נק') • בחירה מרובעת</h4>
+                                <span class="text-emerald-700 font-bold text-xs bg-emerald-100/60 px-2.5 py-1 rounded border border-emerald-200">בדיקה אוטומטית</span>
+                            </div>
+                            <p class="text-slate-800 font-medium">מתי החלה המלחמה?</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partB_q1" value="לאחר היעלמות פסטון" class="text-amber-600 focus:ring-amber-500 h-4 w-4">
+                                    <span>לאחר היעלמות פסטון</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partB_q1" value="לאחר השחייה בים" class="text-amber-600 focus:ring-amber-500 h-4 w-4">
+                                    <span>לאחר השחייה בים</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partB_q1" value="בזמן חתונה" class="text-amber-600 focus:ring-amber-500 h-4 w-4">
+                                    <span>בזמן חתונה</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partB_q1" value="בזמן שלטון נעים" class="text-amber-600 focus:ring-amber-500 h-4 w-4">
+                                    <span>בזמן שלטון נעים</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Part B - Q2 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 2 (10 נק') • שאלה פתוחה</h4>
+                            <p class="text-slate-800 font-medium">תאר את האירוע בזמן הנהגת אבי תפוח.</p>
+                            <textarea id="partB_q2" rows="3" placeholder="תאר/י את האירוע הימי והמתקפה שהתרחשה מיד לאחריו..." class="w-full p-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white text-sm sm:text-base"></textarea>
+                        </div>
+
+                        <!-- Part B - Q3 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 3 (5 נק') • התאמה</h4>
+                                <span class="text-emerald-700 font-bold text-xs bg-emerald-100/60 px-2.5 py-1 rounded border border-emerald-200">בדיקה אוטומטית</span>
+                            </div>
+                            <p class="text-slate-800 font-medium">התאם לכל דמות את תפקידה הנכון:</p>
+                            <div class="space-y-3 max-w-xl">
+                                <div class="flex items-center gap-4">
+                                    <span class="w-24 font-bold text-slate-700 text-sm">אבי תפוח:</span>
+                                    <select id="partB_q3_d1" class="p-2 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-amber-500 flex-grow">
+                                        <option value="">בחר תפקיד...</option>
+                                        <option value="מנהיג">מנהיג</option>
+                                        <option value="דמות נבואית">דמות נבואית</option>
+                                        <option value="מחלק הממלכה">מחלק הממלכה</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <span class="w-24 font-bold text-slate-700 text-sm">פסטון:</span>
+                                    <select id="partB_q3_d2" class="p-2 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-amber-500 flex-grow">
+                                        <option value="">בחר תפקיד...</option>
+                                        <option value="מנהיג">מנהיג</option>
+                                        <option value="דמות נבואית">דמות נבואית</option>
+                                        <option value="מחלק הממלכה">מחלק הממלכה</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <span class="w-24 font-bold text-slate-700 text-sm">מתוק בוג'י:</span>
+                                    <select id="partB_q3_d3" class="p-2 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-amber-500 flex-grow">
+                                        <option value="">בחר תפקיד...</option>
+                                        <option value="מנהיג">מנהיג</option>
+                                        <option value="דמות נבואית">דמות נבואית</option>
+                                        <option value="מחלק הממלכה">מחלק הממלכה</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- PART C -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-blue-600 text-white p-4 flex justify-between items-center">
+                        <h2 class="font-bold text-lg">חלק ג' – מגילת הפיסטי (עד 25 נק')</h2>
+                        <span class="bg-blue-700 text-xs px-3 py-1 rounded-full font-bold">3 שאלות מוצגות</span>
+                    </div>
+                    <div class="p-6 space-y-6">
+
+                        <!-- Part C - Q1 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 1 (5 נק') • בחירה מרובעת</h4>
+                                <span class="text-emerald-700 font-bold text-xs bg-emerald-100/60 px-2.5 py-1 rounded border border-emerald-200">בדיקה אוטומטית</span>
+                            </div>
+                            <p class="text-slate-800 font-medium">לפי המגילה, מי התחיל את המלחמה?</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partC_q1" value="הטובים" class="text-blue-600 focus:ring-blue-500 h-4 w-4">
+                                    <span>הטובים</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partC_q1" value="הפיסטים" class="text-blue-600 focus:ring-blue-500 h-4 w-4">
+                                    <span>הפיסטים</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partC_q1" value="נעים" class="text-blue-600 focus:ring-blue-500 h-4 w-4">
+                                    <span>נעים</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partC_q1" value="פסטון" class="text-blue-600 focus:ring-blue-500 h-4 w-4">
+                                    <span>פסטון</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Part C - Q2 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 2 (10 נק') • שאלה פתוחה</h4>
+                            <p class="text-slate-800 font-medium">האם מגילת הפיסטי היא תיעוד או תעמולה? נמק.</p>
+                            <textarea id="partC_q2" rows="3" placeholder="נתחו את המגילה משני צידיה ופרטו את דעתכם..." class="w-full p-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm sm:text-base"></textarea>
+                        </div>
+
+                        <!-- Part C - Q3 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 3 (5 נק') • נכון / לא נכון מרובה</h4>
+                                <span class="text-emerald-700 font-bold text-xs bg-emerald-100/60 px-2.5 py-1 rounded border border-emerald-200">בדיקה אוטומטית</span>
+                            </div>
+                            <p class="text-slate-800 font-medium">סמנו נכון/לא נכון עבור כל היגד:</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
+                                    <span class="text-sm font-semibold">יש הגזמה במספרי ההרוגים.</span>
+                                    <div class="flex gap-3 text-xs font-bold">
+                                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="partC_q3_s1" value="נכון" class="text-blue-600"> נכון</label>
+                                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="partC_q3_s1" value="לא נכון" class="text-blue-600"> לא נכון</label>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
+                                    <span class="text-sm font-semibold">שני הצדדים מסכימים על כל העובדות.</span>
+                                    <div class="flex gap-3 text-xs font-bold">
+                                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="partC_q3_s2" value="נכון" class="text-blue-600"> נכון</label>
+                                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="partC_q3_s2" value="לא נכון" class="text-blue-600"> לא נכון</label>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
+                                    <span class="text-sm font-semibold">המגילה מציגה את הפיסטים כקורבנות.</span>
+                                    <div class="flex gap-3 text-xs font-bold">
+                                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="partC_q3_s3" value="נכון" class="text-blue-600"> נכון</label>
+                                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="partC_q3_s3" value="לא נכון" class="text-blue-600"> לא נכון</label>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
+                                    <span class="text-sm font-semibold">אין סתירות בין המקורות.</span>
+                                    <div class="flex gap-3 text-xs font-bold">
+                                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="partC_q3_s4" value="נכון" class="text-blue-600"> נכון</label>
+                                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="partC_q3_s4" value="לא נכון" class="text-blue-600"> לא נכון</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- PART D -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-purple-600 text-white p-4 flex justify-between items-center">
+                        <h2 class="font-bold text-lg">חלק ד' – דמויות (עד 25 נק')</h2>
+                        <span class="bg-purple-700 text-xs px-3 py-1 rounded-full font-bold">3 שאלות מוצגות</span>
+                    </div>
+                    <div class="p-6 space-y-6">
+
+                        <!-- Part D - Q1 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center flex-wrap gap-2">
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 1 (10 נק') • בחר דמות ותאר</h4>
+                            </div>
+                            
+                            <!-- Character selector -->
+                            <div class="flex items-center gap-3">
+                                <span class="font-bold text-slate-700 text-sm shrink-0">בחר דמות אחת:</span>
+                                <div class="flex gap-2">
+                                    <label class="px-3 py-1.5 rounded-lg border border-purple-200 bg-white text-xs sm:text-sm font-bold cursor-pointer hover:bg-purple-50 transition flex items-center gap-1.5">
+                                        <input type="radio" name="partD_q1_char" value="אילנה" onchange="toggleCharTip('אילנה')"> אילנה
+                                    </label>
+                                    <label class="px-3 py-1.5 rounded-lg border border-purple-200 bg-white text-xs sm:text-sm font-bold cursor-pointer hover:bg-purple-50 transition flex items-center gap-1.5">
+                                        <input type="radio" name="partD_q1_char" value="קרולין" onchange="toggleCharTip('קרולין')"> קרולין
+                                    </label>
+                                    <label class="px-3 py-1.5 rounded-lg border border-purple-200 bg-white text-xs sm:text-sm font-bold cursor-pointer hover:bg-purple-50 transition flex items-center gap-1.5">
+                                        <input type="radio" name="partD_q1_char" value="שירה" onchange="toggleCharTip('שירה')"> שירה
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic tip box based on choice -->
+                            <div id="charTipBox" class="hidden p-3 bg-purple-50 border border-purple-100 rounded text-xs text-purple-900">
+                                <span class="font-bold" id="selectedCharTitle"></span>
+                                <p id="selectedCharContent" class="mt-1 leading-relaxed"></p>
+                            </div>
+
+                            <p class="text-slate-800 font-medium">תאר את סיפור חייה של הדמות שבחרת:</p>
+                            <textarea id="partD_q1" rows="4" placeholder="כתוב כאן תיאור מפורט של מהלך חייה ומעשיה של הדמות בהתאם לעלילה..." class="w-full p-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white text-sm sm:text-base"></textarea>
+                        </div>
+
+                        <!-- Part D - Q2 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 2 (5 נק') • בחירה מרובעת</h4>
+                                <span class="text-emerald-700 font-bold text-xs bg-emerald-100/60 px-2.5 py-1 rounded border border-emerald-200">בדיקה אוטומטית</span>
+                            </div>
+                            <p class="text-slate-800 font-medium">מי האמין שחשמל עשוי מקיר?</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partD_q2" value="קרולין" class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                    <span>קרולין</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partD_q2" value="שירה" class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                    <span>שירה</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partD_q2" value="סנדי" class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                    <span>סנדי</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partD_q2" value="מיכל" class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                    <span>מיכל</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Part D - Q3 -->
+                        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-900 text-sm sm:text-base">שאלה 3 (5 נק') • בחירה מרובעת</h4>
+                                <span class="text-emerald-700 font-bold text-xs bg-emerald-100/60 px-2.5 py-1 rounded border border-emerald-200">בדיקה אוטומטית</span>
+                            </div>
+                            <p class="text-slate-800 font-medium">מי היה קרפדה?</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partD_q3" value="מלך" class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                    <span>מלך</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partD_q3" value="בעלה השני של קרולין" class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                    <span>בעלה השני של קרולין</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partD_q3" value="בנו של פסטון" class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                    <span>בנו של פסטון</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 cursor-pointer transition">
+                                    <input type="radio" name="partD_q3" value="אחיה של אילנה" class="text-purple-600 focus:ring-purple-500 h-4 w-4">
+                                    <span>אחיה של אילנה</span>
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Submit Action Button -->
+                <div class="flex justify-center pt-4">
+                    <button type="button" onclick="submitExamToFirebase()" class="px-8 py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 text-lg">
+                        🚀 הגשת המבחן הסופי לשרת
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Tab: VIEW GRADE (Specifically added for student self-checks) -->
+        <div id="panel-view-grade" class="hidden max-w-4xl mx-auto space-y-6">
+            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-md border border-slate-200 text-center space-y-6">
+                <div class="max-w-md mx-auto space-y-4">
+                    <span class="text-5xl block">🎓</span>
+                    <h3 class="text-2xl font-bold text-brand-900">מרכז ציונים לתלמיד</h3>
+                    <p class="text-sm text-slate-500">הזן/י את שמך המלא בדיוק כפי שהקלדת במבחן כדי לצפות בציון ומשוב המורה:</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="gradeCheckName" placeholder="הקלד שם מלא לתצוגת ציון..." class="flex-grow p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold">
+                        <button onclick="checkStudentGrade()" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-lg transition shadow-md">
+                            בדוק ציון עכשיו
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grade Result Area (Hidden initially) -->
+                <div id="grade-result-container" class="hidden border-t pt-6 text-right space-y-6">
+                    
+                    <!-- Pending feedback -->
+                    <div id="grade-pending-box" class="hidden bg-amber-50 border border-amber-200 text-amber-950 p-6 rounded-xl space-y-2 text-center">
+                        <span class="text-3xl block">⏳</span>
+                        <h4 class="font-bold text-lg">המבחן שלך הוגש וכרגע בבדיקה!</h4>
+                        <p class="text-xs sm:text-sm">התשובות שלך נשמרו בבטחה. המורה מעריך כעת את השאלות הפתוחות. אנא חזור/י שוב מאוחר יותר.</p>
+                    </div>
+
+                    <!-- Grade Released Sheet -->
+                    <div id="grade-released-box" class="hidden space-y-6">
+                        <div class="flex flex-col sm:flex-row justify-between items-center border-b pb-4 gap-4">
+                            <div>
+                                <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">מבחן נבדק ופורסם</span>
+                                <h2 class="text-2xl font-extrabold text-slate-900 mt-2" id="res-student-title">ציון מבחן: </h2>
+                            </div>
+                            <div class="flex flex-col items-center bg-brand-50 px-6 py-3 rounded-xl border border-brand-200">
+                                <span class="text-xs font-semibold text-slate-500">ציון סופי משוקלל</span>
+                                <span id="res-final-score" class="text-4xl font-extrabold text-brand-600">0 / 100</span>
+                            </div>
+                        </div>
+
+                        <!-- Score breakdown cards -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div class="p-3 bg-slate-50 rounded-lg text-center border">
+                                <span class="text-xs font-semibold text-slate-500 block">חלק א' (ראשית)</span>
+                                <span id="res-breakdown-A" class="text-lg font-bold text-slate-800">0 / 25</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-lg text-center border">
+                                <span class="text-xs font-semibold text-slate-500 block">חלק ב' (מלחמות)</span>
+                                <span id="res-breakdown-B" class="text-lg font-bold text-slate-800">0 / 25</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-lg text-center border">
+                                <span class="text-xs font-semibold text-slate-500 block">חלק ג' (מגילה)</span>
+                                <span id="res-breakdown-C" class="text-lg font-bold text-slate-800">0 / 25</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-lg text-center border">
+                                <span class="text-xs font-semibold text-slate-500 block">חלק ד' (דמויות)</span>
+                                <span id="res-breakdown-D" class="text-lg font-bold text-slate-800">0 / 25</span>
+                            </div>
+                        </div>
+
+                        <!-- Teacher Feedback -->
+                        <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-2">
+                            <h4 class="font-bold text-amber-900 text-sm">הערכת מורה ובונוס:</h4>
+                            <p id="res-comment" class="text-xs sm:text-sm text-slate-700 leading-relaxed"></p>
+                            <div class="text-xs text-amber-800 font-bold mt-1">
+                                בונוס מיוחד שהוענק על ידי המורה: +<span id="res-bonus">0</span> נקודות.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: TEACHER GRADING DESK (Protected by fisti123 Password) -->
+        <div id="panel-grading" class="hidden space-y-6">
+            
+            <!-- Lock Screen inside Teacher tab -->
+            <div id="teacher-lock-screen" class="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-md border text-center space-y-4">
+                <span class="text-4xl">🔐</span>
+                <h3 class="text-xl font-bold text-slate-800">כניסת מורה מוגנת</h3>
+                <p class="text-xs text-slate-500">הזן את סיסמת המורה כדי לפתוח את שולחן הבדיקה ומחווני הציונים:</p>
+                <div class="flex gap-2">
+                    <input type="password" id="teacherPass" placeholder="הקלד סיסמה..." class="flex-grow p-2.5 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                    <button onclick="verifyTeacher()" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition">פתח</button>
+                </div>
+                <p class="text-[11px] text-slate-400">סיסמת ברירת מחדל: <code class="font-mono bg-slate-100 p-0.5 rounded">fisti123</code></p>
+            </div>
+
+            <!-- Authentic Workspace (Hidden until unlocked) -->
+            <div id="teacher-unlocked-workspace" class="hidden space-y-6">
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 shadow-sm text-blue-950 flex flex-col md:flex-row justify-between gap-4">
+                    <div class="space-y-1">
+                        <h3 class="font-bold text-lg flex items-center gap-2">
+                            <span>👑</span> שולחן מורה ובדיקת המחוונים
+                        </h3>
+                        <p class="text-xs sm:text-sm">
+                            סקור הגשות תלמידים, השתמש בכפתורי המחוון המהירים כדי להעניק את הניקוד המתאים ופרסם את הציון לתלמידים.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Left List: Student Submissions -->
+                    <div class="lg:col-span-1 space-y-4">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                            <h3 class="font-bold text-lg text-slate-900 border-b pb-2 flex justify-between items-center">
+                                <span>📋 רשימת נבחנים</span>
+                                <span id="student-count-badge" class="bg-slate-100 text-slate-600 text-xs px-2.5 py-1 rounded">0 הגשות</span>
+                            </h3>
+                            <div class="space-y-2 max-h-[500px] overflow-y-auto pr-1" id="submissions-list">
+                                <p class="text-slate-400 text-sm text-center py-6">אין הגשות במערכת כרגע...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Single Exam Sheet Rubric Assessment -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <div id="no-selection-alert" class="bg-white p-12 rounded-xl border text-center space-y-4">
+                            <span class="text-5xl block">🔎</span>
+                            <h4 class="font-bold text-lg text-slate-800">לא נבחר תלמיד לבדיקה</h4>
+                            <p class="text-sm text-slate-500 max-w-md mx-auto">לחץ על אחד מהתלמידים ברשימה הימנית כדי להציג את התשובות שלו, מחווני הבדיקה וכדי לקבוע את הציון הסופי.</p>
+                        </div>
+
+                        <!-- Interactive Grading Form -->
+                        <div id="active-grading-card" class="hidden bg-white p-6 rounded-xl shadow-sm border space-y-6">
+                            
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 gap-2">
+                                <div>
+                                    <h3 class="font-bold text-xl text-slate-900">בדיקת מבחן: <span id="current-g-student" class="text-brand-600"></span></h3>
+                                    <p class="text-xs text-slate-500">הוגש בתאריך: <span id="current-g-date"></span></p>
+                                </div>
+                                <div>
+                                    <span id="g-publish-status" class="text-xs font-bold px-3 py-1 rounded-full"></span>
+                                </div>
+                            </div>
+
+                            <!-- Open Q1 Rubric Check -->
+                            <div class="space-y-2 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-bold text-slate-700">חלק א' - שאלה 3 (הקשר בין נעים לפסטון)</span>
+                                    <span id="g_partA_q3_score" class="text-brand-600 font-bold text-sm bg-brand-50 px-2 py-0.5 rounded">ציון: 0 / 10</span>
+                                </div>
+                                <div class="p-3 bg-white border border-slate-200 rounded text-sm italic min-h-[50px] text-slate-600 whitespace-pre-wrap" id="g_answer_partA_q3"></div>
+                                
+                                <div class="flex flex-wrap gap-2 pt-2 border-t">
+                                    <button onclick="setTeacherManualScore('partA_q3', 0)" class="px-3 py-1 bg-slate-200 text-slate-800 hover:bg-slate-300 text-xs rounded font-medium">0 נק'</button>
+                                    <button onclick="setTeacherManualScore('partA_q3', 3)" class="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium">3 נק' (חלקי)</button>
+                                    <button onclick="setTeacherManualScore('partA_q3', 7)" class="px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs rounded font-medium">7 נק' (חברות)</button>
+                                    <button onclick="setTeacherManualScore('partA_q3', 10)" class="px-3 py-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs rounded font-medium">10 נק' (מלא)</button>
+                                </div>
+                                <!-- Rubric Box -->
+                                <div class="bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-950 space-y-1">
+                                    <p class="font-bold">📋 מחוון ניקוד להערכה:</p>
+                                    <ul class="list-disc list-inside space-y-0.5">
+                                        <li><strong>0–3 נק':</strong> תשובה חלקית ביותר.</li>
+                                        <li><strong>4–7 נק':</strong> מוזכרת חברות אדוקה ונדיבות (מתנות, בילוי יחד).</li>
+                                        <li><strong>8–10 נק':</strong> מוזכרים החברות, אזהרת פסטון והנבואה, והיעלמותו המפתיעה.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Open Q2 Rubric Check -->
+                            <div class="space-y-2 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-bold text-slate-700">חלק ב' - שאלה 2 (תיאור האירוע בזמן הנהגת אבי תפוח)</span>
+                                    <span id="g_partB_q2_score" class="text-brand-600 font-bold text-sm bg-brand-50 px-2 py-0.5 rounded">ציון: 0 / 10</span>
+                                </div>
+                                <div class="p-3 bg-white border border-slate-200 rounded text-sm italic min-h-[50px] text-slate-600 whitespace-pre-wrap" id="g_answer_partB_q2"></div>
+                                
+                                <div class="flex flex-wrap gap-2 pt-2 border-t">
+                                    <button onclick="setTeacherManualScore('partB_q2', 0)" class="px-3 py-1 bg-slate-200 text-slate-800 hover:bg-slate-300 text-xs rounded font-medium">0 נק'</button>
+                                    <button onclick="setTeacherManualScore('partB_q2', 3)" class="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium">3 נק' (חלקי)</button>
+                                    <button onclick="setTeacherManualScore('partB_q2', 7)" class="px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs rounded font-medium">7 נק' (הים והתקפה)</button>
+                                    <button onclick="setTeacherManualScore('partB_q2', 10)" class="px-3 py-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs rounded font-medium">10 נק' (מלא)</button>
+                                </div>
+                                <!-- Rubric Box -->
+                                <div class="bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-950 space-y-1">
+                                    <p class="font-bold">📋 מחוון ניקוד להערכה:</p>
+                                    <ul class="list-disc list-inside space-y-0.5">
+                                        <li><strong>0–3 נק':</strong> אזכור חלקי בלבד.</li>
+                                        <li><strong>4–7 נק':</strong> מוזכרים הים והתקפת הפיסטים.</li>
+                                        <li><strong>8–10 נק':</strong> מוזכרים הים, המתקפה עם יציאתם, הקרב והשלכותיו.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Open Q3 Rubric Check -->
+                            <div class="space-y-2 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-bold text-slate-700">חלק ג' - שאלה 2 (האם מגילת הפיסטי היא תיעוד או תעמולה?)</span>
+                                    <span id="g_partC_q2_score" class="text-brand-600 font-bold text-sm bg-brand-50 px-2 py-0.5 rounded">ציון: 0 / 10</span>
+                                </div>
+                                <div class="p-3 bg-white border border-slate-200 rounded text-sm italic min-h-[50px] text-slate-600 whitespace-pre-wrap" id="g_answer_partC_q2"></div>
+                                
+                                <div class="flex flex-wrap gap-2 pt-2 border-t">
+                                    <button onclick="setTeacherManualScore('partC_q2', 0)" class="px-3 py-1 bg-slate-200 text-slate-800 hover:bg-slate-300 text-xs rounded font-medium">0 נק'</button>
+                                    <button onclick="setTeacherManualScore('partC_q2', 3)" class="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium">3 נק' (ללא נימוק)</button>
+                                    <button onclick="setTeacherManualScore('partC_q2', 7)" class="px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs rounded font-medium">7 נק' (זיהוי צד אחד)</button>
+                                    <button onclick="setTeacherManualScore('partC_q2', 10)" class="px-3 py-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs rounded font-medium">10 נק' (שילוב שתי נקודות מבט)</button>
+                                </div>
+                                <!-- Rubric Box -->
+                                <div class="bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-950 space-y-1">
+                                    <p class="font-bold">📋 מחוון ניקוד להערכה:</p>
+                                    <ul class="list-disc list-inside space-y-0.5">
+                                        <li><strong>0–3 נק':</strong> תשובה ללא נימוק.</li>
+                                        <li><strong>4–7 נק':</strong> זיהוי תעמולה או תיעוד בלבד.</li>
+                                        <li><strong>8–10 נק':</strong> דיון עשיר ומפורט בשתי נקודות המבט.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Open Q4 Rubric Check -->
+                            <div class="space-y-2 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-bold text-slate-700">חלק ד' - שאלה 1 (תיאור סיפור חייה של הדמות שנבחרה)</span>
+                                    <span id="g_partD_q1_score" class="text-brand-600 font-bold text-sm bg-brand-50 px-2 py-0.5 rounded">ציון: 0 / 10</span>
+                                </div>
+                                <div class="p-3 bg-white border border-slate-200 rounded text-sm italic min-h-[50px] text-slate-600 whitespace-pre-wrap" id="g_answer_partD_q1"></div>
+                                
+                                <div class="flex flex-wrap gap-2 pt-2 border-t">
+                                    <button onclick="setTeacherManualScore('partD_q1', 0)" class="px-3 py-1 bg-slate-200 text-slate-800 hover:bg-slate-300 text-xs rounded font-medium">0 נק'</button>
+                                    <button onclick="setTeacherManualScore('partD_q1', 3)" class="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 text-xs rounded font-medium">3 נק' (פרטים בודדים)</button>
+                                    <button onclick="setTeacherManualScore('partD_q1', 7)" class="px-3 py-1 bg-amber-100 text-amber-700 hover:bg-amber-200 text-xs rounded font-medium">7 נק' (רוב האירועים)</button>
+                                    <button onclick="setTeacherManualScore('partD_q1', 10)" class="px-3 py-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs rounded font-medium">10 נק' (מלא)</button>
+                                </div>
+                                <!-- Rubric Box -->
+                                <div class="bg-amber-50 border border-amber-200 rounded p-3 text-xs text-amber-950 space-y-1">
+                                    <p class="font-bold">📋 מחוון ניקוד להערכה:</p>
+                                    <ul class="list-disc list-inside space-y-0.5">
+                                        <li><strong>0–3 נק':</strong> פרטים בודדים בלבד.</li>
+                                        <li><strong>4–7 נק':</strong> רוב האירועים המרכזיים של הדמות.</li>
+                                        <li><strong>8–10 נק':</strong> תיאור מלא, כרונולוגי ומסודר של מהלך החיים.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Teacher Bonus Segment -->
+                            <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
+                                <h4 class="font-bold text-sm text-amber-900 flex items-center gap-1.5">
+                                    <span>⭐</span> בונוס מורה (על התנהלות חברתית, השקעה, השתתפות פעילה)
+                                </h4>
+                                <div class="flex items-center gap-4">
+                                    <input type="range" id="g_teacherBonus" min="0" max="10" value="0" oninput="updateTeacherBonusValue(this.value)" class="w-full h-2 bg-amber-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
+                                    <span id="g_bonusLabel" class="text-sm font-bold bg-white text-amber-700 border border-amber-300 px-3 py-1.5 rounded min-w-[60px] text-center">0 / 10</span>
+                                </div>
+                            </div>
+
+                            <!-- Total Score Summary Card -->
+                            <div class="bg-slate-100 p-4 rounded-xl flex justify-between items-center">
+                                <div>
+                                    <span class="text-xs font-semibold text-slate-500">ציון סופי משוקלל:</span>
+                                    <div class="text-2xl font-bold text-slate-800" id="g_calculated_total">0 / 100</div>
+                                </div>
+                                <button onclick="publishStudentScore()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow transition">
+                                    📢 פרסם ציון סופי לתלמיד
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 text-xs text-center py-4 border-t border-slate-700 mt-auto">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>פותח עבור תוכנית הלימודים התשפ"ו עונה 1-2 • מערכת מאובטחת ומסונכרנת בזמן אמת</p>
+        </div>
+    </footer>
+
+    <!-- Firebase System Logic Code -->
+    <script>
+        // FIREBASE INITIALIZATION CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyCx-23vtJ3ppt5zqRZivKy2pAU5XdVzdrE",
+            authDomain: "tests-application-81ec3.firebaseapp.com",
+            projectId: "tests-application-81ec3",
+            storageBucket: "tests-application-81ec3.firebasestorage.app",
+            messagingSenderId: "845954176699",
+            appId: "1:845954176699:web:fb6a8b25eac2b83c787b9e",
+            measurementId: "G-NLQSX49785"
+        };
+
+        // Standard Init
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'tests-application-81ec3';
+
+        // State Store
+        let isFirebaseAuthenticated = false;
+        let dbSubmissions = []; // Holds fetched student exams
+        let activeGradingDocId = null; // Currently evaluated document
+        let activeGradingData = null; // Selected student's record
+
+        // Character Tips text helper
+        const charTips = {
+            'אילנה': {
+                title: 'הנחיות לסיפור חייה של אילנה:',
+                content: 'התחתנה עם סיק קרמר ונולדה להם חנה. סיק פגע בה קשות והיא ברחה, נהפכה לבודדה ברחוב מרוחק. נסיך הדרבניקלים אדוארד-דוד תנון מצא אותה, לקח אותה לארמונו, הם נישאו ונולדו להם שני ילדים נוספים.'
+            },
+            'קרולין': {
+                title: 'הנחיות לסיפור חייה של קרולין:',
+                content: 'בתם של ג\'יג\'י ושירה. התחתנה תחילה עם שמעון סרגלי (שהיה בעל מצוין) ונולד להם מיכאל. בהמשך התגרשה ממנו והתחתנה עם קרפדה, שהיה עצלן ופגע בבריאותה (הכין לה מרק נזלת). למרות הכל אהבה אותו.'
+            },
+            'שירה': {
+                title: 'הנחיות לסיפור חייה של שירה:',
+                content: 'נישאה לג\'יג\'י/חיים ונולדה להם קרולין. האמינה מילדותה שחשמל עשוי מקיר ואף הפיקה כך חשמל. חברתה סנדי תמכה בה והן בנו בית משותף ליד הארמון (שנשרף בהמשך על ידי ממלכת דוושה).'
+            }
+        };
+
+        // ON LAUNCH: Authenticate Firebase FIRST (Rule 3 Compliance)
+        window.onload = function() {
+            auth.signInAnonymously()
+                .then(() => {
+                    isFirebaseAuthenticated = true;
+                    const badge = document.getElementById('cloud-badge');
+                    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span id="cloud-status" class="text-emerald-500">ענן מסונכרן</span>`;
+                })
+                .catch((error) => {
+                    console.error("Firebase connection error: ", error);
+                    triggerNotification("⚠️ שגיאת חיבור למסד הנתונים בענן. ודא חיבור לרשת.", "bg-red-500 text-white");
+                });
+        };
+
+        // Sync inputs from floating bar to grade checks etc.
+        function syncStudentName(val) {
+            document.getElementById('gradeCheckName').value = val;
+        }
+
+        // Custom Safe Alerts/Notifications
+        function triggerNotification(message, classes = "bg-brand-900 text-white") {
+            const container = document.getElementById('custom-alert-box');
+            const inner = document.getElementById('custom-alert-content');
+            document.getElementById('custom-alert-text').innerText = message;
+            
+            inner.className = `p-4 rounded-xl text-sm font-bold flex items-center justify-between shadow-sm ` + classes;
+            container.classList.remove('hidden');
+        }
+
+        function dismissAlert() {
+            document.getElementById('custom-alert-box').classList.add('hidden');
+        }
+
+        // Beautiful Navigation
+        function switchTab(tabId) {
+            document.getElementById('panel-test').classList.add('hidden');
+            document.getElementById('panel-study').classList.add('hidden');
+            document.getElementById('panel-view-grade').classList.add('hidden');
+            document.getElementById('panel-grading').classList.add('hidden');
+            
+            document.getElementById('panel-' + tabId).classList.remove('hidden');
+
+            const tabs = ['test', 'study', 'view-grade', 'grading'];
+            tabs.forEach(t => {
+                const tabEl = document.getElementById('tab-' + t);
+                if (t === tabId) {
+                    tabEl.className = "px-4 py-2.5 rounded-lg font-bold transition-all bg-brand-500 text-white shadow flex items-center gap-1";
+                } else {
+                    tabEl.className = "px-4 py-2.5 rounded-lg font-bold transition-all text-brand-200 hover:text-white flex items-center gap-1";
+                }
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Show tips inside Part D Question 1 selection
+        function toggleCharTip(charName) {
+            const box = document.getElementById('charTipBox');
+            const title = document.getElementById('selectedCharTitle');
+            const content = document.getElementById('selectedCharContent');
+            
+            if (charTips[charName]) {
+                box.classList.remove('hidden');
+                title.innerText = charTips[charName].title;
+                content.innerText = charTips[charName].content;
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        // --- EXAM SUBMISSION TO CLOUD ---
+        async function submitExamToFirebase() {
+            const studentName = document.getElementById('studentName').value.trim();
+            if (!studentName) {
+                triggerNotification("⚠️ אנא הקלד/י את שמך המלא בפס השם העליון כדי להגיש.", "bg-amber-100 text-amber-900 border border-amber-300");
+                return;
+            }
+
+            if (!isFirebaseAuthenticated) {
+                triggerNotification("⚠️ מערכת הענן בטעינה. המתן מספר שניות ונסה שוב.", "bg-amber-100 text-amber-900 border border-amber-300");
+                return;
+            }
+
+            // Gather student answers
+            const partA_q1 = document.querySelector('input[name="partA_q1"]:checked')?.value || "";
+            const partA_q2_s1 = document.querySelector('input[name="partA_q2_s1"]:checked')?.value || "";
+            const partA_q2_s2 = document.querySelector('input[name="partA_q2_s2"]:checked')?.value || "";
+            const partA_q2_s3 = document.querySelector('input[name="partA_q2_s3"]:checked')?.value || "";
+            const partA_q2_s4 = document.querySelector('input[name="partA_q2_s4"]:checked')?.value || "";
+            const partA_q3 = document.getElementById('partA_q3').value.trim();
+
+            const partB_q1 = document.querySelector('input[name="partB_q1"]:checked')?.value || "";
+            const partB_q2 = document.getElementById('partB_q2').value.trim();
+            const partB_q3_d1 = document.getElementById('partB_q3_d1').value;
+            const partB_q3_d2 = document.getElementById('partB_q3_d2').value;
+            const partB_q3_d3 = document.getElementById('partB_q3_d3').value;
+
+            const partC_q1 = document.querySelector('input[name="partC_q1"]:checked')?.value || "";
+            const partC_q2 = document.getElementById('partC_q2').value.trim();
+            const partC_q3_s1 = document.querySelector('input[name="partC_q3_s1"]:checked')?.value || "";
+            const partC_q3_s2 = document.querySelector('input[name="partC_q3_s2"]:checked')?.value || "";
+            const partC_q3_s3 = document.querySelector('input[name="partC_q3_s3"]:checked')?.value || "";
+            const partC_q3_s4 = document.querySelector('input[name="partC_q3_s4"]:checked')?.value || "";
+
+            const partD_q1_char = document.querySelector('input[name="partD_q1_char"]:checked')?.value || "";
+            const partD_q1 = document.getElementById('partD_q1').value.trim();
+            const partD_q2 = document.querySelector('input[name="partD_q2"]:checked')?.value || "";
+            const partD_q3 = document.querySelector('input[name="partD_q3"]:checked')?.value || "";
+
+            // Calculate auto checking
+            let scoreA = 0;
+            if (partA_q1 === 'אהבת שלום ועשיית טוב') scoreA += 5;
+            if (partA_q2_s1 === 'נכון') scoreA += 1.25;
+            if (partA_q2_s2 === 'לא נכון') scoreA += 1.25;
+            if (partA_q2_s3 === 'נכון') scoreA += 1.25;
+            if (partA_q2_s4 === 'נכון') scoreA += 1.25;
+
+            let scoreB = 0;
+            if (partB_q1 === 'לאחר השחייה בים') scoreB += 5;
+            let matchPoints = 0;
+            if (partB_q3_d1 === 'מנהיג') matchPoints++;
+            if (partB_q3_d2 === 'דמות נבואית') matchPoints++;
+            if (partB_q3_d3 === 'מחלק הממלכה') matchPoints++;
+            scoreB += (matchPoints === 3) ? 5 : (matchPoints * 1.66);
+
+            let scoreC = 0;
+            if (partC_q1 === 'הטובים') scoreC += 5;
+            if (partC_q3_s1 === 'נכון') scoreC += 1.25;
+            if (partC_q3_s2 === 'לא נכון') scoreC += 1.25;
+            if (partC_q3_s3 === 'נכון') scoreC += 1.25;
+            if (partC_q3_s4 === 'לא נכון') scoreC += 1.25;
+
+            let scoreD = 0;
+            if (partD_q2 === 'שירה') scoreD += 5;
+            if (partD_q3 === 'בעלה השני של קרולין') scoreD += 5;
+
+            const finalPayload = {
+                studentName: studentName,
+                submittedAt: new Date().getTime(),
+                status: 'submitted', // submitted | published
+                answers: {
+                    partA_q1, partA_q2_s1, partA_q2_s2, partA_q2_s3, partA_q2_s4, partA_q3,
+                    partB_q1, partB_q2, partB_q3_d1, partB_q3_d2, partB_q3_d3,
+                    partC_q1, partC_q2, partC_q3_s1, partC_q3_s2, partC_q3_s3, partC_q3_s4,
+                    partD_q1_char, partD_q1, partD_q2, partD_q3
+                },
+                autoScores: {
+                    partA: scoreA,
+                    partB: scoreB,
+                    partC: scoreC,
+                    partD: scoreD
+                },
+                manualScores: {
+                    partA_q3: 0,
+                    partB_q2: 0,
+                    partC_q2: 0,
+                    partD_q1: 0
+                },
+                teacherBonus: 0,
+                finalScore: 0,
+                evaluationComment: ""
+            };
+
+            try {
+                // Rule 1 paths
+                const examsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('exams');
+                await examsRef.add(finalPayload);
+
+                triggerNotification("🏆 המבחן שלך הוגש בהצלחה! תוכל לבדוק את הציון שלך בלשונית 'צפייה בציון' ברגע שהמורה יפרסם אותו.", "bg-emerald-600 text-white");
+                
+                // Switch to Grade view automatically
+                document.getElementById('gradeCheckName').value = studentName;
+                switchTab('view-grade');
+
+            } catch (err) {
+                console.error("Submission error:", err);
+                triggerNotification("⚠️ שגיאה בשמירת הבחינה בשרת.", "bg-red-500 text-white");
+            }
+        }
+
+        // --- STUDENT SELF-GRADE CHECKER ---
+        async function checkStudentGrade() {
+            const name = document.getElementById('gradeCheckName').value.trim();
+            if (!name) {
+                triggerNotification("⚠️ הזן שם מלא כדי לבדוק.", "bg-amber-100 text-amber-900 border border-amber-300");
+                return;
+            }
+
+            const container = document.getElementById('grade-result-container');
+            const pendingBox = document.getElementById('grade-pending-box');
+            const releasedBox = document.getElementById('grade-released-box');
+
+            container.classList.remove('hidden');
+            pendingBox.classList.add('hidden');
+            releasedBox.classList.add('hidden');
+
+            try {
+                // Rule 1 compliant path
+                const examsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('exams');
+                const snapshot = await examsRef.get(); // Rule 2 compliant JS filter
+                
+                let record = null;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.studentName.toLowerCase() === name.toLowerCase()) {
+                        record = data;
+                    }
+                });
+
+                if (!record) {
+                    container.classList.add('hidden');
+                    triggerNotification("⚠️ לא נמצא מבחן עבור שם זה. אנא ודא שהגשת את המבחן תחת השם הנכון.", "bg-amber-100 text-amber-900 border border-amber-300");
+                    return;
+                }
+
+                if (record.status === 'published') {
+                    // Render released sheet
+                    releasedBox.classList.remove('hidden');
+                    document.getElementById('res-student-title').innerText = `מבחן של: ${record.studentName}`;
+                    document.getElementById('res-final-score').innerText = `${record.finalScore} / 100`;
+
+                    // Sum scores
+                    const rPartA = parseFloat(record.autoScores?.partA || 0) + parseFloat(record.manualScores?.partA_q3 || 0);
+                    const rPartB = parseFloat(record.autoScores?.partB || 0) + parseFloat(record.manualScores?.partB_q2 || 0);
+                    const rPartC = parseFloat(record.autoScores?.partC || 0) + parseFloat(record.manualScores?.partC_q2 || 0);
+                    const rPartD = parseFloat(record.autoScores?.partD || 0) + parseFloat(record.manualScores?.partD_q1 || 0);
+
+                    document.getElementById('res-breakdown-A').innerText = `${rPartA.toFixed(1).replace('.0', '')} / 25`;
+                    document.getElementById('res-breakdown-B').innerText = `${rPartB.toFixed(1).replace('.0', '')} / 25`;
+                    document.getElementById('res-breakdown-C').innerText = `${rPartC.toFixed(1).replace('.0', '')} / 25`;
+                    document.getElementById('res-breakdown-D').innerText = `${rPartD.toFixed(1).replace('.0', '')} / 25`;
+
+                    document.getElementById('res-comment').innerText = record.evaluationComment || "עבודה יפה מאוד!";
+                    document.getElementById('res-bonus').innerText = record.teacherBonus || 0;
+                } else {
+                    // Pending
+                    pendingBox.classList.remove('hidden');
+                }
+
+            } catch (err) {
+                console.error("Check score error:", err);
+                triggerNotification("⚠️ שגיאה במשיכת הציון ממסד הנתונים.", "bg-red-500 text-white");
+            }
+        }
+
+        // --- TEACHER VERIFICATION ---
+        function verifyTeacher() {
+            const pass = document.getElementById('teacherPass').value.trim();
+            if (pass === 'fisti123') {
+                document.getElementById('teacher-lock-screen').classList.add('hidden');
+                document.getElementById('teacher-unlocked-workspace').classList.remove('hidden');
+                setupTeacherDashboard();
+            } else {
+                triggerNotification("⚠️ סיסמת מורה שגויה! נסה שוב.", "bg-red-500 text-white");
+            }
+        }
+
+        // Fetch submissions for teacher view
+        function setupTeacherDashboard() {
+            const examsRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('exams');
+            
+            // Listen real-time using Rule 2 compatible simplified fetch with Snapshot
+            examsRef.onSnapshot((snapshot) => {
+                dbSubmissions = [];
+                snapshot.forEach(doc => {
+                    dbSubmissions.push({ id: doc.id, ...doc.data() });
+                });
+                renderTeacherSubmissionsList();
+            }, (error) => {
+                console.error("Realtime listener failed:", error);
+            });
+        }
+
+        function renderTeacherSubmissionsList() {
+            const container = document.getElementById('submissions-list');
+            document.getElementById('student-count-badge').innerText = `${dbSubmissions.length} הגשות`;
+
+            if (dbSubmissions.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-sm text-center py-6">אין הגשות במערכת כרגע...</p>`;
+                return;
+            }
+
+            let html = "";
+            dbSubmissions.forEach(sub => {
+                const isPublished = sub.status === 'published';
+                const statusColor = isPublished ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800';
+                const statusLabel = isPublished ? 'ציון פורסם' : 'ממתין לבדיקה';
+                
+                const closedScore = parseFloat(sub.autoScores?.partA || 0) + parseFloat(sub.autoScores?.partB || 0) + parseFloat(sub.autoScores?.partC || 0) + parseFloat(sub.autoScores?.partD || 0);
+                const openScore = parseFloat(sub.manualScores?.partA_q3 || 0) + parseFloat(sub.manualScores?.partB_q2 || 0) + parseFloat(sub.manualScores?.partC_q2 || 0) + parseFloat(sub.manualScores?.partD_q1 || 0);
+                const currentTotal = Math.round(closedScore + openScore + parseFloat(sub.teacherBonus || 0));
+
+                html += `
+                    <button onclick="selectStudentForGrading('${sub.id}')" class="w-full text-right p-3 rounded-xl border border-slate-200 hover:border-brand-500 hover:bg-slate-50 transition flex justify-between items-center bg-white shadow-sm">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">${sub.studentName}</h4>
+                            <span class="text-[10px] text-slate-500">${new Date(sub.submittedAt).toLocaleDateString('he-IL')}</span>
+                        </div>
+                        <div class="text-left space-y-1">
+                            <span class="text-[10px] px-2 py-0.5 rounded-full block font-bold text-center ${statusColor}">${statusLabel}</span>
+                            <span class="text-xs font-bold text-slate-600 block text-center">${currentTotal} / 100</span>
+                        </div>
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Render grading panel of selected student
+        function selectStudentForGrading(docId) {
+            activeGradingDocId = docId;
+            activeGradingData = dbSubmissions.find(s => s.id === docId);
+
+            if (!activeGradingData) return;
+
+            document.getElementById('no-selection-alert').classList.add('hidden');
+            document.getElementById('active-grading-card').classList.remove('hidden');
+
+            // Set student meta details
+            document.getElementById('current-g-student').innerText = activeGradingData.studentName;
+            document.getElementById('current-g-date').innerText = new Date(activeGradingData.submittedAt).toLocaleString('he-IL');
+            
+            const pStatus = document.getElementById('g-publish-status');
+            if (activeGradingData.status === 'published') {
+                pStatus.innerText = "ציון מפורסם";
+                pStatus.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
+            } else {
+                pStatus.innerText = "ממתין לפרסום";
+                pStatus.className = "text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800";
+            }
+
+            // Put answers
+            document.getElementById('g_answer_partA_q3').innerText = activeGradingData.answers?.partA_q3 || "(אין תשובה)";
+            document.getElementById('g_answer_partB_q2').innerText = activeGradingData.answers?.partB_q2 || "(אין תשובה)";
+            document.getElementById('g_answer_partC_q2').innerText = activeGradingData.answers?.partC_q2 || "(אין תשובה)";
+
+            const dChar = activeGradingData.answers?.partD_q1_char || "לא נבחרה דמות";
+            document.getElementById('g_answer_partD_q1').innerText = `[דמות: ${dChar}]\n\n` + (activeGradingData.answers?.partD_q1 || "(אין תשובה)");
+
+            // Sync scores
+            document.getElementById('g_partA_q3_score').innerText = `ציון: ${activeGradingData.manualScores?.partA_q3 || 0} / 10`;
+            document.getElementById('g_partB_q2_score').innerText = `ציון: ${activeGradingData.manualScores?.partB_q2 || 0} / 10`;
+            document.getElementById('g_partC_q2_score').innerText = `ציון: ${activeGradingData.manualScores?.partC_q2 || 0} / 10`;
+            document.getElementById('g_partD_q1_score').innerText = `ציון: ${activeGradingData.manualScores?.partD_q1 || 0} / 10`;
+
+            // Sync teacher bonus slider
+            document.getElementById('g_teacherBonus').value = activeGradingData.teacherBonus || 0;
+            document.getElementById('g_bonusLabel').innerText = `${activeGradingData.teacherBonus || 0} / 10`;
+
+            recalculateTotalsOnTeacherDesk();
+        }
+
+        function setTeacherManualScore(questionKey, score) {
+            if (!activeGradingData) return;
+            activeGradingData.manualScores = activeGradingData.manualScores || {};
+            activeGradingData.manualScores[questionKey] = score;
+
+            document.getElementById(`g_${questionKey}_score`).innerText = `ציון: ${score} / 10`;
+            recalculateTotalsOnTeacherDesk();
+        }
+
+        function updateTeacherBonusValue(val) {
+            if (!activeGradingData) return;
+            activeGradingData.teacherBonus = parseInt(val);
+            document.getElementById('g_bonusLabel').innerText = `${val} / 10`;
+            recalculateTotalsOnTeacherDesk();
+        }
+
+        function recalculateTotalsOnTeacherDesk() {
+            if (!activeGradingData) return;
+
+            const autoTotal = parseFloat(activeGradingData.autoScores?.partA || 0) + parseFloat(activeGradingData.autoScores?.partB || 0) + parseFloat(activeGradingData.autoScores?.partC || 0) + parseFloat(activeGradingData.autoScores?.partD || 0);
+            const manualTotal = parseFloat(activeGradingData.manualScores?.partA_q3 || 0) + parseFloat(activeGradingData.manualScores?.partB_q2 || 0) + parseFloat(activeGradingData.manualScores?.partC_q2 || 0) + parseFloat(activeGradingData.manualScores?.partD_q1 || 0);
+            const bonus = parseFloat(activeGradingData.teacherBonus || 0);
+
+            let calculated = Math.round(autoTotal + manualTotal + bonus);
+            if (calculated > 100) calculated = 100;
+
+            document.getElementById('g_calculated_total').innerText = `${calculated} / 100`;
+        }
+
+        async function publishStudentScore() {
+            if (!activeGradingDocId || !activeGradingData) return;
+
+            const autoTotal = parseFloat(activeGradingData.autoScores?.partA || 0) + parseFloat(activeGradingData.autoScores?.partB || 0) + parseFloat(activeGradingData.autoScores?.partC || 0) + parseFloat(activeGradingData.autoScores?.partD || 0);
+            const manualTotal = parseFloat(activeGradingData.manualScores?.partA_q3 || 0) + parseFloat(activeGradingData.manualScores?.partB_q2 || 0) + parseFloat(activeGradingData.manualScores?.partC_q2 || 0) + parseFloat(activeGradingData.manualScores?.partD_q1 || 0);
+            const bonus = parseFloat(activeGradingData.teacherBonus || 0);
+
+            let calculated = Math.round(autoTotal + manualTotal + bonus);
+            if (calculated > 100) calculated = 100;
+
+            let evalComment = "";
+            if (calculated >= 90) evalComment = "🏆 שליטה מצוינת בחומר! הבנה עמוקה של עלילות הדורות ומגילת הפיסטי.";
+            else if (calculated >= 80) evalComment = "⭐ ידע טוב מאוד עם טעויות מעטות בלבד. כל הכבוד!";
+            else if (calculated >= 70) evalComment = "📚 ידע טוב אך חסרים פרטים מסוימים במחוון התשובות. מומלץ לחזור על חומר הרקע.";
+            else if (calculated >= 55) evalComment = "⚠️ הבנה בסיסית של החומר. נדרשת חזרה מעמיקה יותר על סדר הדורות והממלכות.";
+            else evalComment = "❌ נדרש חיזוק משמעותי. מומלץ לקרוא את ספר המקור מחדש ולבצע תרגול מודרך.";
+
+            try {
+                // Rule 1 compliant path update
+                const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('exams').doc(activeGradingDocId);
+                
+                await docRef.update({
+                    manualScores: activeGradingData.manualScores,
+                    teacherBonus: activeGradingData.teacherBonus,
+                    finalScore: calculated,
+                    evaluationComment: evalComment,
+                    status: 'published'
+                });
+
+                triggerNotification(`📢 הציון של ${activeGradingData.studentName} פורסם בהצלחה (${calculated} / 100)`, "bg-emerald-600 text-white");
+                
+                document.getElementById('g-publish-status').innerText = "ציון מפורסם";
+                document.getElementById('g-publish-status').className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
+
+            } catch (err) {
+                console.error("Publish score error:", err);
+                triggerNotification("⚠️ שגיאה בפרסום הציון לענן.", "bg-red-500 text-white");
+            }
+        }
+    </script>
+</body>
+</html>
