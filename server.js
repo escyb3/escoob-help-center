@@ -41,6 +41,53 @@ function saveUsers(data) {
 }
 let users = loadUsers();
 
+// הוסף את זה בשרת ה-Express שלך
+app.post('/api/get-dvar-torah', async (req, res) => {
+    try {
+        const { formattedDate } = req.body;
+
+        const systemPrompt = `
+            אתה מומחה ביהדות. המטרה שלך היא למצוא את פרשת השבוע הנוכחית על פי התאריך ולכתוב עליה דבר תורה קצר ומרתק.
+            הטקסט צריך להיות בסגנון קליל, מתאים לכל המשפחה, באורך של 200-300 מילים.
+        `;
+        const userQuery = `כתוב דבר תורה על פרשת השבוע הנוכחית (היום הוא ${formattedDate}).`;
+
+        const payload = {
+            contents: [{ parts: [{ text: userQuery }] }],
+            tools: [{ "googleSearch": {} }],
+            systemInstruction: {
+                parts: [{ text: systemPrompt }]
+            }
+        };
+
+        // שימוש במפתח ה-AQ בצד השרת (שם זה מאובטח ומותר)
+        const apiKey = process.env.GEMINI_API_KEY || "AQ.Ab8RN6JH8ooi_JvH_payT9HL0vzTwEbcY5K8esEjxAHFGuI5ug";
+        const apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Gemini API error: ${response.status} - ${errText}`);
+        }
+
+        const result = await response.json();
+        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        res.json({ success: true, text });
+    } catch (error) {
+        console.error("Server error in /api/get-dvar-torah:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // --- הודעות ---
 function loadMessages() {
   return loadJsonFile(MESSAGES_FILE);
