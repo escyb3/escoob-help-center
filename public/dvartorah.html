@@ -398,13 +398,20 @@
   measurementId: "G-2YVXMYSBCF"
 };
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=";
-        const API_KEY = "AQ.Ab8RN6JH8ooi_JvH_payT9HL0vzTwEbcY5K8esEjxAHFGuI5ug"; // Canvas will automatically provide the API key
-async function fetchWithRetry(data, retries = 5, delay = 2000) {
+        
+        // כתובת ה-API בלבד, בלי ?key= בסוף
+        const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+        const API_KEY = "AQ.Ab8RN6JH8ooi_JvH_payT9HL0vzTwEbcY5K8esEjxAHFGuI5ug"; 
+
+        async function fetchWithRetry(data, retries = 5, delay = 2000) {
             for (let i = 0; i < retries; i++) {
-                const response = await fetch(GEMINI_API_URL + API_KEY, {
+                // שליחת הבקשה עם המפתח כ-Bearer Token בכותרת (Headers)
+                const response = await fetch(GEMINI_API_URL, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${API_KEY}` // תיקון קריטי למפתחות מסוג AQ
+                    },
                     body: JSON.stringify(data)
                 });
 
@@ -420,9 +427,9 @@ async function fetchWithRetry(data, retries = 5, delay = 2000) {
 
                 // If it's a different error, stop and throw
                 const errorText = await response.text();
-                throw new Error(`Request failed: ${response.status} - ${errorText}`);
+                throw new Error(`Request failed: ${response.status} -${errorText}`);
             }
-            throw new Error('Max retries reached without success.'); // מומלץ להוסיף זריקת שגיאה אם כל הניסיונות נכשלו
+            throw new Error('Max retries reached without success.');
         }
         
         let db;
