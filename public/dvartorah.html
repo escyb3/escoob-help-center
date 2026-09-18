@@ -1103,7 +1103,6 @@ async function fetchWithRetry(data, retries = 5, delay = 2000) {
             const year = today.getFullYear();
             const formattedDate = `${day}/${month}/${year}`;
 
-            // Use Google Search to find the current weekly Torah portion
             const systemPrompt = `
                 אתה מומחה ביהדות. המטרה שלך היא למצוא את פרשת השבוע הנוכחית על פי התאריך העברי/לועזי של היום ולכתוב עליה דבר תורה קצר ומרתק.
                 הטקסט שתכתוב צריך להיות בסגנון קליל, מתאים לכל המשפחה, ולכלול מסר חינוכי או רעיון עמוק שקשור לפרשה.
@@ -1113,7 +1112,7 @@ async function fetchWithRetry(data, retries = 5, delay = 2000) {
             
             const payload = {
                 contents: [{ parts: [{ text: userQuery }] }],
-                tools: [{ "google_search": {} }],
+                tools: [{ "googleSearch": {} }], // תיקון: googleSearch במקום google_search
                 systemInstruction: {
                     parts: [{ text: systemPrompt }]
                 }
@@ -1134,25 +1133,31 @@ async function fetchWithRetry(data, retries = 5, delay = 2000) {
 
                     if (response.status === 429) {
                         retryCount++;
+                        console.warn(`Rate limit (429) hit. Retrying attempt ${retryCount} of ${maxRetries}...`);
                         await delay(Math.pow(2, retryCount) * 1000);
                         continue;
+                    }
+
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        throw new Error(`API error: ${response.status} - ${errText}`);
                     }
 
                     const result = await response.json();
                     const candidate = result.candidates?.[0];
 
                     if (candidate && candidate.content?.parts?.[0]?.text) {
-                        const text = candidate.content.parts[0].text;
-                        return text;
+                        return candidate.content.parts[0].text;
                     } else {
-                        console.error("Gemini API returned no candidates with search for Dvar Torah:", result);
+                        console.error("Gemini API returned no candidates for Dvar Torah:", result);
                         return null;
                     }
                 } catch (error) {
-                    console.error("Error calling Gemini API with search for Dvar Torah:", error);
+                    console.error("Error calling Gemini API for Dvar Torah:", error);
                     return null;
                 }
             }
+            console.error("Max retries reached. Request failed due to rate limits.");
             return null;
         }
 
