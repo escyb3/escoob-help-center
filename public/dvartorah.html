@@ -398,7 +398,7 @@
   measurementId: "G-2YVXMYSBCF"
 };
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=";
+        const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
         const API_KEY = "AIzaSyCRfkAJH1D5PAS9B6i_2KE3Ctob3FxzEVc"; // Canvas will automatically provide the API key
 async function fetchWithRetry(data, retries = 5, delay = 2000) {
             for (let i = 0; i < retries; i++) {
